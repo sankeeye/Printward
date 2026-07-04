@@ -1,0 +1,9 @@
+{
+  "_note": "Fill in bambu_password, then run encrypt_password.bat once: it replaces the plaintext with an encrypted 'bambu_password_enc' (Windows DPAPI) and removes 'bambu_password'. Recommended because this file may sync to the cloud (e.g. Google Drive). Alternatively leave the password empty and put a token in custom_token.",
+  "bambu_email": "your-bambu-account-email@example.com",
+  "bambu_password": "your-bambu-account-password",
+  "printer_serial": "YOUR_PRINTER_SERIAL",
+  "device_ip": "192.168.1.123",
+  "poll_interval_sec": 120,
+  "custom_token": ""
+}

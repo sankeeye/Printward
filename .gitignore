@@ -1,0 +1,33 @@
+# PlatformIO
+.pio
+.pioenvs
+.piolibdeps
+.clang_complete
+.gcc-flags.json
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python (Virtualenvs)
+venv/
+.venv/
+__pycache__/
+
+# Build artifacts
+*.bin
+*.elf
+build_out*.txt
+
+# Bambu Cloud weight relay - has your account password / access token, keep local
+tools/config.json
+tools/relay_state.json
+
+# Windows shortcut with a machine-specific absolute path - not useful to others
+tools/*.lnk
