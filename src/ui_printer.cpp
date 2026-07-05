@@ -44,8 +44,106 @@ static lv_obj_t* g_speed_btn = nullptr;
 static lv_obj_t* g_speed_btn_label = nullptr;
 static lv_obj_t* g_slider = nullptr;
 
+// --- Stop confirmation ---------------------------------------------------
+// Stop aborts the running print irreversibly, so unlike the other controls it
+// asks for confirmation first. Built from plain objects on the top layer (the
+// lv_msgbox widget is disabled in lv_conf.h): a full-screen dimmed backdrop
+// makes it modal (swallows taps outside the box), and only "Stoppen" queues
+// the actual ACT_STOP.
+static lv_obj_t* g_stop_modal = nullptr;
+
+static void stop_confirm_close() {
+    if (g_stop_modal) { lv_obj_del(g_stop_modal); g_stop_modal = nullptr; }
+}
+
+static void stop_confirm_yes_cb(lv_event_t* e) {
+    g_pending_action = ACT_STOP;
+    stop_confirm_close();
+}
+
+static void stop_confirm_no_cb(lv_event_t* e) {
+    stop_confirm_close();
+}
+
+static void show_stop_confirm() {
+    if (g_stop_modal) return; // already open
+
+    // Dimmed full-screen backdrop on the top layer -> modal.
+    lv_obj_t* bg = lv_obj_create(lv_layer_top());
+    lv_obj_set_size(bg, lv_pct(100), lv_pct(100));
+    lv_obj_set_style_bg_color(bg, lv_color_hex(0x000000), 0);
+    lv_obj_set_style_bg_opa(bg, LV_OPA_50, 0);
+    lv_obj_set_style_border_width(bg, 0, 0);
+    lv_obj_set_style_radius(bg, 0, 0);
+    lv_obj_set_style_pad_all(bg, 0, 0);
+    lv_obj_clear_flag(bg, LV_OBJ_FLAG_SCROLLABLE);
+    g_stop_modal = bg;
+
+    // Dialog box.
+    lv_obj_t* box = lv_obj_create(bg);
+    lv_obj_set_size(box, 460, 230);
+    lv_obj_center(box);
+    lv_obj_set_style_bg_color(box, lv_color_hex(0x1c1c1c), 0);
+    lv_obj_set_style_border_color(box, lv_color_hex(0x333333), 0);
+    lv_obj_set_style_pad_all(box, 20, 0);
+    lv_obj_set_style_pad_gap(box, 14, 0);
+    lv_obj_set_flex_flow(box, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(box, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_clear_flag(box, LV_OBJ_FLAG_SCROLLABLE);
+
+    lv_obj_t* title = lv_label_create(box);
+    lv_label_set_text(title, "Print stoppen?");
+    lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
+    lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
+
+    lv_obj_t* txt = lv_label_create(box);
+    lv_label_set_text(txt, "Weet je zeker dat je de print wilt afbreken?\n"
+                           "Dit kan niet ongedaan worden gemaakt.");
+    lv_obj_set_style_text_font(txt, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(txt, lv_color_hex(0xAAAAAA), 0);
+    lv_obj_set_width(txt, lv_pct(100));
+    lv_label_set_long_mode(txt, LV_LABEL_LONG_WRAP);
+    lv_obj_set_style_text_align(txt, LV_TEXT_ALIGN_CENTER, 0);
+
+    // Button row.
+    lv_obj_t* row = lv_obj_create(box);
+    lv_obj_set_size(row, lv_pct(100), 60);
+    lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(row, 0, 0);
+    lv_obj_set_style_pad_all(row, 0, 0);
+    lv_obj_set_style_pad_gap(row, 10, 0);
+    lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(row, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_clear_flag(row, LV_OBJ_FLAG_SCROLLABLE);
+
+    lv_obj_t* cancel = lv_btn_create(row);
+    lv_obj_set_flex_grow(cancel, 1);
+    lv_obj_set_height(cancel, 56);
+    lv_obj_set_style_bg_color(cancel, lv_color_hex(0x555555), LV_PART_MAIN);
+    lv_obj_t* cl = lv_label_create(cancel);
+    lv_label_set_text(cl, "Annuleren");
+    lv_obj_set_style_text_font(cl, &lv_font_montserrat_18, 0);
+    lv_obj_center(cl);
+    lv_obj_add_event_cb(cancel, stop_confirm_no_cb, LV_EVENT_CLICKED, NULL);
+
+    lv_obj_t* confirm = lv_btn_create(row);
+    lv_obj_set_flex_grow(confirm, 1);
+    lv_obj_set_height(confirm, 56);
+    lv_obj_set_style_bg_color(confirm, lv_color_hex(0xa40000), LV_PART_MAIN);
+    lv_obj_t* cf = lv_label_create(confirm);
+    lv_label_set_text(cf, "Stoppen");
+    lv_obj_set_style_text_font(cf, &lv_font_montserrat_18, 0);
+    lv_obj_center(cf);
+    lv_obj_add_event_cb(confirm, stop_confirm_yes_cb, LV_EVENT_CLICKED, NULL);
+}
+
 static void act_cb(lv_event_t* e) {
     int action = (int)(uintptr_t)lv_event_get_user_data(e);
+    // Stop is destructive - confirm before sending it instead of firing on tap.
+    if (action == ACT_STOP) {
+        show_stop_confirm();
+        return;
+    }
     // Queue only - MQTT publish happens from the main loop, after this frame
     // has already been flushed, so we don't block lv_task_handler() mid-redraw.
     g_pending_action = action;
