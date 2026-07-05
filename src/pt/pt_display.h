@@ -11,6 +11,7 @@
 #include <esp_heap_caps.h>
 #include <lvgl.h>
 #include <Arduino_GFX_Library.h>
+#include <esp_lcd_panel_rgb.h> // esp_lcd_rgb_panel_restart / event callbacks (RGB anti-drift)
 #include "TAMC_GT911.h"
 #include "pt_board.h"
 
@@ -18,8 +19,14 @@
 #define PT_LVGL_RENDER_PARTIAL_LINES 80
 #endif
 
+// Bounce buffer height in lines. Bigger = more slack for the RGB DMA when the
+// CPU/PSRAM bus is briefly busy (WiFi activity), which reduces the ESP32-S3 RGB
+// "drift" (image slowly shifts down). SRAM cost ~= lines * H_RES * 2 bytes * 2.
+// 10 -> 20 as a first mitigation step; if the display fails to init (blank),
+// lower it again. Note: this does NOT help drift triggered by flash/NVS writes
+// (cache disabled) - that needs the panel-restart fix.
 #ifndef PT_LCD_RENDER_BOUNCE_LINES
-#define PT_LCD_RENDER_BOUNCE_LINES 10
+#define PT_LCD_RENDER_BOUNCE_LINES 20
 #endif
 
 /* =========================
@@ -228,6 +235,28 @@ inline void pt_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data)
   }
 }
 
+/**
+ * @brief VSYNC callback: re-syncs the RGB panel every frame.
+ *
+ * esp_lcd_rgb_panel_restart() doesn't restart immediately - it sets a flag and
+ * the driver performs the DMA restart at the next VSYNC. Firing it every frame
+ * therefore continuously corrects the ESP32-S3 RGB "drift" (the image creeps
+ * down permanently after a brief cache-disable from a flash write, or a PSRAM
+ * bus stall under WiFi load) within ~1 frame. This is the manual equivalent of
+ * CONFIG_LCD_RGB_RESTART_IN_VSYNC, which the precompiled arduino-esp32 libs
+ * don't enable. Runs in ISR context; restart() only sets a flag, so it's safe
+ * here and needs no IRAM placement.
+ */
+inline bool pt_lcd_on_vsync(esp_lcd_panel_handle_t panel,
+                            const esp_lcd_rgb_panel_event_data_t *edata,
+                            void *user_ctx)
+{
+  (void)edata;
+  (void)user_ctx;
+  esp_lcd_rgb_panel_restart(panel);
+  return false; // no higher-priority task woken
+}
+
 /* =========================
  *  Public API
  * ========================= */
@@ -258,6 +287,21 @@ inline void pt_setup_display(PT_LVGL_render_method_t mode = (PT_LVGL_render_meth
   // Panel bring-up
   pt_gfx.begin();
   pt_gfx.fillScreen(0x000000);
+
+  // RGB anti-drift: restart the panel DMA every VSYNC so any drift caused by a
+  // brief cache-disable (flash write) or a PSRAM-bandwidth stall (WiFi) is
+  // corrected within one frame. Needs the esp_lcd panel handle that GFX keeps
+  // private - exposed via the build-time getPanelHandle() patch
+  // (patch_gfx_getter.py). No-op if the handle isn't available.
+  {
+    esp_lcd_panel_handle_t panel = pt_rgbpanel.getPanelHandle();
+    if (panel)
+    {
+      esp_lcd_rgb_panel_event_callbacks_t cbs = {};
+      cbs.on_vsync = pt_lcd_on_vsync;
+      esp_lcd_rgb_panel_register_event_callbacks(panel, &cbs, NULL);
+    }
+  }
 
   // Touch
   pt_touchpanel.begin();
