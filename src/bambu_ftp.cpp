@@ -1,52 +1,182 @@
 #include "bambu_ftp.h"
 #include "storage.h"
-#include <WiFi.h>
-#include <WiFiClientSecure.h>
+#include <esp_random.h>
+#include <esp_heap_caps.h>
+#include <mbedtls/ssl.h>
+#include <mbedtls/net_sockets.h>
+#include <mbedtls/platform.h>
 
-// Reads one FTP reply off `c`, handling multi-line replies (RFC 959: a
-// continuation line looks like "150-...", the reply ends with a line that
-// has the same 3-digit code followed by a space, e.g. "150 Ready"). Returns
-// the numeric code, or -1 on timeout/disconnect before a final line arrived.
-static int ftp_read_reply(WiFiClientSecure& c, String* full_out, unsigned long timeout_ms = 8000) {
-    String all;
-    String line;
+// Bambu printers expose their SD card over implicit FTPS on port 990 (see
+// ftp.md in github.com/Doridian/OpenBambuAPI). The tricky part isn't the FTP
+// protocol - it's that the printer's server requires the *data* connection to
+// RESUME the TLS session negotiated on the *control* connection (a common
+// anti-"data-connection-stealing" measure). Arduino's WiFiClientSecure exposes
+// no session-reuse API, and the convenient esp_tls session helpers are compiled
+// out of the precompiled arduino-esp32 libs, so this talks raw mbedTLS: we keep
+// the control session with mbedtls_ssl_get_session() and inject it into the
+// data connection with mbedtls_ssl_set_session() before its handshake.
+
+// -----------------------------------------------------------------------------
+//  Raw mbedTLS connection helper (used for both control and data channels)
+// -----------------------------------------------------------------------------
+
+// RNG for the TLS stack: ESP32's hardware RNG is a valid entropy source while
+// WiFi/BT is active, so we can skip the entropy/CTR-DRBG boilerplate.
+static int ftp_rng(void* ctx, unsigned char* buf, size_t len) {
+    (void)ctx;
+    esp_fill_random(buf, len);
+    return 0;
+}
+
+// This build compiles mbedTLS with CONFIG_MBEDTLS_INTERNAL_MEM_ALLOC, so TLS
+// buffers come from internal RAM only - and two 16KB-content contexts at once
+// (control + data, both open during a transfer) don't fit next to WiFi and the
+// RGB bounce buffers. Point mbedTLS at PSRAM instead (8MB, and TLS buffers need
+// no DMA/internal RAM). Installed once, globally: harmless for the other TLS
+// users (MQTT/Cloud), which just get their buffers from PSRAM too.
+static void* ftp_tls_calloc(size_t n, size_t size) {
+    return heap_caps_calloc(n, size, MALLOC_CAP_SPIRAM);
+}
+static void ftp_tls_free(void* p) {
+    heap_caps_free(p);
+}
+static void ftp_use_psram_tls() {
+    static bool done = false;
+    if (!done) {
+        mbedtls_platform_set_calloc_free(ftp_tls_calloc, ftp_tls_free);
+        done = true;
+    }
+}
+
+struct FtpConn {
+    mbedtls_net_context net;
+    mbedtls_ssl_context ssl;
+    mbedtls_ssl_config conf;
+    bool up = false;
+};
+
+// Opens a TCP connection to host:port and completes a TLS handshake. When
+// `resume` is non-null its session is installed first, so the server resumes
+// it instead of doing a full handshake (the data-channel requirement). Cert
+// verification is off - same trust trade-off as the LAN MQTT/Cloud links.
+static bool ftpc_connect(FtpConn& c, const char* host, int port,
+                         const mbedtls_ssl_session* resume, String* err) {
+    mbedtls_net_init(&c.net);
+    mbedtls_ssl_init(&c.ssl);
+    mbedtls_ssl_config_init(&c.conf);
+
+    char port_s[8];
+    snprintf(port_s, sizeof(port_s), "%d", port);
+    int ret = mbedtls_net_connect(&c.net, host, port_s, MBEDTLS_NET_PROTO_TCP);
+    if (ret != 0) { if (err) *err = "tcp " + String(ret); return false; }
+
+    if (mbedtls_ssl_config_defaults(&c.conf, MBEDTLS_SSL_IS_CLIENT,
+            MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT) != 0) {
+        if (err) *err = "cfg"; return false;
+    }
+    mbedtls_ssl_conf_authmode(&c.conf, MBEDTLS_SSL_VERIFY_NONE);
+    mbedtls_ssl_conf_rng(&c.conf, ftp_rng, nullptr);
+    mbedtls_ssl_conf_session_tickets(&c.conf, MBEDTLS_SSL_SESSION_TICKETS_ENABLED);
+    // Pin TLS 1.2 so resumption uses the classic ticket/session-id flow that
+    // this printer's (old mbedTLS-based) server and FileZilla negotiate.
+    mbedtls_ssl_conf_min_tls_version(&c.conf, MBEDTLS_SSL_VERSION_TLS1_2);
+    mbedtls_ssl_conf_max_tls_version(&c.conf, MBEDTLS_SSL_VERSION_TLS1_2);
+    mbedtls_ssl_conf_read_timeout(&c.conf, 8000);
+
+    ret = mbedtls_ssl_setup(&c.ssl, &c.conf);
+    if (ret != 0) { if (err) *err = "setup " + String(ret); return false; }
+    if (resume) {
+        ret = mbedtls_ssl_set_session(&c.ssl, resume);
+        if (ret != 0) { if (err) *err = "set_session " + String(ret); return false; }
+    }
+    mbedtls_ssl_set_bio(&c.ssl, &c.net, mbedtls_net_send, nullptr, mbedtls_net_recv_timeout);
+
+    unsigned long start = millis();
+    while ((ret = mbedtls_ssl_handshake(&c.ssl)) != 0) {
+        if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE) {
+            if (err) *err = "hs " + String(ret);
+            return false;
+        }
+        if (millis() - start > 10000) { if (err) *err = "hs timeout"; return false; }
+        delay(5);
+    }
+    c.up = true;
+    return true;
+}
+
+static int ftpc_write(FtpConn& c, const uint8_t* buf, size_t len) {
+    size_t sent = 0;
+    while (sent < len) {
+        int ret = mbedtls_ssl_write(&c.ssl, buf + sent, len - sent);
+        if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE) continue;
+        if (ret <= 0) return ret;
+        sent += ret;
+    }
+    return (int)sent;
+}
+
+// Returns >0 bytes read, 0 on "nothing yet"/timeout, <0 on close or error.
+static int ftpc_read(FtpConn& c, uint8_t* buf, size_t len) {
+    int ret = mbedtls_ssl_read(&c.ssl, buf, len);
+    if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE ||
+        ret == MBEDTLS_ERR_SSL_TIMEOUT) return 0;
+    if (ret <= 0) return -1; // PEER_CLOSE_NOTIFY, reset, or hard error
+    return ret;
+}
+
+static void ftpc_close(FtpConn& c) {
+    if (c.up) mbedtls_ssl_close_notify(&c.ssl);
+    mbedtls_ssl_free(&c.ssl);
+    mbedtls_ssl_config_free(&c.conf);
+    mbedtls_net_free(&c.net);
+    c.up = false;
+}
+
+// -----------------------------------------------------------------------------
+//  FTP reply reading / command sending over an FtpConn
+// -----------------------------------------------------------------------------
+
+// Reads one FTP reply, handling multi-line replies (RFC 959: continuation
+// lines look like "150-...", the reply ends with "150 " - the same code then a
+// space). Returns the numeric code, or -1 on timeout/disconnect.
+static int ftp_read_reply(FtpConn& c, String* full_out, unsigned long timeout_ms = 8000) {
+    String all, line;
     unsigned long start = millis();
     while (millis() - start < timeout_ms) {
-        if (c.available()) {
-            char ch = c.read();
-            line += ch;
+        uint8_t ch;
+        int n = ftpc_read(c, &ch, 1);
+        if (n == 1) {
+            line += (char)ch;
             start = millis();
             if (ch == '\n') {
                 all += line;
                 bool final_line = line.length() >= 4 &&
                     isDigit(line[0]) && isDigit(line[1]) && isDigit(line[2]) && line[3] == ' ';
-                if (final_line) {
-                    if (full_out) *full_out = all;
-                    return line.substring(0, 3).toInt();
-                }
+                if (final_line) { if (full_out) *full_out = all; return line.substring(0, 3).toInt(); }
                 line = "";
             }
-        } else if (!c.connected()) {
+        } else if (n < 0) {
             break;
         } else {
-            delay(5);
+            delay(2);
         }
     }
     if (full_out) *full_out = all;
     return -1;
 }
 
-static int ftp_send_cmd(WiFiClientSecure& c, const String& cmd, String* full_out = nullptr) {
-    c.print(cmd);
-    c.print("\r\n");
+static int ftp_send_cmd(FtpConn& c, const String& cmd, String* full_out = nullptr) {
+    String line = cmd + "\r\n"; // one write -> one TLS record (this printer's
+    ftpc_write(c, (const uint8_t*)line.c_str(), line.length()); // server mis-parses split records)
     return ftp_read_reply(c, full_out);
 }
 
-// Parses EPSV's reply (RFC 2428), e.g. "229 Entering Extended Passive Mode
-// (|||6446|)." - the delimiter character (usually '|') is whatever comes
-// right after the opening paren; the port is between the last two
-// occurrences of it. Unlike PASV, EPSV doesn't give a separate data-channel
-// IP - the same host as the control connection is used. Returns -1 if the
+// -----------------------------------------------------------------------------
+//  Reply/listing parsing (transport-independent)
+// -----------------------------------------------------------------------------
+
+// Parses EPSV's reply (RFC 2428): "229 ... (|||6446|)" - delimiter is the char
+// after '(', the port sits between the last two delimiters. Returns -1 if the
 // reply doesn't look like a valid EPSV response.
 static int parse_epsv_port(const String& resp) {
     int paren_start = resp.indexOf('(');
@@ -64,17 +194,11 @@ static int parse_epsv_port(const String& resp) {
     return port_str.toInt();
 }
 
-// Parses Unix-style `ls -l` lines, e.g.:
-//   "-rwxrwxrwx 1 user group    12345 Jan  1 00:00 my_print.3mf"
-//   "drwxrwxrwx 1 user group        0 Jan  1 00:00 cache"
-// Fields before the name are whitespace-separated and (on the embedded FTP
-// daemons Bambu printers use) don't vary in count, but the name itself may
-// contain spaces, so it's taken as "everything after the 8th field" rather
-// than split further.
+// Parses Unix `ls -l` lines: 8 whitespace-separated fields then the name (which
+// may contain spaces, so it's "everything after field 8"). Field 5 is the size,
+// a leading 'd' marks a directory.
 static int parse_listing(const String& listing, FtpEntry* out, int max_entries) {
-    int count = 0;
-    int line_start = 0;
-    int len = listing.length();
+    int count = 0, line_start = 0, len = listing.length();
     while (line_start < len && count < max_entries) {
         int nl = listing.indexOf('\n', line_start);
         if (nl < 0) nl = len;
@@ -84,9 +208,7 @@ static int parse_listing(const String& listing, FtpEntry* out, int max_entries) 
         if (line.length() == 0) continue;
 
         bool is_dir = (line[0] == 'd');
-        int i = 0;
-        int n = line.length();
-        int fields_seen = 0;
+        int i = 0, n = line.length(), fields_seen = 0;
         uint32_t size = 0;
         while (i < n && fields_seen < 8) {
             while (i < n && line[i] == ' ') i++;
@@ -110,116 +232,72 @@ static int parse_listing(const String& listing, FtpEntry* out, int max_entries) 
     return count;
 }
 
+// -----------------------------------------------------------------------------
+//  Directory listing
+// -----------------------------------------------------------------------------
+
 bool bambu_ftp_list(const char* path, FtpEntry* out, int max_entries, int* out_count, String* err) {
     *out_count = 0;
-    if (strlen(g_printer_ip) == 0) {
-        *err = "No printer IP configured yet";
-        return false;
-    }
+    if (strlen(g_printer_ip) == 0) { *err = "No printer IP configured yet"; return false; }
 
-    // Compact step-by-step trail of every command's reply code, appended to
-    // *err on any failure. After several rounds of guessing blind from a
-    // single reply code reported over chat, this is worth more than any one
-    // more speculative protocol fix - it tells us exactly which step in the
-    // sequence actually failed instead of us guessing from one number.
+    ftp_use_psram_tls(); // keep the two TLS contexts out of scarce internal RAM
+
+    // Compact reply-code trail, appended to *err on any failure.
     String log;
 
-    WiFiClientSecure ctrl;
-    // Same trust trade-off as the LAN MQTT link and Bambu Cloud calls
-    // elsewhere in this firmware - no CA bundle loaded on-device.
-    ctrl.setInsecure();
-    ctrl.setTimeout(8000);
-    if (!ctrl.connect(g_printer_ip, 990)) {
-        *err = "Couldn't connect to the printer on port 990 (FTPS)";
+    FtpConn ctrl;
+    String cerr;
+    if (!ftpc_connect(ctrl, g_printer_ip, 990, nullptr, &cerr)) {
+        *err = "Couldn't establish the FTPS control connection (" + cerr + ")";
+        ftpc_close(ctrl);
         return false;
     }
+
+    // Save the control channel's TLS session for the data connection to resume.
+    mbedtls_ssl_session sess;
+    mbedtls_ssl_session_init(&sess);
+    bool have_sess = (mbedtls_ssl_get_session(&ctrl.ssl, &sess) == 0);
+    log += have_sess ? "SESS=ok " : "SESS=fail ";
+
+    // Cleans up ctrl + session and returns false with the message in *err.
+    auto fail = [&](const String& msg) -> bool {
+        *err = msg + " [" + log + "]";
+        ftpc_close(ctrl);
+        mbedtls_ssl_session_free(&sess);
+        return false;
+    };
 
     String resp;
     int code;
 
-    // A captured FileZilla session against this exact printer shows PASS
-    // succeeding immediately (230) with no ACCT step at all. Every attempt
-    // from this firmware instead got 332 ("need account") on PASS - and
-    // every time that happened, every later command (PBSZ, TYPE, PASV,
-    // CWD-to-root) came back 502, the signature of some kind of
-    // degraded/conflicting session - most likely a control connection from
-    // an earlier attempt that the printer hadn't fully torn down yet (this
-    // code has been reconnecting a lot during testing). Rather than treating
-    // 332 as a normal step to answer with ACCT, close the connection and
-    // retry once with a fresh one first, which is effectively what a client
-    // that always opens a brand-new connection (like FileZilla) gets for
-    // free. ACCT is still there as a last-resort fallback if even a clean
-    // retry doesn't get a direct 230.
-    for (int reconnect_attempt = 0; reconnect_attempt < 2; reconnect_attempt++) {
-        if (reconnect_attempt > 0) {
-            ctrl.stop();
-            delay(300);
-            if (!ctrl.connect(g_printer_ip, 990)) {
-                *err = "Couldn't reconnect to the printer on port 990 (FTPS) [" + log + "]";
-                return false;
-            }
-        }
+    code = ftp_read_reply(ctrl, &resp);
+    log += "GREET=" + String(code) + " ";
+    if (code < 200 || code >= 300) return fail("No FTP greeting: " + resp);
 
-        code = ftp_read_reply(ctrl, &resp);
-        log += "GREET=" + String(code) + " ";
-        if (code < 200 || code >= 300) {
-            *err = "FTP didn't answer with a greeting: " + resp + " [" + log + "]";
-            ctrl.stop();
-            return false;
-        }
-
-        code = ftp_send_cmd(ctrl, "USER bblp", &resp);
-        log += "USER=" + String(code) + " ";
-        if (code == 331) {
-            code = ftp_send_cmd(ctrl, String("PASS ") + g_printer_access_code, &resp);
-            log += "PASS=" + String(code) + " ";
-        }
-
-        if (code == 230) break; // clean login, matching the working FileZilla trace
-
-        if (reconnect_attempt == 1 && code == 332) {
-            // Still not a clean login on the second, fresh connection -
-            // fall back to answering ACCT so we at least log in, even if
-            // the session ends up degraded.
-            code = ftp_send_cmd(ctrl, String("ACCT ") + g_printer_access_code, &resp);
-            log += "ACCT=" + String(code) + " ";
-        }
+    code = ftp_send_cmd(ctrl, "USER bblp", &resp);
+    log += "USER=" + String(code) + " ";
+    if (code == 331) {
+        code = ftp_send_cmd(ctrl, String("PASS ") + g_printer_access_code, &resp);
+        log += "PASS=" + String(code) + " ";
     }
-    if (code != 230) {
-        *err = "FTP login failed - check the LAN access code: " + resp + " [" + log + "]";
-        ctrl.stop();
-        return false;
-    }
+    if (code != 230) return fail("FTP login failed (need clean PASS=230): " + resp);
 
-    // From here on, mirror the working FileZilla trace command-for-command:
-    // SYST/FEAT (informational, printer replies 502 "no-features" to FEAT -
-    // expected and harmless), PBSZ/PROT (implicit-FTPS ritual this daemon
-    // apparently does expect despite port 990 already being all-TLS), PWD,
-    // then TYPE I, all logged but not treated as fatal by themselves - only
-    // the actual PASV/EPSV/LIST/NLST failures below abort the listing.
+    // Mirror FileZilla's post-login ritual. Only the data-channel steps below
+    // are treated as fatal; these are logged but informational.
     ftp_send_cmd(ctrl, "SYST", &resp);
-    ftp_send_cmd(ctrl, "FEAT", &resp);
-    code = ftp_send_cmd(ctrl, "PBSZ 0", &resp);
-    log += "PBSZ=" + String(code) + " ";
-    code = ftp_send_cmd(ctrl, "PROT P", &resp);
-    log += "PROT=" + String(code) + " ";
+    code = ftp_send_cmd(ctrl, "PBSZ 0", &resp); log += "PBSZ=" + String(code) + " ";
+    code = ftp_send_cmd(ctrl, "PROT P", &resp); log += "PROT=" + String(code) + " ";
     ftp_send_cmd(ctrl, "PWD", &resp);
-    code = ftp_send_cmd(ctrl, "TYPE I", &resp);
-    log += "TYPE=" + String(code) + " ";
+    code = ftp_send_cmd(ctrl, "TYPE I", &resp); log += "TYPE=" + String(code) + " ";
 
-    // CWD only when navigating into an actual subfolder - the working trace
-    // never sends "CWD /" for the root listing itself (only PWD/TYPE/PASV),
-    // and a live test against this printer confirmed "CWD /" alone gets 502.
+    // CWD only into a real subfolder - the working trace never sends "CWD /".
     if (path && path[0] != '\0' && !(path[0] == '/' && path[1] == '\0')) {
         code = ftp_send_cmd(ctrl, String("CWD ") + path, &resp);
         log += "CWD=" + String(code) + " ";
-        if (code < 200 || code >= 300) {
-            *err = "Couldn't open folder \"" + String(path) + "\": " + resp + " [" + log + "]";
-            ctrl.stop();
-            return false;
-        }
+        if (code < 200 || code >= 300) return fail("Couldn't open folder \"" + String(path) + "\": " + resp);
     }
 
+    // Passive mode: PASV (classic) then EPSV as a fallback.
     char data_ip[16];
     strncpy(data_ip, g_printer_ip, sizeof(data_ip) - 1);
     data_ip[sizeof(data_ip) - 1] = '\0';
@@ -228,169 +306,66 @@ bool bambu_ftp_list(const char* path, FtpEntry* out, int max_entries, int* out_c
     code = ftp_send_cmd(ctrl, "PASV", &resp);
     log += "PASV=" + String(code) + " ";
     if (code == 227) {
-        int p1 = resp.indexOf('(');
-        int p2 = resp.indexOf(')', p1);
-        if (p1 < 0 || p2 < 0) {
-            *err = "Couldn't parse PASV reply: " + resp + " [" + log + "]";
-            ctrl.stop();
-            return false;
-        }
-        String nums = resp.substring(p1 + 1, p2);
-        int parts[6] = {0, 0, 0, 0, 0, 0};
-        int idx = 0, val = 0;
-        for (size_t i = 0; i < nums.length() && idx < 6; i++) {
-            char ch = nums[i];
-            if (ch == ',') {
-                parts[idx++] = val;
-                val = 0;
-            } else if (isDigit(ch)) {
-                val = val * 10 + (ch - '0');
+        int p1 = resp.indexOf('('), p2 = resp.indexOf(')', p1);
+        if (p1 >= 0 && p2 >= 0) {
+            String nums = resp.substring(p1 + 1, p2);
+            int parts[6] = {0}, idx = 0, val = 0;
+            for (size_t i = 0; i < nums.length() && idx < 6; i++) {
+                char ch = nums[i];
+                if (ch == ',') { parts[idx++] = val; val = 0; }
+                else if (isDigit(ch)) val = val * 10 + (ch - '0');
             }
+            if (idx == 5) parts[5] = val;
+            snprintf(data_ip, sizeof(data_ip), "%d.%d.%d.%d", parts[0], parts[1], parts[2], parts[3]);
+            data_port = parts[4] * 256 + parts[5];
         }
-        if (idx == 5) parts[5] = val;
-        snprintf(data_ip, sizeof(data_ip), "%d.%d.%d.%d", parts[0], parts[1], parts[2], parts[3]);
-        data_port = parts[4] * 256 + parts[5];
     } else {
-        // Some embedded FTP daemons (this printer included, apparently)
-        // don't implement classic PASV at all (502 "not implemented") - try
-        // the newer Extended Passive Mode instead before giving up.
         code = ftp_send_cmd(ctrl, "EPSV", &resp);
         log += "EPSV=" + String(code) + " ";
-        if (code == 229) {
-            data_port = parse_epsv_port(resp);
-        }
+        if (code == 229) data_port = parse_epsv_port(resp);
     }
+    if (data_port < 0) return fail("Printer's FTP gave no usable passive data port");
 
-    // Whichever listing verb we try, some minimal embedded FTP daemons only
-    // implement one of LIST/NLST (both are supposed to be standard, but
-    // Bambu's seems to reject at least LIST outright in some configurations)
-    // - try LIST first, then NLST as a fallback if LIST itself comes back
-    // "not implemented" rather than that being a data-channel problem.
+    // Some minimal daemons implement only one of LIST/NLST - try LIST, fall
+    // back to NLST if LIST itself is "not implemented" (502).
     static const char* kListCmds[2] = {"LIST", "NLST"};
-
-    if (data_port >= 0) {
-        // Passive mode (PASV or EPSV worked): we connect out to the printer
-        // for the data channel, same TLS trust trade-off as the control
-        // connection. A fresh data connection is needed per attempt (FTP
-        // data channels are single-use), so this re-connects for each
-        // listing verb tried.
-        for (int i = 0; i < 2; i++) {
-            WiFiClientSecure data;
-            data.setInsecure();
-            data.setTimeout(8000);
-            if (!data.connect(data_ip, data_port)) {
-                *err = "Couldn't open the FTP data connection [" + log + "]";
-                ctrl.stop();
-                return false;
-            }
-
-            code = ftp_send_cmd(ctrl, kListCmds[i], &resp);
-            log += String(kListCmds[i]) + "=" + String(code) + " ";
-            if (code != 150 && code != 125) {
-                data.stop();
-                if (i == 0 && code == 502) continue; // try NLST next
-                *err = String(kListCmds[i]) + " failed: " + resp + " [" + log + "]";
-                ctrl.stop();
-                return false;
-            }
-
-            String listing;
-            unsigned long start = millis();
-            while (millis() - start < 8000) {
-                while (data.available()) {
-                    listing += (char)data.read();
-                    start = millis();
-                }
-                if (!data.connected() && !data.available()) break;
-                delay(5);
-            }
-            data.stop();
-
-            // Final "226 Transfer complete" on the control channel.
-            ftp_read_reply(ctrl, &resp);
-            ftp_send_cmd(ctrl, "QUIT", &resp);
-            ctrl.stop();
-
-            *out_count = parse_listing(listing, out, max_entries);
-            return true;
-        }
-        *err = "Printer's FTP server doesn't support LIST or NLST in passive mode [" + log + "]";
-        ctrl.stop();
-        return false;
-    }
-
-    // Neither PASV nor EPSV worked (this printer's FTP daemon apparently
-    // doesn't implement either) - fall back to active mode: we listen, tell
-    // the printer where via PORT, and it connects to us instead of the
-    // other way around. Tried here as a plain (non-TLS) data connection -
-    // if this particular daemon insists on encrypting the data channel too,
-    // this will fail at the accept/read step below, since running a TLS
-    // *server* would need a certificate this device doesn't have.
-    IPAddress my_ip = WiFi.localIP();
-
     for (int i = 0; i < 2; i++) {
-        int active_port = 50100 + (int)(millis() % 100) + i;
-        WiFiServer active_server(active_port);
-        active_server.begin();
-
-        char port_cmd[48];
-        snprintf(port_cmd, sizeof(port_cmd), "PORT %d,%d,%d,%d,%d,%d",
-                 my_ip[0], my_ip[1], my_ip[2], my_ip[3], active_port / 256, active_port % 256);
-        code = ftp_send_cmd(ctrl, port_cmd, &resp);
-        log += "PORT=" + String(code) + " ";
-        if (code != 200) {
-            *err = "Active mode (PORT) failed too - printer's FTP server doesn't support PASV, EPSV, or PORT: " + resp + " [" + log + "]";
-            active_server.end();
-            ctrl.stop();
-            return false;
+        // Data channel resumes the control channel's TLS session (the whole
+        // point of the raw-mbedTLS approach).
+        FtpConn data;
+        String derr;
+        if (!ftpc_connect(data, data_ip, data_port, have_sess ? &sess : nullptr, &derr)) {
+            ftpc_close(data);
+            return fail("Couldn't open the FTP data connection to " + String(data_ip) + ":" + String(data_port) + " (" + derr + ")");
         }
 
         code = ftp_send_cmd(ctrl, kListCmds[i], &resp);
         log += String(kListCmds[i]) + "=" + String(code) + " ";
         if (code != 150 && code != 125) {
-            active_server.end();
-            if (i == 0 && code == 502) continue; // try NLST next
-            *err = String(kListCmds[i]) + " failed (active mode): " + resp + " [" + log + "]";
-            ctrl.stop();
-            return false;
-        }
-
-        WiFiClient active_data;
-        unsigned long accept_start = millis();
-        while (millis() - accept_start < 8000) {
-            active_data = active_server.accept();
-            if (active_data) break;
-            delay(20);
-        }
-        if (!active_data) {
-            *err = "Printer never connected back for the active-mode data transfer (a firewall or router on this network may be blocking it) [" + log + "]";
-            active_server.end();
-            ctrl.stop();
-            return false;
+            ftpc_close(data);
+            if (i == 0 && code == 502) continue; // try NLST
+            return fail(String(kListCmds[i]) + " failed: " + resp);
         }
 
         String listing;
+        uint8_t buf[512];
         unsigned long start = millis();
         while (millis() - start < 8000) {
-            while (active_data.available()) {
-                listing += (char)active_data.read();
-                start = millis();
-            }
-            if (!active_data.connected() && !active_data.available()) break;
-            delay(5);
+            int n = ftpc_read(data, buf, sizeof(buf));
+            if (n > 0) { listing.concat((const char*)buf, (unsigned int)n); start = millis(); }
+            else if (n < 0) break;
+            else delay(2);
         }
-        active_data.stop();
-        active_server.end();
+        ftpc_close(data);
 
-        ftp_read_reply(ctrl, &resp);
+        ftp_read_reply(ctrl, &resp);      // final "226 Transfer complete"
         ftp_send_cmd(ctrl, "QUIT", &resp);
-        ctrl.stop();
+        ftpc_close(ctrl);
+        mbedtls_ssl_session_free(&sess);
 
         *out_count = parse_listing(listing, out, max_entries);
-        return true;
+        return true; // 0 entries just means an empty directory
     }
 
-    *err = "Printer's FTP server doesn't support LIST or NLST in active mode either [" + log + "]";
-    ctrl.stop();
-    return false;
+    return fail("Printer's FTP server doesn't support LIST or NLST");
 }
