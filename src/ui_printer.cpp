@@ -182,11 +182,13 @@ void create_printer_ui() {
     g_pct_label = lv_label_create(prog_row);
     lv_label_set_text(g_pct_label, "0%");
     lv_obj_set_style_text_font(g_pct_label, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(g_pct_label, lv_color_hex(0xFFFFFF), 0);
     lv_obj_set_style_pad_left(g_pct_label, 10, 0);
 
     g_remain_label = lv_label_create(prog_row);
     lv_label_set_text(g_remain_label, "");
     lv_obj_set_style_text_font(g_remain_label, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(g_remain_label, lv_color_hex(0x999999), 0);
     lv_obj_set_style_pad_left(g_remain_label, 10, 0);
 
     // --- Temperatures ---
@@ -305,6 +307,7 @@ void create_printer_ui() {
     lv_obj_t* bl = lv_label_create(bright_row);
     lv_label_set_text(bl, "Brightness");
     lv_obj_set_style_text_font(bl, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(bl, lv_color_hex(0x999999), 0);
     lv_obj_set_style_pad_right(bl, 10, 0);
     g_slider = lv_slider_create(bright_row);
     lv_obj_set_flex_grow(g_slider, 1);

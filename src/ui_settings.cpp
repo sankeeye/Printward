@@ -126,6 +126,7 @@ void create_settings_ui() {
     lv_obj_t* bl = lv_label_create(bright_row);
     lv_label_set_text(bl, "Brightness");
     lv_obj_set_style_text_font(bl, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(bl, lv_color_hex(0x999999), 0);
 
     lv_obj_t* slider = lv_slider_create(bright_row);
     lv_obj_set_flex_grow(slider, 1);
