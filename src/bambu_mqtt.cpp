@@ -317,7 +317,13 @@ void bambu_cmd_start_project_file(const String& ftp_path, bool use_ams, const in
     doc["print"]["task_id"] = "0";
     doc["print"]["subtask_id"] = "0";
     doc["print"]["subtask_name"] = "";
-    doc["print"]["url"] = "ftp://" + ftp_path;
+    doc["print"]["file"] = "";
+    // The SD card is mounted at /sdcard; a file at FTP path "/model/foo.3mf"
+    // is "file:///sdcard/model/foo.3mf". (ftp:// and file:///mnt/sdcard both got
+    // silently ignored - see the ha-bambulab notes on P1 SD-path formats.)
+    String rel_path = ftp_path;
+    if (rel_path.startsWith("/")) rel_path = rel_path.substring(1);
+    doc["print"]["url"] = "file:///sdcard/" + rel_path;
     doc["print"]["md5"] = "";
     doc["print"]["timelapse"] = true;
     doc["print"]["bed_type"] = "auto";
