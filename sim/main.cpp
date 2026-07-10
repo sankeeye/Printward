@@ -17,6 +17,7 @@
 #include "pt/pt_display.h"
 #ifdef __ANDROID__
 #include "ui_tablet_setup.h"   // on-screen printer config (tablet only)
+#include "ui_screensaver.h"    // idle print dashboard (tablet only)
 #endif
 
 extern void sim_load_mock_data();
@@ -99,7 +100,8 @@ int main(int argc, char **argv) {
     // and open a real MQTT session to the printer (see android_glue.cpp).
     load_settings();
     bambu_mqtt_setup();
-    pt_set_backlight(g_brightness, false);   // apply saved brightness (dim overlay)
+    create_screensaver();                    // idle dashboard (top layer, hidden)
+    pt_set_backlight(g_brightness, false);   // dim overlay sits above the screensaver
 #else
     sim_load_mock_data();
 #endif
@@ -125,6 +127,7 @@ int main(int argc, char **argv) {
         // upscaling blurs the text. The lv_pct/flex layouts fill the native size.
         bambu_mqtt_loop();   // real printer: reconnect + pump incoming status
         tablet_setup_loop(); // apply a queued Save from the Printer setup screen
+        screensaver_loop();  // show/hide the idle print dashboard
 #endif
         drain_pending_action();
         ui_files_loop();

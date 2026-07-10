@@ -25,8 +25,8 @@ robocopy "$repo\sim\shim" "$src\ourui\shim" /E @flags | Out-Null
 # 3. entry point + Android glue (storage globals + config loader + FTP stub)
 robocopy "$repo\sim"         "$src\ourui" main.cpp @flags | Out-Null
 robocopy "$repo\sim\android" "$src\ourui" android_glue.cpp @flags | Out-Null
-# 3b. Android-only on-screen printer setup screen -> next to the other ui_*
-robocopy "$repo\sim\android" "$src\ourui\src" ui_tablet_setup.cpp ui_tablet_setup.h @flags | Out-Null
+# 3b. Android-only screens (printer setup + idle screensaver) -> next to ui_*
+robocopy "$repo\sim\android" "$src\ourui\src" ui_tablet_setup.cpp ui_tablet_setup.h ui_screensaver.cpp ui_screensaver.h @flags | Out-Null
 # 4. PubSubClient (compiled) + ArduinoJson (header-only) from PlatformIO libdeps
 robocopy "$repo\.pio\libdeps\pandatouch\PubSubClient\src" "$src\pubsubclient" /E @flags | Out-Null
 robocopy "$repo\.pio\libdeps\pandatouch\ArduinoJson\src"  "$src\arduinojson"  /E @flags | Out-Null

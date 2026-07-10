@@ -34,7 +34,8 @@ LOCAL_SRC_FILES := \
     ourui/src/ui_settings.cpp \
     ourui/src/ui_filament.cpp \
     ourui/src/ui_wifi.cpp \
-    ourui/src/ui_tablet_setup.cpp
+    ourui/src/ui_tablet_setup.cpp \
+    ourui/src/ui_screensaver.cpp
 
 LOCAL_CFLAGS := -DLV_CONF_INCLUDE_SIMPLE -DARDUINOJSON_ENABLE_ARDUINO_STRING=1 -w
 
