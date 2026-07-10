@@ -9,6 +9,15 @@
 
 #define SS_TIMEOUT_MS 60000   // show after 60 s of no touch
 
+// Dutch day/month names (bionic doesn't support setlocale for non-C locales).
+static const char* NL_DAYS[7] = {
+    "Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"
+};
+static const char* NL_MONTHS[12] = {
+    "januari", "februari", "maart", "april", "mei", "juni",
+    "juli", "augustus", "september", "oktober", "november", "december"
+};
+
 static lv_obj_t* g_ss = nullptr;
 static lv_obj_t* g_ss_clock = nullptr;
 static lv_obj_t* g_ss_date = nullptr;
@@ -82,8 +91,9 @@ static void ss_update() {
     if (lt) {
         strftime(buf, sizeof(buf), "%H:%M", lt);
         lv_label_set_text(g_ss_clock, buf);
-        strftime(buf, sizeof(buf), "%A %d %B", lt);
-        lv_label_set_text(g_ss_date, buf);
+        int wd = (lt->tm_wday >= 0 && lt->tm_wday < 7) ? lt->tm_wday : 0;
+        int mo = (lt->tm_mon >= 0 && lt->tm_mon < 12) ? lt->tm_mon : 0;
+        lv_label_set_text_fmt(g_ss_date, "%s %d %s", NL_DAYS[wd], lt->tm_mday, NL_MONTHS[mo]);
     }
 
     bool active = (strcmp(s.gcode_state, "RUNNING") == 0 || strcmp(s.gcode_state, "PAUSE") == 0);
