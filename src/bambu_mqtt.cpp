@@ -235,6 +235,16 @@ bool bambu_is_connected() {
     return g_printer_status.mqtt_connected;
 }
 
+void bambu_mqtt_settings_changed() {
+    // Printer IP/serial/access code changed at runtime: drop any live session,
+    // force topic rebuild (serial feeds the topic names) and reconnect on the
+    // next loop instead of waiting out the 5s backoff.
+    if (g_mqtt.connected()) g_mqtt.disconnect();
+    g_topics_built = false;
+    g_printer_status.mqtt_connected = false;
+    g_last_reconnect_attempt = 0;
+}
+
 bool bambu_pop_pending_finish(unsigned long* finish_ms, int* tray_now) {
     for (int i = 0; i < PENDING_FINISH_MAX; i++) {
         if (!g_pending_finishes[i].used && g_pending_finishes[i].finish_ms != 0) {

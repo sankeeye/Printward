@@ -4,6 +4,7 @@
 #include "storage.h"
 #include <lvgl.h>
 #include <WiFi.h>
+#include "ui_scale.h"   // tablet font scaling (Android only)
 
 #define WIFI_SCAN_MAX_RESULTS 12
 

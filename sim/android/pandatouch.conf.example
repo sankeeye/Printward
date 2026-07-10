@@ -1,0 +1,14 @@
+# PandaTouch tablet config. Copy this to the tablet as /sdcard/pandatouch.conf:
+#     adb push pandatouch.conf /sdcard/pandatouch.conf
+#
+# The access_code is a SECRET (printer LAN access code, shown on the printer's
+# screen under Settings > WLAN). Keep this file on the tablet only - never
+# commit a real one to git.
+
+printer_ip=192.168.2.27
+printer_serial=01P00C000000000
+access_code=00000000
+
+# optional
+brightness=70
+wifi_ssid=HomeWiFi

@@ -19,6 +19,10 @@ enum PrinterAction {
 };
 extern volatile int g_pending_action;
 
+// Speed level (1-4) picked from the Speed dropdown, applied in the main loop
+// (0 = nothing pending). Separate from g_pending_action since it carries a value.
+extern volatile int g_pending_speed_level;
+
 // OTA (both web-dashboard upload and ArduinoOTA/network-IDE flashing) shows a
 // full-screen progress overlay; these flags let webserver.cpp/printer_app.cpp
 // request it without depending on LVGL directly.

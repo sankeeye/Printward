@@ -68,6 +68,10 @@ void bambu_mqtt_loop();
 
 bool bambu_is_connected();
 
+// Call after the printer IP / serial / access code change at runtime: drops the
+// current session and reconnects promptly with the new settings.
+void bambu_mqtt_settings_changed();
+
 // Records {finish time, tray that was active} whenever a print job finishes
 // (gcode_state transitions away from RUNNING/PAUSE to FINISH), in a small
 // ring buffer. bambu_cloud.cpp drains this to attribute cloud-reported print

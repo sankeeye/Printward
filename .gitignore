@@ -31,3 +31,19 @@ tools/relay_state.json
 
 # Windows shortcut with a machine-specific absolute path - not useful to others
 tools/*.lnk
+
+# Tablet printer config - contains the LAN access code (secret). Only the
+# .example is tracked; a real pandatouch.conf stays on the device.
+pandatouch.conf
+!android/**/pandatouch.conf.example
+!sim/android/pandatouch.conf.example
+
+# Android build tree / gradle output (third-party SDL/lvgl/mbedtls + APKs are
+# reconstructed, not committed - see android/README.md)
+android/**/build/
+android/**/.gradle/
+android/local.properties
+*.apk
+
+# Simulator build output
+sim/build/

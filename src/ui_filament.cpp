@@ -3,6 +3,7 @@
 #include "bambu_mqtt.h"
 #include "storage.h"
 #include <lvgl.h>
+#include "ui_scale.h"   // tablet font scaling (Android only)
 
 static lv_obj_t* g_filament_screen = nullptr;
 
@@ -135,27 +136,27 @@ static void set_btn_cb(lv_event_t* e) {
 static lv_obj_t* make_tray_cell(lv_obj_t* parent, int slot, lv_obj_t** swatch_out, lv_obj_t** type_out,
                                  lv_obj_t** bar_out, lv_obj_t** pct_out) {
     lv_obj_t* cell = lv_obj_create(parent);
-    lv_obj_set_size(cell, 170, 100);
+    lv_obj_set_size(cell, PT_SZ(170), PT_SZ(100));
     lv_obj_set_style_bg_opa(cell, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(cell, 0, LV_PART_MAIN);
-    lv_obj_set_style_pad_all(cell, 4, LV_PART_MAIN);
-    lv_obj_set_style_pad_gap(cell, 4, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(cell, PT_SZ(4), LV_PART_MAIN);
+    lv_obj_set_style_pad_gap(cell, PT_SZ(4), LV_PART_MAIN);
     lv_obj_set_flex_flow(cell, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(cell, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_clear_flag(cell, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t* row = lv_obj_create(cell);
-    lv_obj_set_size(row, lv_pct(100), 30);
+    lv_obj_set_size(row, lv_pct(100), PT_SZ(30));
     lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(row, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(row, 0, LV_PART_MAIN);
     lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(row, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    lv_obj_set_style_pad_gap(row, 8, LV_PART_MAIN);
+    lv_obj_set_style_pad_gap(row, PT_SZ(8), LV_PART_MAIN);
     lv_obj_clear_flag(row, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t* swatch = lv_obj_create(row);
-    lv_obj_set_size(swatch, 40, 26);
+    lv_obj_set_size(swatch, PT_SZ(40), PT_SZ(26));
     lv_obj_set_style_radius(swatch, 5, LV_PART_MAIN);
     lv_obj_set_style_border_width(swatch, 1, LV_PART_MAIN);
     lv_obj_set_style_border_color(swatch, lv_color_hex(0x555555), LV_PART_MAIN);
@@ -166,7 +167,7 @@ static lv_obj_t* make_tray_cell(lv_obj_t* parent, int slot, lv_obj_t** swatch_ou
     lv_obj_set_style_text_font(type_label, &lv_font_montserrat_14, 0);
 
     lv_obj_t* bar = lv_bar_create(cell);
-    lv_obj_set_size(bar, 150, 10);
+    lv_obj_set_size(bar, PT_SZ(150), PT_SZ(10));
     lv_bar_set_range(bar, 0, 100);
     lv_obj_set_style_bg_color(bar, lv_color_hex(0x333333), LV_PART_MAIN);
 
@@ -176,7 +177,7 @@ static lv_obj_t* make_tray_cell(lv_obj_t* parent, int slot, lv_obj_t** swatch_ou
     lv_obj_set_style_text_color(pct_label, lv_color_hex(0x999999), 0);
 
     lv_obj_t* set_btn = lv_btn_create(cell);
-    lv_obj_set_size(set_btn, 90, 20);
+    lv_obj_set_size(set_btn, PT_SZ(90), PT_SZ(20));
     lv_obj_set_style_bg_color(set_btn, lv_color_hex(0x333333), LV_PART_MAIN);
     lv_obj_t* set_label = lv_label_create(set_btn);
     lv_label_set_text(set_label, "Set roll");
@@ -205,8 +206,8 @@ void create_filament_ui() {
     lv_obj_center(root);
     lv_obj_set_style_bg_opa(root, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(root, 0, LV_PART_MAIN);
-    lv_obj_set_style_pad_all(root, 16, LV_PART_MAIN);
-    lv_obj_set_style_pad_gap(root, 8, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(root, PT_SZ(16), LV_PART_MAIN);
+    lv_obj_set_style_pad_gap(root, PT_SZ(8), LV_PART_MAIN);
     lv_obj_set_flex_flow(root, LV_FLEX_FLOW_COLUMN);
     // Not scrollable, same reasoning as the Settings screen fix: a
     // scrollable column on this display's partial-refresh render mode can
@@ -216,7 +217,7 @@ void create_filament_ui() {
 
     // --- Header ---
     lv_obj_t* header = lv_obj_create(root);
-    lv_obj_set_size(header, lv_pct(100), 36);
+    lv_obj_set_size(header, lv_pct(100), PT_SZ(36));
     lv_obj_set_style_bg_opa(header, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(header, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(header, 0, LV_PART_MAIN);
@@ -230,7 +231,7 @@ void create_filament_ui() {
     lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
 
     lv_obj_t* back_btn = lv_btn_create(header);
-    lv_obj_set_size(back_btn, 80, 30);
+    lv_obj_set_size(back_btn, PT_SZ(80), PT_SZ(30));
     lv_obj_set_style_bg_color(back_btn, lv_color_hex(0x333333), LV_PART_MAIN);
     lv_obj_t* back_label = lv_label_create(back_btn);
     lv_label_set_text(back_label, "Back");
@@ -241,17 +242,17 @@ void create_filament_ui() {
     // --- AMS units, each a row of up to 4 tray cells ---
     for (int u = 0; u < AMS_MAX_UNITS; u++) {
         lv_obj_t* box = lv_obj_create(root);
-        lv_obj_set_size(box, lv_pct(100), 136);
+        lv_obj_set_size(box, lv_pct(100), PT_SZ(136));
         lv_obj_set_style_bg_color(box, lv_color_hex(0x1c1c1c), LV_PART_MAIN);
         lv_obj_set_style_border_color(box, lv_color_hex(0x333333), LV_PART_MAIN);
-        lv_obj_set_style_pad_all(box, 6, LV_PART_MAIN);
-        lv_obj_set_style_pad_gap(box, 4, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(box, PT_SZ(6), LV_PART_MAIN);
+        lv_obj_set_style_pad_gap(box, PT_SZ(4), LV_PART_MAIN);
         lv_obj_set_flex_flow(box, LV_FLEX_FLOW_COLUMN);
         lv_obj_clear_flag(box, LV_OBJ_FLAG_SCROLLABLE);
         g_unit_boxes[u] = box;
 
         lv_obj_t* unit_header = lv_obj_create(box);
-        lv_obj_set_size(unit_header, lv_pct(100), 18);
+        lv_obj_set_size(unit_header, lv_pct(100), PT_SZ(18));
         lv_obj_set_style_bg_opa(unit_header, LV_OPA_TRANSP, LV_PART_MAIN);
         lv_obj_set_style_border_width(unit_header, 0, LV_PART_MAIN);
         lv_obj_set_style_pad_all(unit_header, 0, LV_PART_MAIN);
@@ -270,7 +271,7 @@ void create_filament_ui() {
         g_unit_humidity_labels[u] = humidity_label;
 
         lv_obj_t* tray_row = lv_obj_create(box);
-        lv_obj_set_size(tray_row, lv_pct(100), 100);
+        lv_obj_set_size(tray_row, lv_pct(100), PT_SZ(100));
         lv_obj_set_style_bg_opa(tray_row, LV_OPA_TRANSP, LV_PART_MAIN);
         lv_obj_set_style_border_width(tray_row, 0, LV_PART_MAIN);
         lv_obj_set_style_pad_all(tray_row, 0, LV_PART_MAIN);
@@ -288,11 +289,11 @@ void create_filament_ui() {
 
     // --- External / manual spool ---
     g_ext_row = lv_obj_create(root);
-    lv_obj_set_size(g_ext_row, lv_pct(100), 136);
+    lv_obj_set_size(g_ext_row, lv_pct(100), PT_SZ(136));
     lv_obj_set_style_bg_color(g_ext_row, lv_color_hex(0x1c1c1c), LV_PART_MAIN);
     lv_obj_set_style_border_color(g_ext_row, lv_color_hex(0x333333), LV_PART_MAIN);
-    lv_obj_set_style_pad_all(g_ext_row, 6, LV_PART_MAIN);
-    lv_obj_set_style_pad_gap(g_ext_row, 4, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(g_ext_row, PT_SZ(6), LV_PART_MAIN);
+    lv_obj_set_style_pad_gap(g_ext_row, PT_SZ(4), LV_PART_MAIN);
     lv_obj_set_flex_flow(g_ext_row, LV_FLEX_FLOW_COLUMN);
     lv_obj_clear_flag(g_ext_row, LV_OBJ_FLAG_SCROLLABLE);
 
@@ -302,7 +303,7 @@ void create_filament_ui() {
     lv_obj_set_style_text_color(ext_header, lv_color_hex(0x999999), 0);
 
     lv_obj_t* ext_cell_holder = lv_obj_create(g_ext_row);
-    lv_obj_set_size(ext_cell_holder, lv_pct(100), 100);
+    lv_obj_set_size(ext_cell_holder, lv_pct(100), PT_SZ(100));
     lv_obj_set_style_bg_opa(ext_cell_holder, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(ext_cell_holder, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(ext_cell_holder, 0, LV_PART_MAIN);
@@ -314,13 +315,13 @@ void create_filament_ui() {
 
     // --- "Set roll weight" modal (hidden until a Set button is tapped) ---
     g_modal = lv_obj_create(g_filament_screen);
-    lv_obj_set_size(g_modal, 420, 160);
+    lv_obj_set_size(g_modal, PT_SZ(420), PT_SZ(160));
     lv_obj_center(g_modal);
     lv_obj_set_style_bg_color(g_modal, lv_color_hex(0x22262c), LV_PART_MAIN);
     lv_obj_set_style_border_color(g_modal, lv_color_hex(0x3465a4), LV_PART_MAIN);
     lv_obj_set_style_border_width(g_modal, 2, LV_PART_MAIN);
-    lv_obj_set_style_pad_all(g_modal, 14, LV_PART_MAIN);
-    lv_obj_set_style_pad_gap(g_modal, 10, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(g_modal, PT_SZ(14), LV_PART_MAIN);
+    lv_obj_set_style_pad_gap(g_modal, PT_SZ(10), LV_PART_MAIN);
     lv_obj_set_flex_flow(g_modal, LV_FLEX_FLOW_COLUMN);
     lv_obj_clear_flag(g_modal, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_flag(g_modal, LV_OBJ_FLAG_HIDDEN);
@@ -333,14 +334,14 @@ void create_filament_ui() {
     lv_obj_set_width(g_modal_label, lv_pct(100));
 
     g_modal_ta = lv_textarea_create(g_modal);
-    lv_obj_set_size(g_modal_ta, lv_pct(100), 40);
+    lv_obj_set_size(g_modal_ta, lv_pct(100), PT_SZ(40));
     lv_textarea_set_one_line(g_modal_ta, true);
     lv_textarea_set_accepted_chars(g_modal_ta, "0123456789.");
     lv_textarea_set_placeholder_text(g_modal_ta, "e.g. 1000");
     lv_obj_add_event_cb(g_modal_ta, modal_ta_event_cb, LV_EVENT_CLICKED, NULL);
 
     lv_obj_t* modal_btn_row = lv_obj_create(g_modal);
-    lv_obj_set_size(modal_btn_row, lv_pct(100), 44);
+    lv_obj_set_size(modal_btn_row, lv_pct(100), PT_SZ(44));
     lv_obj_set_style_bg_opa(modal_btn_row, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(modal_btn_row, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(modal_btn_row, 0, LV_PART_MAIN);
@@ -349,7 +350,7 @@ void create_filament_ui() {
     lv_obj_clear_flag(modal_btn_row, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t* cancel_btn = lv_btn_create(modal_btn_row);
-    lv_obj_set_size(cancel_btn, 120, 40);
+    lv_obj_set_size(cancel_btn, PT_SZ(120), PT_SZ(40));
     lv_obj_set_style_bg_color(cancel_btn, lv_color_hex(0x555555), LV_PART_MAIN);
     lv_obj_t* cancel_label = lv_label_create(cancel_btn);
     lv_label_set_text(cancel_label, "Cancel");
@@ -357,7 +358,7 @@ void create_filament_ui() {
     lv_obj_add_event_cb(cancel_btn, modal_cancel_cb, LV_EVENT_CLICKED, NULL);
 
     lv_obj_t* save_btn = lv_btn_create(modal_btn_row);
-    lv_obj_set_size(save_btn, 160, 40);
+    lv_obj_set_size(save_btn, PT_SZ(160), PT_SZ(40));
     lv_obj_set_style_bg_color(save_btn, lv_color_hex(0x2ecc71), LV_PART_MAIN);
     lv_obj_t* save_label = lv_label_create(save_btn);
     lv_label_set_text(save_label, "Save (fresh roll)");
@@ -368,7 +369,7 @@ void create_filament_ui() {
     // Numeric keyboard for the weight textarea, shared modal-wide.
     g_modal_keyboard = lv_keyboard_create(g_filament_screen);
     lv_keyboard_set_mode(g_modal_keyboard, LV_KEYBOARD_MODE_NUMBER);
-    lv_obj_set_size(g_modal_keyboard, lv_pct(100), 180);
+    lv_obj_set_size(g_modal_keyboard, lv_pct(100), PT_SZ(180));
     lv_obj_align(g_modal_keyboard, LV_ALIGN_BOTTOM_MID, 0, 0);
     lv_obj_add_flag(g_modal_keyboard, LV_OBJ_FLAG_HIDDEN);
 

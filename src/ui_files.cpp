@@ -3,6 +3,7 @@
 #include "bambu_ftp.h"
 #include "bambu_mqtt.h"
 #include <lvgl.h>
+#include "ui_scale.h"   // tablet font scaling (Android only)
 
 static lv_obj_t* g_files_screen = nullptr;
 static lv_obj_t* g_path_label = nullptr;
@@ -288,8 +289,8 @@ void create_files_ui() {
     lv_obj_center(root);
     lv_obj_set_style_bg_opa(root, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(root, 0, LV_PART_MAIN);
-    lv_obj_set_style_pad_all(root, 14, LV_PART_MAIN);
-    lv_obj_set_style_pad_gap(root, 6, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(root, PT_SZ(14), LV_PART_MAIN);
+    lv_obj_set_style_pad_gap(root, PT_SZ(6), LV_PART_MAIN);
     lv_obj_set_flex_flow(root, LV_FLEX_FLOW_COLUMN);
     // Not scrollable - paging buttons are used instead, same reasoning as
     // the Settings/Filament screens (a scrollable column tears on this
@@ -298,7 +299,7 @@ void create_files_ui() {
 
     // --- Header ---
     lv_obj_t* header = lv_obj_create(root);
-    lv_obj_set_size(header, lv_pct(100), 36);
+    lv_obj_set_size(header, lv_pct(100), PT_SZ(36));
     lv_obj_set_style_bg_opa(header, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(header, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(header, 0, LV_PART_MAIN);
@@ -312,7 +313,7 @@ void create_files_ui() {
     lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
 
     lv_obj_t* back_btn = lv_btn_create(header);
-    lv_obj_set_size(back_btn, 80, 30);
+    lv_obj_set_size(back_btn, PT_SZ(80), PT_SZ(30));
     lv_obj_set_style_bg_color(back_btn, lv_color_hex(0x333333), LV_PART_MAIN);
     lv_obj_t* back_label = lv_label_create(back_btn);
     lv_label_set_text(back_label, "Back");
@@ -322,7 +323,7 @@ void create_files_ui() {
 
     // --- Path row: current folder + Up + Refresh ---
     lv_obj_t* path_row = lv_obj_create(root);
-    lv_obj_set_size(path_row, lv_pct(100), 34);
+    lv_obj_set_size(path_row, lv_pct(100), PT_SZ(34));
     lv_obj_set_style_bg_opa(path_row, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(path_row, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(path_row, 0, LV_PART_MAIN);
@@ -336,16 +337,16 @@ void create_files_ui() {
     lv_obj_set_style_text_color(g_path_label, lv_color_hex(0xAAAAAA), 0);
 
     lv_obj_t* btn_group = lv_obj_create(path_row);
-    lv_obj_set_size(btn_group, 180, 30);
+    lv_obj_set_size(btn_group, PT_SZ(180), PT_SZ(30));
     lv_obj_set_style_bg_opa(btn_group, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(btn_group, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(btn_group, 0, LV_PART_MAIN);
     lv_obj_set_flex_flow(btn_group, LV_FLEX_FLOW_ROW);
-    lv_obj_set_style_pad_gap(btn_group, 8, LV_PART_MAIN);
+    lv_obj_set_style_pad_gap(btn_group, PT_SZ(8), LV_PART_MAIN);
     lv_obj_clear_flag(btn_group, LV_OBJ_FLAG_SCROLLABLE);
 
     g_up_btn = lv_btn_create(btn_group);
-    lv_obj_set_size(g_up_btn, 80, 30);
+    lv_obj_set_size(g_up_btn, PT_SZ(80), PT_SZ(30));
     lv_obj_set_style_bg_color(g_up_btn, lv_color_hex(0x333333), LV_PART_MAIN);
     lv_obj_t* up_label = lv_label_create(g_up_btn);
     lv_label_set_text(up_label, "Up");
@@ -354,7 +355,7 @@ void create_files_ui() {
     lv_obj_add_event_cb(g_up_btn, up_btn_cb, LV_EVENT_CLICKED, NULL);
 
     lv_obj_t* refresh_btn = lv_btn_create(btn_group);
-    lv_obj_set_size(refresh_btn, 90, 30);
+    lv_obj_set_size(refresh_btn, PT_SZ(90), PT_SZ(30));
     lv_obj_set_style_bg_color(refresh_btn, lv_color_hex(0x333333), LV_PART_MAIN);
     lv_obj_t* refresh_label = lv_label_create(refresh_btn);
     lv_label_set_text(refresh_label, "Refresh");
@@ -365,7 +366,7 @@ void create_files_ui() {
     // --- File/folder rows (fixed set of PAGE_SIZE buttons, shown/hidden) ---
     for (int i = 0; i < PAGE_SIZE; i++) {
         lv_obj_t* row = lv_btn_create(root);
-        lv_obj_set_size(row, lv_pct(100), 34);
+        lv_obj_set_size(row, lv_pct(100), PT_SZ(34));
         lv_obj_set_style_bg_color(row, lv_color_hex(0x1c1c1c), LV_PART_MAIN);
         lv_obj_t* label = lv_label_create(row);
         lv_label_set_text(label, "");
@@ -378,7 +379,7 @@ void create_files_ui() {
 
     // --- Paging + status row ---
     lv_obj_t* page_row = lv_obj_create(root);
-    lv_obj_set_size(page_row, lv_pct(100), 30);
+    lv_obj_set_size(page_row, lv_pct(100), PT_SZ(30));
     lv_obj_set_style_bg_opa(page_row, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(page_row, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(page_row, 0, LV_PART_MAIN);
@@ -387,7 +388,7 @@ void create_files_ui() {
     lv_obj_clear_flag(page_row, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t* prev_btn = lv_btn_create(page_row);
-    lv_obj_set_size(prev_btn, 70, 28);
+    lv_obj_set_size(prev_btn, PT_SZ(70), PT_SZ(28));
     lv_obj_set_style_bg_color(prev_btn, lv_color_hex(0x333333), LV_PART_MAIN);
     lv_obj_t* prev_label = lv_label_create(prev_btn);
     lv_label_set_text(prev_label, "< Prev");
@@ -401,7 +402,7 @@ void create_files_ui() {
     lv_obj_set_style_text_color(g_page_label, lv_color_hex(0x999999), 0);
 
     lv_obj_t* next_btn = lv_btn_create(page_row);
-    lv_obj_set_size(next_btn, 70, 28);
+    lv_obj_set_size(next_btn, PT_SZ(70), PT_SZ(28));
     lv_obj_set_style_bg_color(next_btn, lv_color_hex(0x333333), LV_PART_MAIN);
     lv_obj_t* next_label = lv_label_create(next_btn);
     lv_label_set_text(next_label, "Next >");
@@ -418,13 +419,13 @@ void create_files_ui() {
 
     // --- Print-confirm modal ---
     g_confirm_modal = lv_obj_create(g_files_screen);
-    lv_obj_set_size(g_confirm_modal, 460, 320);
+    lv_obj_set_size(g_confirm_modal, PT_SZ(460), PT_SZ(320));
     lv_obj_center(g_confirm_modal);
     lv_obj_set_style_bg_color(g_confirm_modal, lv_color_hex(0x22262c), LV_PART_MAIN);
     lv_obj_set_style_border_color(g_confirm_modal, lv_color_hex(0x3465a4), LV_PART_MAIN);
     lv_obj_set_style_border_width(g_confirm_modal, 2, LV_PART_MAIN);
-    lv_obj_set_style_pad_all(g_confirm_modal, 14, LV_PART_MAIN);
-    lv_obj_set_style_pad_gap(g_confirm_modal, 8, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(g_confirm_modal, PT_SZ(14), LV_PART_MAIN);
+    lv_obj_set_style_pad_gap(g_confirm_modal, PT_SZ(8), LV_PART_MAIN);
     lv_obj_set_flex_flow(g_confirm_modal, LV_FLEX_FLOW_COLUMN);
     lv_obj_clear_flag(g_confirm_modal, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_flag(g_confirm_modal, LV_OBJ_FLAG_HIDDEN);
@@ -437,7 +438,7 @@ void create_files_ui() {
     lv_obj_set_width(g_confirm_file_label, lv_pct(100));
 
     g_ams_toggle_btn = lv_btn_create(g_confirm_modal);
-    lv_obj_set_size(g_ams_toggle_btn, lv_pct(100), 34);
+    lv_obj_set_size(g_ams_toggle_btn, lv_pct(100), PT_SZ(34));
     lv_obj_set_style_bg_color(g_ams_toggle_btn, lv_color_hex(0x333333), LV_PART_MAIN);
     g_ams_toggle_label = lv_label_create(g_ams_toggle_btn);
     lv_label_set_text(g_ams_toggle_label, "Use AMS: Off");
@@ -447,7 +448,7 @@ void create_files_ui() {
 
     for (int i = 0; i < 4; i++) {
         lv_obj_t* row = lv_obj_create(g_confirm_modal);
-        lv_obj_set_size(row, lv_pct(100), 30);
+        lv_obj_set_size(row, lv_pct(100), PT_SZ(30));
         lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, LV_PART_MAIN);
         lv_obj_set_style_border_width(row, 0, LV_PART_MAIN);
         lv_obj_set_style_pad_all(row, 0, LV_PART_MAIN);
@@ -461,7 +462,7 @@ void create_files_ui() {
         lv_obj_set_style_text_color(lbl, lv_color_hex(0xAAAAAA), 0);
 
         lv_obj_t* cyc_btn = lv_btn_create(row);
-        lv_obj_set_size(cyc_btn, 160, 28);
+        lv_obj_set_size(cyc_btn, PT_SZ(160), PT_SZ(28));
         lv_obj_set_style_bg_color(cyc_btn, lv_color_hex(0x333333), LV_PART_MAIN);
         lv_obj_t* cyc_label = lv_label_create(cyc_btn);
         lv_label_set_text(cyc_label, "Skip");
@@ -474,7 +475,7 @@ void create_files_ui() {
     }
 
     lv_obj_t* confirm_btn_row = lv_obj_create(g_confirm_modal);
-    lv_obj_set_size(confirm_btn_row, lv_pct(100), 44);
+    lv_obj_set_size(confirm_btn_row, lv_pct(100), PT_SZ(44));
     lv_obj_set_style_bg_opa(confirm_btn_row, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(confirm_btn_row, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(confirm_btn_row, 0, LV_PART_MAIN);
@@ -483,7 +484,7 @@ void create_files_ui() {
     lv_obj_clear_flag(confirm_btn_row, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t* cancel_btn = lv_btn_create(confirm_btn_row);
-    lv_obj_set_size(cancel_btn, 120, 40);
+    lv_obj_set_size(cancel_btn, PT_SZ(120), PT_SZ(40));
     lv_obj_set_style_bg_color(cancel_btn, lv_color_hex(0x555555), LV_PART_MAIN);
     lv_obj_t* cancel_label = lv_label_create(cancel_btn);
     lv_label_set_text(cancel_label, "Cancel");
@@ -491,7 +492,7 @@ void create_files_ui() {
     lv_obj_add_event_cb(cancel_btn, confirm_cancel_cb, LV_EVENT_CLICKED, NULL);
 
     lv_obj_t* print_btn = lv_btn_create(confirm_btn_row);
-    lv_obj_set_size(print_btn, 160, 40);
+    lv_obj_set_size(print_btn, PT_SZ(160), PT_SZ(40));
     lv_obj_set_style_bg_color(print_btn, lv_color_hex(0x2ecc71), LV_PART_MAIN);
     lv_obj_t* print_label = lv_label_create(print_btn);
     lv_label_set_text(print_label, "Print");

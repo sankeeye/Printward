@@ -5,6 +5,7 @@
 #define SIM_WIFI_H
 
 #include <Arduino.h>
+#include "IPAddress.h"
 
 typedef enum {
     WL_IDLE_STATUS = 0,
@@ -20,13 +21,6 @@ typedef enum {
 #define WIFI_SCAN_FAILED  (-2)
 #define WIFI_STA 1
 
-class IPAddress {
-public:
-    uint8_t o[4] = {192, 168, 2, 33};
-    uint8_t operator[](int i) const { return (i >= 0 && i < 4) ? o[i] : 0; }
-    String toString() const { return String("192.168.2.33"); }
-};
-
 class WiFiClass {
 public:
     void mode(int) {}
@@ -38,7 +32,7 @@ public:
     void disconnect() {}
     void begin(const char *, const char *) {}
     wl_status_t status() { return WL_CONNECTED; }
-    IPAddress localIP() { return IPAddress(); }
+    IPAddress localIP() { return IPAddress(192, 168, 2, 33); }
 };
 extern WiFiClass WiFi;
 

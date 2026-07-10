@@ -1,7 +1,11 @@
 #include "bambu_ftp.h"
 #include "storage.h"
+#ifdef __ANDROID__
+#include <stdlib.h>   // arc4random_buf (bionic, API 21+)
+#else
 #include <esp_random.h>
 #include <esp_heap_caps.h>
+#endif
 #include <mbedtls/ssl.h>
 #include <mbedtls/net_sockets.h>
 #include <mbedtls/platform.h>
@@ -24,7 +28,11 @@
 // WiFi/BT is active, so we can skip the entropy/CTR-DRBG boilerplate.
 static int ftp_rng(void* ctx, unsigned char* buf, size_t len) {
     (void)ctx;
+#ifdef __ANDROID__
+    arc4random_buf(buf, len);   // bionic CSPRNG - no seeding needed
+#else
     esp_fill_random(buf, len);
+#endif
     return 0;
 }
 
@@ -34,6 +42,10 @@ static int ftp_rng(void* ctx, unsigned char* buf, size_t len) {
 // RGB bounce buffers. Point mbedTLS at PSRAM instead (8MB, and TLS buffers need
 // no DMA/internal RAM). Installed once, globally: harmless for the other TLS
 // users (MQTT/Cloud), which just get their buffers from PSRAM too.
+#ifdef __ANDROID__
+// The tablet has plenty of heap; keep mbedTLS on the default allocator.
+static void ftp_use_psram_tls() {}
+#else
 static void* ftp_tls_calloc(size_t n, size_t size) {
     return heap_caps_calloc(n, size, MALLOC_CAP_SPIRAM);
 }
@@ -47,6 +59,7 @@ static void ftp_use_psram_tls() {
         done = true;
     }
 }
+#endif
 
 struct FtpConn {
     mbedtls_net_context net;

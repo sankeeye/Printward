@@ -6,6 +6,10 @@
 #include "constants.h"
 #include "pt/pt_display.h"
 #include <lvgl.h>
+#include "ui_scale.h"   // tablet font scaling (Android only)
+#ifdef __ANDROID__
+#include "ui_tablet_setup.h"   // on-screen printer config (tablet only)
+#endif
 
 static lv_obj_t* g_settings_screen = nullptr;
 
@@ -17,6 +21,13 @@ static void wifi_setup_btn_cb(lv_event_t* e) {
     create_wifi_ui();
 }
 
+#ifdef __ANDROID__
+static void printer_setup_btn_cb(lv_event_t* e) {
+    (void)e;
+    create_tablet_setup_ui();
+}
+#endif
+
 static void brightness_cb(lv_event_t* e) {
     lv_obj_t* slider = (lv_obj_t*)lv_event_get_target(e);
     int32_t val = lv_slider_get_value(slider);
@@ -27,7 +38,7 @@ static void brightness_cb(lv_event_t* e) {
 
 static lv_obj_t* add_info_row(lv_obj_t* parent, const char* label, const String& value) {
     lv_obj_t* row = lv_obj_create(parent);
-    lv_obj_set_size(row, lv_pct(100), 26);
+    lv_obj_set_size(row, lv_pct(100), PT_SZ(26));
     lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(row, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(row, 0, LV_PART_MAIN);
@@ -73,8 +84,8 @@ void create_settings_ui() {
     lv_obj_center(root);
     lv_obj_set_style_bg_opa(root, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(root, 0, LV_PART_MAIN);
-    lv_obj_set_style_pad_all(root, 12, LV_PART_MAIN);
-    lv_obj_set_style_pad_gap(root, 5, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(root, PT_SZ(12), LV_PART_MAIN);
+    lv_obj_set_style_pad_gap(root, PT_SZ(5), LV_PART_MAIN);
     lv_obj_set_flex_flow(root, LV_FLEX_FLOW_COLUMN);
     // NOT scrollable: on this display, a scrollable column combined with the
     // partial (top/bottom split) render buffer produced a torn frame - the
@@ -90,37 +101,61 @@ void create_settings_ui() {
     lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
 
     add_info_row(root, "Firmware", PANDA_VERSION);
+#ifndef __ANDROID__
+    // The tablet's own WiFi/IP is managed by Android, not by this UI.
     add_info_row(root, "WiFi network", String(g_wifi_ssid));
     add_info_row(root, "Device IP", g_ip_addr);
+#endif
     add_info_row(root, "Printer IP", String(g_printer_ip));
     add_info_row(root, "Printer serial", String(g_printer_serial));
     add_info_row(root, "Access code", mask_secret(g_printer_access_code));
     add_info_row(root, "Printer connection", bambu_is_connected() ? "Connected" : "Offline");
 
     lv_obj_t* hint = lv_label_create(root);
+#ifdef __ANDROID__
+    // No on-device webserver on the tablet build - settings come from a file.
+    lv_label_set_text(hint, "To change printer settings, edit /sdcard/pandatouch.conf and restart the app");
+#else
     lv_label_set_text_fmt(hint, "To change printer settings, open http://%s/ in a browser", g_ip_addr.c_str());
+#endif
     lv_obj_set_style_text_font(hint, &lv_font_montserrat_12, 0);
     lv_obj_set_style_text_color(hint, lv_color_hex(0x777777), 0);
     lv_label_set_long_mode(hint, LV_LABEL_LONG_WRAP);
     lv_obj_set_width(hint, lv_pct(100));
 
+#ifndef __ANDROID__
+    // WiFi setup is only relevant on the ESP32; the tablet uses Android's WiFi.
     lv_obj_t* wifi_btn = lv_btn_create(root);
-    lv_obj_set_size(wifi_btn, lv_pct(100), 44);
+    lv_obj_set_size(wifi_btn, lv_pct(100), PT_SZ(44));
     lv_obj_set_style_bg_color(wifi_btn, lv_color_hex(0x555555), LV_PART_MAIN);
     lv_obj_t* wifi_btn_label = lv_label_create(wifi_btn);
     lv_label_set_text(wifi_btn_label, "WiFi Setup");
     lv_obj_set_style_text_font(wifi_btn_label, &lv_font_montserrat_14, 0);
     lv_obj_center(wifi_btn_label);
     lv_obj_add_event_cb(wifi_btn, wifi_setup_btn_cb, LV_EVENT_CLICKED, NULL);
+#endif
+
+#ifdef __ANDROID__
+    // The tablet has no webserver, so printer IP/serial/access code are entered
+    // on-screen here (see ui_tablet_setup.cpp).
+    lv_obj_t* setup_btn = lv_btn_create(root);
+    lv_obj_set_size(setup_btn, lv_pct(100), PT_SZ(44));
+    lv_obj_set_style_bg_color(setup_btn, lv_color_hex(0x3465a4), LV_PART_MAIN);
+    lv_obj_t* setup_btn_label = lv_label_create(setup_btn);
+    lv_label_set_text(setup_btn_label, "Printer setup");
+    lv_obj_set_style_text_font(setup_btn_label, &lv_font_montserrat_14, 0);
+    lv_obj_center(setup_btn_label);
+    lv_obj_add_event_cb(setup_btn, printer_setup_btn_cb, LV_EVENT_CLICKED, NULL);
+#endif
 
     lv_obj_t* bright_row = lv_obj_create(root);
-    lv_obj_set_size(bright_row, lv_pct(100), 36);
+    lv_obj_set_size(bright_row, lv_pct(100), PT_SZ(36));
     lv_obj_set_style_bg_opa(bright_row, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(bright_row, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(bright_row, 0, LV_PART_MAIN);
     lv_obj_set_flex_flow(bright_row, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(bright_row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    lv_obj_set_style_pad_gap(bright_row, 10, LV_PART_MAIN);
+    lv_obj_set_style_pad_gap(bright_row, PT_SZ(10), LV_PART_MAIN);
     lv_obj_clear_flag(bright_row, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t* bl = lv_label_create(bright_row);
@@ -135,7 +170,7 @@ void create_settings_ui() {
     lv_obj_add_event_cb(slider, brightness_cb, LV_EVENT_VALUE_CHANGED, NULL);
 
     lv_obj_t* back_btn = lv_btn_create(root);
-    lv_obj_set_size(back_btn, lv_pct(100), 46);
+    lv_obj_set_size(back_btn, lv_pct(100), PT_SZ(46));
     lv_obj_set_style_bg_color(back_btn, lv_color_hex(0x3465a4), LV_PART_MAIN);
     lv_obj_t* back_label = lv_label_create(back_btn);
     lv_label_set_text(back_label, "Back");

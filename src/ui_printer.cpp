@@ -5,9 +5,11 @@
 #include "ui_filament.h"
 #include "ui_files.h"
 #include "pt/pt_display.h"
+#include "ui_scale.h"   // tablet font scaling (Android only)
 
 lv_obj_t* g_main_screen = nullptr;
 volatile int g_pending_action = ACT_NONE;
+volatile int g_pending_speed_level = 0;
 volatile bool g_ota_screen_requested = false;
 volatile int g_ota_progress = -1;
 
@@ -40,8 +42,7 @@ static lv_obj_t* g_light_btn = nullptr;
 static lv_obj_t* g_light_btn_label = nullptr;
 static lv_obj_t* g_fan_btn = nullptr;
 static lv_obj_t* g_fan_btn_label = nullptr;
-static lv_obj_t* g_speed_btn = nullptr;
-static lv_obj_t* g_speed_btn_label = nullptr;
+static lv_obj_t* g_speed_dd = nullptr;   // speed level select (dropdown)
 static lv_obj_t* g_slider = nullptr;
 
 // --- Stop confirmation ---------------------------------------------------
@@ -171,7 +172,7 @@ static void files_btn_cb(lv_event_t* e) {
 
 static lv_obj_t* make_row(lv_obj_t* parent, int32_t height) {
     lv_obj_t* row = lv_obj_create(parent);
-    lv_obj_set_size(row, lv_pct(100), height);
+    lv_obj_set_size(row, lv_pct(100), PT_SZ(height));
     lv_obj_set_style_bg_opa(row, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(row, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(row, 0, LV_PART_MAIN);
@@ -184,7 +185,7 @@ static lv_obj_t* make_row(lv_obj_t* parent, int32_t height) {
 static lv_obj_t* make_btn(lv_obj_t* parent, const char* text, uint32_t color, int action, lv_obj_t** label_out) {
     lv_obj_t* btn = lv_btn_create(parent);
     lv_obj_set_flex_grow(btn, 1);
-    lv_obj_set_height(btn, 64);
+    lv_obj_set_height(btn, PT_SZ(64));
     lv_obj_set_style_bg_color(btn, lv_color_hex(color), LV_PART_MAIN);
     lv_obj_t* label = lv_label_create(btn);
     lv_label_set_text(label, text);
@@ -193,6 +194,12 @@ static lv_obj_t* make_btn(lv_obj_t* parent, const char* text, uint32_t color, in
     lv_obj_add_event_cb(btn, act_cb, LV_EVENT_CLICKED, (void*)(uintptr_t)action);
     if (label_out) *label_out = label;
     return btn;
+}
+
+// Speed level picked from the dropdown -> queued, applied in the main loop.
+static void speed_dd_cb(lv_event_t* e) {
+    lv_obj_t* dd = (lv_obj_t*)lv_event_get_target(e);
+    g_pending_speed_level = (int)lv_dropdown_get_selected(dd) + 1;  // 1..4
 }
 
 void create_printer_ui() {
@@ -204,22 +211,27 @@ void create_printer_ui() {
     lv_obj_center(root);
     lv_obj_set_style_bg_opa(root, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(root, 0, LV_PART_MAIN);
-    lv_obj_set_style_pad_all(root, 12, LV_PART_MAIN);
-    lv_obj_set_style_pad_gap(root, 10, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(root, PT_SZ(12), LV_PART_MAIN);
+    lv_obj_set_style_pad_gap(root, PT_SZ(10), LV_PART_MAIN);
     lv_obj_set_flex_flow(root, LV_FLEX_FLOW_COLUMN);
     lv_obj_clear_flag(root, LV_OBJ_FLAG_SCROLLABLE);
 
     // --- Header: wifi/ip (left) + printer connection (right) ---
     lv_obj_t* header = make_row(root, 30);
+#ifndef __ANDROID__
+    // On the ESP32 this shows the device's own WiFi IP. On the Android tablet the
+    // OS owns the WiFi, so the label is dropped (g_wifi_label stays null and
+    // update_status_label() skips it).
     g_wifi_label = lv_label_create(header);
     lv_obj_set_style_text_font(g_wifi_label, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(g_wifi_label, lv_color_hex(0xAAAAAA), 0);
+#endif
 
     g_conn_label = lv_label_create(header);
     lv_obj_set_style_text_font(g_conn_label, &lv_font_montserrat_14, 0);
 
     lv_obj_t* filament_btn = lv_btn_create(header);
-    lv_obj_set_size(filament_btn, 90, 26);
+    lv_obj_set_size(filament_btn, PT_SZ(90), PT_SZ(26));
     lv_obj_set_style_bg_color(filament_btn, lv_color_hex(0x333333), LV_PART_MAIN);
     lv_obj_t* filament_label = lv_label_create(filament_btn);
     lv_label_set_text(filament_label, "Filament");
@@ -228,7 +240,7 @@ void create_printer_ui() {
     lv_obj_add_event_cb(filament_btn, filament_btn_cb, LV_EVENT_CLICKED, NULL);
 
     lv_obj_t* files_btn = lv_btn_create(header);
-    lv_obj_set_size(files_btn, 80, 26);
+    lv_obj_set_size(files_btn, PT_SZ(80), PT_SZ(26));
     lv_obj_set_style_bg_color(files_btn, lv_color_hex(0x333333), LV_PART_MAIN);
     lv_obj_t* files_label = lv_label_create(files_btn);
     lv_label_set_text(files_label, "Files");
@@ -237,7 +249,7 @@ void create_printer_ui() {
     lv_obj_add_event_cb(files_btn, files_btn_cb, LV_EVENT_CLICKED, NULL);
 
     lv_obj_t* settings_btn = lv_btn_create(header);
-    lv_obj_set_size(settings_btn, 90, 26);
+    lv_obj_set_size(settings_btn, PT_SZ(90), PT_SZ(26));
     lv_obj_set_style_bg_color(settings_btn, lv_color_hex(0x333333), LV_PART_MAIN);
     lv_obj_t* settings_label = lv_label_create(settings_btn);
     lv_label_set_text(settings_label, "Settings");
@@ -272,7 +284,7 @@ void create_printer_ui() {
     lv_obj_t* prog_row = make_row(root, 34);
     g_bar = lv_bar_create(prog_row);
     lv_obj_set_flex_grow(g_bar, 1);
-    lv_obj_set_height(g_bar, 18);
+    lv_obj_set_height(g_bar, PT_SZ(18));
     lv_bar_set_range(g_bar, 0, 100);
     lv_obj_set_style_bg_color(g_bar, lv_color_hex(0x333333), LV_PART_MAIN);
     lv_obj_set_style_bg_color(g_bar, lv_color_hex(0x2ecc71), LV_PART_INDICATOR);
@@ -304,7 +316,7 @@ void create_printer_ui() {
     // material type text). Boxes don't wrap internally - if more than ~2
     // units are present the row itself scrolls horizontally instead.
     g_ams_row = lv_obj_create(root);
-    lv_obj_set_size(g_ams_row, lv_pct(100), 80);
+    lv_obj_set_size(g_ams_row, lv_pct(100), PT_SZ(80));
     lv_obj_set_style_bg_opa(g_ams_row, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(g_ams_row, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(g_ams_row, 0, LV_PART_MAIN);
@@ -316,7 +328,7 @@ void create_printer_ui() {
 
     for (int u = 0; u < AMS_MAX_UNITS; u++) {
         lv_obj_t* box = lv_obj_create(g_ams_row);
-        lv_obj_set_size(box, 280, 80);
+        lv_obj_set_size(box, PT_SZ(280), PT_SZ(80));
         lv_obj_set_style_bg_color(box, lv_color_hex(0x1c1c1c), LV_PART_MAIN);
         lv_obj_set_style_border_color(box, lv_color_hex(0x333333), LV_PART_MAIN);
         lv_obj_set_style_pad_all(box, 6, LV_PART_MAIN);
@@ -327,7 +339,7 @@ void create_printer_ui() {
         g_ams_boxes[u] = box;
         for (int t = 0; t < AMS_MAX_TRAYS; t++) {
             lv_obj_t* cell = lv_obj_create(box);
-            lv_obj_set_size(cell, 62, 68);
+            lv_obj_set_size(cell, PT_SZ(62), PT_SZ(68));
             lv_obj_set_style_bg_opa(cell, LV_OPA_TRANSP, LV_PART_MAIN);
             lv_obj_set_style_border_width(cell, 0, LV_PART_MAIN);
             lv_obj_set_style_pad_all(cell, 0, LV_PART_MAIN);
@@ -337,7 +349,7 @@ void create_printer_ui() {
             lv_obj_clear_flag(cell, LV_OBJ_FLAG_SCROLLABLE);
 
             lv_obj_t* dot = lv_obj_create(cell);
-            lv_obj_set_size(dot, 50, 34);
+            lv_obj_set_size(dot, PT_SZ(50), PT_SZ(34));
             lv_obj_set_style_radius(dot, 6, LV_PART_MAIN);
             lv_obj_set_style_border_width(dot, 1, LV_PART_MAIN);
             lv_obj_set_style_border_color(dot, lv_color_hex(0x555555), LV_PART_MAIN);
@@ -377,7 +389,7 @@ void create_printer_ui() {
     lv_obj_clear_flag(ext_inner, LV_OBJ_FLAG_SCROLLABLE);
 
     g_ext_swatch = lv_obj_create(ext_inner);
-    lv_obj_set_size(g_ext_swatch, 40, 28);
+    lv_obj_set_size(g_ext_swatch, PT_SZ(40), PT_SZ(28));
     lv_obj_set_style_radius(g_ext_swatch, 6, LV_PART_MAIN);
     lv_obj_set_style_border_width(g_ext_swatch, 1, LV_PART_MAIN);
     lv_obj_set_style_border_color(g_ext_swatch, lv_color_hex(0x555555), LV_PART_MAIN);
@@ -398,7 +410,23 @@ void create_printer_ui() {
     g_stop_btn = make_btn(ctrl_row, "Stop", 0xa40000, ACT_STOP, nullptr);
     g_light_btn = make_btn(ctrl_row, "Light", 0x555555, ACT_LIGHT_TOGGLE, &g_light_btn_label);
     g_fan_btn = make_btn(ctrl_row, "Fan", 0x555555, ACT_FAN_TOGGLE, &g_fan_btn_label);
-    g_speed_btn = make_btn(ctrl_row, "Speed", 0x555555, ACT_SPEED_CYCLE, &g_speed_btn_label);
+    // Speed: a select dropdown (Silent / Standard / Sport / Ludicrous) rather
+    // than a cycling button.
+    g_speed_dd = lv_dropdown_create(ctrl_row);
+    lv_obj_set_flex_grow(g_speed_dd, 1);
+    lv_obj_set_height(g_speed_dd, PT_SZ(64));
+    lv_dropdown_set_options_static(g_speed_dd, "Silent\nStandard\nSport\nLudicrous");
+    lv_dropdown_set_selected(g_speed_dd, 1);   // Standard (level 2)
+    lv_obj_set_style_bg_color(g_speed_dd, lv_color_hex(0x555555), LV_PART_MAIN);
+    lv_obj_set_style_text_color(g_speed_dd, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+    lv_obj_set_style_text_font(g_speed_dd, &lv_font_montserrat_14, LV_PART_MAIN);
+    lv_obj_set_style_border_width(g_speed_dd, 0, LV_PART_MAIN);
+    lv_obj_add_event_cb(g_speed_dd, speed_dd_cb, LV_EVENT_VALUE_CHANGED, NULL);
+    // Style the opened list too (dark, readable, scaled font).
+    lv_obj_t* speed_list = lv_dropdown_get_list(g_speed_dd);
+    lv_obj_set_style_bg_color(speed_list, lv_color_hex(0x222222), 0);
+    lv_obj_set_style_text_color(speed_list, lv_color_hex(0xFFFFFF), 0);
+    lv_obj_set_style_text_font(speed_list, &lv_font_montserrat_14, 0);
 
     // --- Brightness ---
     lv_obj_t* bright_row = make_row(root, 36);
@@ -543,7 +571,14 @@ void update_printer_ui() {
 
     if (g_fan_btn_label) lv_label_set_text_fmt(g_fan_btn_label, "Fan %d%%", s.fan_speed_pct);
 
-    if (g_speed_btn_label) lv_label_set_text(g_speed_btn_label, speed_name(s.speed_level));
+    // Reflect the printer's current speed in the dropdown, but don't fight the
+    // user while they have the list open.
+    if (g_speed_dd && !lv_dropdown_is_open(g_speed_dd)) {
+        int sel = s.speed_level - 1;
+        if (sel < 0) sel = 0;
+        if (sel > 3) sel = 3;
+        if ((int)lv_dropdown_get_selected(g_speed_dd) != sel) lv_dropdown_set_selected(g_speed_dd, sel);
+    }
 }
 
 void update_ota_progress(int pct, const char* msg) {

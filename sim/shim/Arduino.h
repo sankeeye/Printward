@@ -17,6 +17,21 @@
 typedef uint8_t byte;
 typedef bool boolean;
 
+// number bases for String(value, base) / print(value, base)
+#define BIN 2
+#define OCT 8
+#define DEC 10
+#define HEX 16
+
+// PROGMEM is an AVR-ism; on real memory it's a no-op (PubSubClient's publish_P).
+#ifndef PROGMEM
+#define PROGMEM
+#endif
+#define pgm_read_byte(addr)      (*(const uint8_t *)(addr))
+#define pgm_read_byte_near(addr) (*(const uint8_t *)(addr))
+#define pgm_read_word(addr)      (*(const uint16_t *)(addr))
+typedef const char *PGM_P;
+
 // --- pin / digital stubs (never do anything in the sim) ---
 #define HIGH 1
 #define LOW 0
@@ -26,9 +41,16 @@ typedef bool boolean;
 inline void pinMode(int, int) {}
 inline void digitalWrite(int, int) {}
 inline int  digitalRead(int) { return 0; }
+inline void yield() {}
+#ifdef __ANDROID__
+// Real sleep on the tablet so busy loops (e.g. the FTP TLS handshake) don't spin.
+#include <unistd.h>
+inline void delay(unsigned long ms) { usleep(ms * 1000UL); }
+inline void delayMicroseconds(unsigned long us) { usleep(us); }
+#else
 inline void delay(unsigned long) {}
 inline void delayMicroseconds(unsigned long) {}
-inline void yield() {}
+#endif
 
 // --- timing ---
 inline unsigned long millis() {
@@ -85,6 +107,10 @@ public:
 
     void concat(const char *c, unsigned int len) { if (c) s.append(c, len); }
     void concat(const String &o) { s += o.s; }
+    // ArduinoJson's ArduinoStringWriter calls concat(const char*) and expects a
+    // truthy result on success.
+    bool concat(const char *c) { if (c) s += c; return true; }
+    bool concat(char c) { s += c; return true; }
 
     int indexOf(char c) const { auto p = s.find(c); return p == std::string::npos ? -1 : (int)p; }
     int indexOf(char c, int from) const { auto p = s.find(c, from < 0 ? 0 : from); return p == std::string::npos ? -1 : (int)p; }
@@ -145,7 +171,27 @@ private:
 
 inline String operator+(const char *c, const String &o) { String r(c); r += o; return r; }
 
-// --- Serial (routed to stdout) ---
+// --- Serial ---
+// On Android, SDL doesn't capture stdout, so route to logcat (tag "PANDA");
+// view with:  adb logcat -s PANDA
+// On the PC simulator, route to stdout.
+#ifdef __ANDROID__
+#include <android/log.h>
+class SerialClass {
+public:
+    void begin(unsigned long) {}
+    void print(const char *c) { if (c) __android_log_print(ANDROID_LOG_INFO, "PANDA", "%s", c); }
+    void print(const String &s) { __android_log_print(ANDROID_LOG_INFO, "PANDA", "%s", s.c_str()); }
+    void print(int v) { __android_log_print(ANDROID_LOG_INFO, "PANDA", "%d", v); }
+    void println() {}
+    void println(const char *c) { if (c) __android_log_print(ANDROID_LOG_INFO, "PANDA", "%s", c); }
+    void println(const String &s) { __android_log_print(ANDROID_LOG_INFO, "PANDA", "%s", s.c_str()); }
+    void println(int v) { __android_log_print(ANDROID_LOG_INFO, "PANDA", "%d", v); }
+    template <typename... A> void printf(const char *f, A... a) { __android_log_print(ANDROID_LOG_INFO, "PANDA", f, a...); }
+    void write(const uint8_t *, unsigned int) {}
+    operator bool() const { return true; }
+};
+#else
 class SerialClass {
 public:
     void begin(unsigned long) {}
@@ -160,6 +206,17 @@ public:
     void write(const uint8_t *, unsigned int) {}
     operator bool() const { return true; }
 };
+#endif
 extern SerialClass Serial;
+
+// --- ESP core object (only bambu_mqtt.cpp uses getEfuseMac for a client id) ---
+class EspClass {
+public:
+    // Single device per build, so a fixed pseudo-MAC is fine for the MQTT id.
+    uint64_t getEfuseMac() { return 0x0000A17B00B5ULL; }
+    uint32_t getFreeHeap() { return 0; }
+    void restart() {}
+};
+extern EspClass ESP;
 
 #endif // SIM_ARDUINO_H

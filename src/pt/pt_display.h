@@ -112,6 +112,19 @@ static uint32_t pt_get_duty_from_percent(uint32_t percent)
  * @param percent Brightness percentage (0-100).
  * @param save If true, saves the current brightness setting.
  */
+#ifdef __ANDROID__
+// The tablet has no hardware backlight PWM. Dim the display with a translucent
+// black overlay on LVGL's top layer instead (implemented in main.cpp).
+void pt_android_set_brightness(uint8_t percent);
+inline void pt_set_backlight(uint8_t percent, bool save)
+{
+  if (percent > 100)
+    percent = 100;
+  pt_android_set_brightness(percent);
+  if (save)
+    pt_backlight_percent = percent;
+}
+#else
 inline void pt_set_backlight(uint8_t percent, bool save)
 {
   if (percent > 100)
@@ -124,6 +137,7 @@ inline void pt_set_backlight(uint8_t percent, bool save)
     pt_backlight_percent = percent;
   }
 }
+#endif
 
 /**
  * @brief Initializes the backlight control.
