@@ -35,13 +35,14 @@ LOCAL_SRC_FILES := \
     ourui/src/ui_filament.cpp \
     ourui/src/ui_wifi.cpp \
     ourui/src/ui_tablet_setup.cpp \
-    ourui/src/ui_screensaver.cpp
+    ourui/src/ui_screensaver.cpp \
+    ourui/src/gcode_view.cpp
 
 LOCAL_CFLAGS := -DLV_CONF_INCLUDE_SIMPLE -DARDUINOJSON_ENABLE_ARDUINO_STRING=1 -w
 
 LOCAL_SHARED_LIBRARIES := SDL2
 LOCAL_STATIC_LIBRARIES := lvgl mbedtls
 
-LOCAL_LDLIBS := -lGLESv1_CM -lGLESv2 -lOpenSLES -llog -landroid
+LOCAL_LDLIBS := -lGLESv1_CM -lGLESv2 -lOpenSLES -llog -landroid -lz
 
 include $(BUILD_SHARED_LIBRARY)

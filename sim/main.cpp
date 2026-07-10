@@ -18,12 +18,42 @@
 #ifdef __ANDROID__
 #include "ui_tablet_setup.h"   // on-screen printer config (tablet only)
 #include "ui_screensaver.h"    // idle print dashboard (tablet only)
+#include "bambu_ftp.h"
+#include "gcode_view.h"
+#include <cstdio>
 #endif
 
 extern void sim_load_mock_data();
 extern void wifi_ui_loop();   // defined in ui_wifi.cpp (not exposed in a header)
 
 static uint32_t sdl_tick(void) { return SDL_GetTicks(); }
+
+#ifdef __ANDROID__
+// Load + parse the current print's gcode on a background thread (FTP download +
+// unzip + parse would freeze the UI otherwise). Fires once per new print file.
+static int gcode_load_thread(void* data) {
+    gcode_view_load((const char*)data);
+    free(data);
+    return 0;
+}
+static void gcode_maybe_load() {
+    static char loaded[128] = "";
+    // Remember the last non-empty file so the model still shows after the print
+    // finishes (the printer clears gcode_file when idle).
+    static char last_seen[128] = "";
+    if (!g_printer_status.mqtt_connected) return;
+    const char* rep = g_printer_status.gcode_file;
+    if (rep[0]) { strncpy(last_seen, rep, sizeof(last_seen) - 1); last_seen[sizeof(last_seen) - 1] = '\0'; }
+    if (!last_seen[0] || strcmp(last_seen, loaded) == 0) return;   // load each new file once
+    strncpy(loaded, last_seen, sizeof(loaded) - 1);
+    loaded[sizeof(loaded) - 1] = '\0';
+    char* copy = strdup(last_seen);
+    if (copy) {
+        SDL_Thread* th = SDL_CreateThread(gcode_load_thread, "gcode", copy);
+        if (th) SDL_DetachThread(th); else free(copy);
+    }
+}
+#endif
 
 #ifdef __ANDROID__
 // Software backlight for the tablet (no PWM): dim the whole UI with a
@@ -128,6 +158,7 @@ int main(int argc, char **argv) {
         bambu_mqtt_loop();   // real printer: reconnect + pump incoming status
         tablet_setup_loop(); // apply a queued Save from the Printer setup screen
         screensaver_loop();  // show/hide the idle print dashboard
+        gcode_maybe_load();  // fetch + parse the print's gcode (background thread)
 #endif
         drain_pending_action();
         ui_files_loop();

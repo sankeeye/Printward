@@ -86,6 +86,14 @@ static void handle_mqtt_message(char* topic, byte* payload, unsigned int length)
         strncpy(g_printer_status.task_name, print["subtask_name"] | "", 63);
         g_printer_status.task_name[63] = '\0';
     }
+    if (!print["gcode_file"].isNull()) {
+        const char* gf = print["gcode_file"] | "";
+        if (strcmp(gf, g_printer_status.gcode_file) != 0) {
+            strncpy(g_printer_status.gcode_file, gf, sizeof(g_printer_status.gcode_file) - 1);
+            g_printer_status.gcode_file[sizeof(g_printer_status.gcode_file) - 1] = '\0';
+            Serial.printf("BAMBU: gcode_file = %s\n", g_printer_status.gcode_file);
+        }
+    }
     if (!print["mc_percent"].isNull()) g_printer_status.progress_pct = print["mc_percent"];
     if (!print["mc_remaining_time"].isNull()) g_printer_status.remaining_min = print["mc_remaining_time"];
     if (!print["layer_num"].isNull()) g_printer_status.layer_num = print["layer_num"];

@@ -27,4 +27,11 @@ struct FtpEntry {
 // any failure (connection, login, or protocol error).
 bool bambu_ftp_list(const char* path, FtpEntry* out, int max_entries, int* out_count, String* err);
 
+// Streams a file (e.g. "/cache/foo.3mf") down over FTPS, handing each chunk to
+// `cb` (return false from it to abort). Blocking. `out_bytes` gets the total
+// received. Returns true on success, false with `err` on failure.
+typedef bool (*ftp_download_cb)(const uint8_t* data, unsigned int len, void* ctx);
+bool bambu_ftp_download(const char* full_path, ftp_download_cb cb, void* ctx,
+                        uint32_t* out_bytes, String* err);
+
 #endif

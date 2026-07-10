@@ -29,6 +29,7 @@ struct PrinterStatus {
 
     char gcode_state[16] = "";     // IDLE, RUNNING, PAUSE, FINISH, FAILED, PREPARE
     char task_name[64] = "";
+    char gcode_file[128] = "";     // path/name of the file being printed (if reported)
     int progress_pct = 0;
     int remaining_min = 0;
     int layer_num = 0;
