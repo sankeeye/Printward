@@ -9,6 +9,7 @@
 // lives in source or git. See pandatouch.conf.example.
 #include "storage.h"
 #include "bambu_ftp.h"
+#include "ui_screensaver.h"   // g_screensaver_3d (persisted below)
 #include <WiFi.h>
 #include <Arduino.h>
 #include <cstring>
@@ -61,6 +62,7 @@ void save_settings() {
     fprintf(f, "printer_serial=%s\n", g_printer_serial);
     fprintf(f, "access_code=%s\n", g_printer_access_code);
     fprintf(f, "brightness=%d\n", (int)g_brightness);
+    fprintf(f, "view3d=%d\n", g_screensaver_3d ? 1 : 0);
     if (g_wifi_ssid[0]) fprintf(f, "wifi_ssid=%s\n", g_wifi_ssid);
     fclose(f);
     Serial.println("CONF: saved /sdcard/pandatouch.conf");
@@ -96,6 +98,7 @@ void load_settings() {
         else if (!strcmp(key, "access_code"))    strncpy(g_printer_access_code, val, sizeof(g_printer_access_code) - 1);
         else if (!strcmp(key, "brightness"))     g_brightness = (uint8_t)atoi(val);
         else if (!strcmp(key, "wifi_ssid"))      strncpy(g_wifi_ssid, val, sizeof(g_wifi_ssid) - 1);
+        else if (!strcmp(key, "view3d"))         g_screensaver_3d = (atoi(val) != 0);
     }
     fclose(f);
     // Never log the access code itself - only whether it was provided.

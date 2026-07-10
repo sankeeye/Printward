@@ -20,7 +20,7 @@ static uint32_t g_zip_len = 0, g_zip_cap = 0;
 static GcodeSeg* g_segs = nullptr;
 static int g_seg_count = 0;
 static int g_max_layer = 0;
-static int16_t g_minx = 0, g_miny = 0, g_maxx = 0, g_maxy = 0;
+static int16_t g_minx = 0, g_miny = 0, g_maxx = 0, g_maxy = 0, g_maxz = 0;
 static volatile bool g_ready = false;   // set last, read from the UI thread
 
 static uint32_t rd32(const uint8_t* p) { return p[0] | (p[1] << 8) | (p[2] << 16) | ((uint32_t)p[3] << 24); }
@@ -109,14 +109,16 @@ static int cmp_i16(const void* a, const void* b) {
 
 static float g_minf, g_maxf_x, g_minf_y, g_maxf_y;   // running bounds (mm)
 
-static inline void add_seg(float x1, float y1, float x2, float y2, int layer) {
+static inline void add_seg(float x1, float y1, float x2, float y2, float z, int layer) {
     float dx = x2 - x1, dy = y2 - y1;
     if (dx * dx + dy * dy < 0.01f) return;               // skip < 0.1 mm
     if (g_seg_count >= GV_MAX_SEGS) return;
     GcodeSeg& s = g_segs[g_seg_count++];
     s.x1 = (int16_t)(x1 * 10); s.y1 = (int16_t)(y1 * 10);
     s.x2 = (int16_t)(x2 * 10); s.y2 = (int16_t)(y2 * 10);
+    s.z = (int16_t)(z * 10);
     s.layer = (uint16_t)(layer < 0 ? 0 : (layer > 65535 ? 65535 : layer));
+    if (layer >= 1 && s.z > g_maxz) g_maxz = s.z;
     // Only count the model (layer >= 1) for the view bounds - the purge/prime
     // line printed before the first layer sits at the bed edge and would
     // otherwise shrink the model into a corner.
@@ -129,8 +131,8 @@ static inline void add_seg(float x1, float y1, float x2, float y2, int layer) {
 }
 
 static void parse_gcode(const char* g, uint32_t len) {
-    g_seg_count = 0; g_max_layer = 0;
-    float px = 0, py = 0; bool have_prev = false;
+    g_seg_count = 0; g_max_layer = 0; g_maxz = 0;
+    float px = 0, py = 0, pz = 0; bool have_prev = false;
     int layer = 0;
     g_minf = 1e9f; g_maxf_x = -1e9f; g_minf_y = 1e9f; g_maxf_y = -1e9f;
 
@@ -146,13 +148,15 @@ static void parse_gcode(const char* g, uint32_t len) {
                 layer++;
         } else if (c[0] == 'G' && (c[2] == ' ' || c[2] == '\t')) {
             if (c[1] == '0' || c[1] == '1') {                 // linear move
-                float x = px, y = py, e = 0;
+                float x = px, y = py, z = pz, e = 0;
                 bool hx = tok(c + 2, le, 'X', &x);
                 bool hy = tok(c + 2, le, 'Y', &y);
+                bool hz = tok(c + 2, le, 'Z', &z);
                 bool he = tok(c + 2, le, 'E', &e);
-                if (he && e > 0.0f && (hx || hy) && have_prev) add_seg(px, py, x, y, layer);
+                if (he && e > 0.0f && (hx || hy) && have_prev) add_seg(px, py, x, y, pz, layer);
                 if (hx) px = x;
                 if (hy) py = y;
+                if (hz) pz = z;
                 have_prev = true;
             } else if (c[1] == '2' || c[1] == '3') {          // arc move (flatten)
                 float x = px, y = py, i = 0, j = 0, e = 0;
@@ -176,7 +180,7 @@ static void parse_gcode(const char* g, uint32_t len) {
                     for (int s = 1; s <= steps; s++) {
                         float a = a0 + da * (float)s / steps;
                         float nx = cx + r * cosf(a), ny = cy + r * sinf(a);
-                        add_seg(lx, ly, nx, ny, layer);
+                        add_seg(lx, ly, nx, ny, pz, layer);
                         lx = nx; ly = ny;
                     }
                 }
@@ -257,6 +261,7 @@ bool gcode_view_ready() { return g_ready; }
 const GcodeSeg* gcode_view_segments() { return g_ready ? g_segs : nullptr; }
 int gcode_view_seg_count() { return g_seg_count; }
 int gcode_view_max_layer() { return g_max_layer; }
+int16_t gcode_view_max_z() { return g_maxz; }
 void gcode_view_bounds(int16_t* minx, int16_t* miny, int16_t* maxx, int16_t* maxy) {
     *minx = g_minx; *miny = g_miny; *maxx = g_maxx; *maxy = g_maxy;
 }

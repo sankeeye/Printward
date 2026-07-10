@@ -9,6 +9,7 @@
 #include "ui_scale.h"   // tablet font scaling (Android only)
 #ifdef __ANDROID__
 #include "ui_tablet_setup.h"   // on-screen printer config (tablet only)
+#include "ui_screensaver.h"    // g_screensaver_3d toggle
 #endif
 
 static lv_obj_t* g_settings_screen = nullptr;
@@ -25,6 +26,15 @@ static void wifi_setup_btn_cb(lv_event_t* e) {
 static void printer_setup_btn_cb(lv_event_t* e) {
     (void)e;
     create_tablet_setup_ui();
+}
+static lv_obj_t* g_view_btn_label = nullptr;
+static void view_toggle_cb(lv_event_t* e) {
+    (void)e;
+    g_screensaver_3d = !g_screensaver_3d;
+    if (g_view_btn_label)
+        lv_label_set_text(g_view_btn_label, g_screensaver_3d ? "Screensaver: 3D" : "Screensaver: 2D");
+    save_settings();
+    screensaver_view_changed();
 }
 #endif
 
@@ -146,6 +156,16 @@ void create_settings_ui() {
     lv_obj_set_style_text_font(setup_btn_label, &lv_font_montserrat_14, 0);
     lv_obj_center(setup_btn_label);
     lv_obj_add_event_cb(setup_btn, printer_setup_btn_cb, LV_EVENT_CLICKED, NULL);
+
+    // Screensaver model view: 2D top-down or 3D isometric.
+    lv_obj_t* view_btn = lv_btn_create(root);
+    lv_obj_set_size(view_btn, lv_pct(100), PT_SZ(44));
+    lv_obj_set_style_bg_color(view_btn, lv_color_hex(0x555555), LV_PART_MAIN);
+    g_view_btn_label = lv_label_create(view_btn);
+    lv_label_set_text(g_view_btn_label, g_screensaver_3d ? "Screensaver: 3D" : "Screensaver: 2D");
+    lv_obj_set_style_text_font(g_view_btn_label, &lv_font_montserrat_14, 0);
+    lv_obj_center(g_view_btn_label);
+    lv_obj_add_event_cb(view_btn, view_toggle_cb, LV_EVENT_CLICKED, NULL);
 #endif
 
     lv_obj_t* bright_row = lv_obj_create(root);

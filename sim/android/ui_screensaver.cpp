@@ -39,6 +39,8 @@ static int g_rendered_layer = -99;
 static bool g_shown = false;
 static int  g_page = 0;
 
+bool g_screensaver_3d = false;   // false = top-down 2D, true = isometric 3D
+
 static lv_obj_t* mk_label(lv_obj_t* parent, const lv_font_t* font, uint32_t color) {
     lv_obj_t* l = lv_label_create(parent);
     lv_obj_set_style_text_font(l, font, 0);
@@ -72,31 +74,68 @@ static void render_gcode(int cur_layer) {
     g_rendered_layer = cur_layer;
     if (!g_cv) return;
     memset(g_cv, 0, (size_t)CV_W * CV_H * 2);
-    if (gcode_view_ready()) {
-        int16_t minx, miny, maxx, maxy;
-        gcode_view_bounds(&minx, &miny, &maxx, &maxy);
+    if (!gcode_view_ready()) { if (g_gcanvas) lv_obj_invalidate(g_gcanvas); return; }
+
+    int16_t minx, miny, maxx, maxy;
+    gcode_view_bounds(&minx, &miny, &maxx, &maxy);
+    const GcodeSeg* segs = gcode_view_segments();
+    int n = gcode_view_seg_count();
+    const uint16_t grey = 0x52AA, accent = 0x07E0;   // dim grey, green
+
+    if (!g_screensaver_3d) {
+        // --- top-down 2D ---
         float w = (float)(maxx - minx), h = (float)(maxy - miny);
-        if (w > 0 && h > 0) {
-            float margin = 24;
-            float sx = (CV_W - 2 * margin) / w, sy = (CV_H - 2 * margin) / h;
-            float s = sx < sy ? sx : sy;
-            float ox = (CV_W - w * s) * 0.5f, oy = (CV_H - h * s) * 0.5f;
-            const GcodeSeg* segs = gcode_view_segments();
-            int n = gcode_view_seg_count();
-            const uint16_t grey = 0x52AA, accent = 0x07E0;   // dim grey, green
-            for (int i = 0; i < n; i++) {
-                const GcodeSeg& g = segs[i];
-                if (g.layer > cur_layer) continue;
-                uint16_t col = ((int)g.layer >= cur_layer) ? accent : grey;
-                int x1 = (int)(ox + (g.x1 - minx) * s);
-                int y1 = (int)(CV_H - (oy + (g.y1 - miny) * s));   // flip Y (bed up)
-                int x2 = (int)(ox + (g.x2 - minx) * s);
-                int y2 = (int)(CV_H - (oy + (g.y2 - miny) * s));
-                cv_line(x1, y1, x2, y2, col);
-            }
+        if (w <= 0 || h <= 0) { if (g_gcanvas) lv_obj_invalidate(g_gcanvas); return; }
+        float margin = 24;
+        float s = (CV_W - 2 * margin) / w; float sy = (CV_H - 2 * margin) / h; if (sy < s) s = sy;
+        float ox = (CV_W - w * s) * 0.5f, oy = (CV_H - h * s) * 0.5f;
+        for (int i = 0; i < n; i++) {
+            const GcodeSeg& g = segs[i];
+            if (g.layer > cur_layer) continue;
+            uint16_t col = ((int)g.layer >= cur_layer) ? accent : grey;
+            int x1 = (int)(ox + (g.x1 - minx) * s);
+            int y1 = (int)(CV_H - (oy + (g.y1 - miny) * s));   // flip Y (bed up)
+            int x2 = (int)(ox + (g.x2 - minx) * s);
+            int y2 = (int)(CV_H - (oy + (g.y2 - miny) * s));
+            cv_line(x1, y1, x2, y2, col);
+        }
+    } else {
+        // --- isometric 3D (z up) ---
+        int16_t maxz = gcode_view_max_z();
+        float cx = (minx + maxx) * 0.5f, cy = (miny + maxy) * 0.5f;
+        const float C = 0.8660254f, S = 0.5f;      // cos/sin 30 deg
+        // iso bounds from the 8 bounding-box corners
+        float ixmin = 1e9f, ixmax = -1e9f, iymin = 1e9f, iymax = -1e9f;
+        for (int k = 0; k < 8; k++) {
+            float X = (k & 1) ? maxx : minx, Y = (k & 2) ? maxy : miny, Z = (k & 4) ? (float)maxz : 0;
+            float dx = X - cx, dy = Y - cy;
+            float ix = (dx - dy) * C, iy = (dx + dy) * S - Z;
+            if (ix < ixmin) ixmin = ix; if (ix > ixmax) ixmax = ix;
+            if (iy < iymin) iymin = iy; if (iy > iymax) iymax = iy;
+        }
+        float w = ixmax - ixmin, h = iymax - iymin;
+        if (w <= 0 || h <= 0) { if (g_gcanvas) lv_obj_invalidate(g_gcanvas); return; }
+        float margin = 30;
+        float s = (CV_W - 2 * margin) / w; float sy = (CV_H - 2 * margin) / h; if (sy < s) s = sy;
+        float ox = (CV_W - w * s) * 0.5f, oy = (CV_H - h * s) * 0.5f;
+        for (int i = 0; i < n; i++) {
+            const GcodeSeg& g = segs[i];
+            if (g.layer > cur_layer) continue;
+            uint16_t col = ((int)g.layer >= cur_layer) ? accent : grey;
+            float dx1 = g.x1 - cx, dy1 = g.y1 - cy;
+            float dx2 = g.x2 - cx, dy2 = g.y2 - cy;
+            int X1 = (int)(ox + ((dx1 - dy1) * C - ixmin) * s);
+            int Y1 = (int)(CV_H - (oy + (((dx1 + dy1) * S - g.z) - iymin) * s));
+            int X2 = (int)(ox + ((dx2 - dy2) * C - ixmin) * s);
+            int Y2 = (int)(CV_H - (oy + (((dx2 + dy2) * S - g.z) - iymin) * s));
+            cv_line(X1, Y1, X2, Y2, col);
         }
     }
     if (g_gcanvas) lv_obj_invalidate(g_gcanvas);
+}
+
+void screensaver_view_changed() {
+    g_rendered_layer = -99;   // force a redraw on the next gcode-page refresh
 }
 
 void create_screensaver() {

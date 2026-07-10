@@ -7,8 +7,12 @@
 // One extruding move, coordinates in 0.1 mm units (fits a 256 mm bed in int16).
 struct GcodeSeg {
     int16_t x1, y1, x2, y2;
+    int16_t z;          // layer height (0.1 mm) - for the 3D view
     uint16_t layer;
 };
+
+// Max Z (0.1 mm) of the model, for scaling the 3D view.
+int16_t gcode_view_max_z();
 
 // Kick off a load for the given file name (e.g. "foo.stl.3mf"); blocking, does
 // the FTP download + unzip + parse. Safe to call again with a new file.
