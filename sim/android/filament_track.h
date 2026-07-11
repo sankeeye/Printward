@@ -1,0 +1,26 @@
+#pragma once
+#ifndef FILAMENT_TRACK_H
+#define FILAMENT_TRACK_H
+
+// Scale-fed filament tracking (Android/tablet). A weighed spool sets a slot's
+// capacity (filament grams); while a print runs, the active slot's used grams
+// are estimated from the gcode's filament total x progress, so the remaining
+// weight ticks down live. Values persist to /sdcard/pandatouch_weights.conf.
+//
+// Slot encoding matches Bambu's tray_now: 254 = external spool, otherwise
+// unit*AMS_MAX_TRAYS + tray. capacity/used live in the existing storage globals
+// (g_tray_capacity_g/g_tray_used_g/g_ext_*), which already drive the Filament
+// screen, so the display updates for free.
+
+extern int g_low_threshold_g;    // low-filament warning threshold (grams)
+
+void  filament_track_init();     // load persisted weights + threshold
+void  filament_track_loop();     // update the active slot's consumption estimate
+void  filament_save();           // persist weights + threshold
+void  filament_weigh_assign(int slot, float measured_g, float empty_g);  // set a roll
+
+float filament_remaining(int slot);   // grams left, or -1 if no capacity set
+bool  filament_slot_low(int slot);    // capacity set AND remaining < threshold
+bool  filament_any_low();             // any slot low
+
+#endif

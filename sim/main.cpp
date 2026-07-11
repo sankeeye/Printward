@@ -12,6 +12,7 @@
 #include "lvgl.h"
 #include "ui_printer.h"
 #include "ui_files.h"
+#include "ui_filament.h"
 #include "bambu_mqtt.h"
 #include "storage.h"
 #include "pt/pt_display.h"
@@ -21,6 +22,7 @@
 #include "ui_move.h"           // manual motion screen (live nozzle temp refresh)
 #include "ui_weigh.h"          // Scale screen (live weight refresh)
 #include "scale_client.h"      // background HTTP client to the PandaScale
+#include "filament_track.h"    // scale-fed remaining-filament tracking
 #include "webctl.h"            // LAN web control server (same Move actions)
 #include "bambu_ftp.h"
 #include "gcode_view.h"
@@ -133,6 +135,7 @@ int main(int argc, char **argv) {
     // On the tablet: read the real printer settings from /sdcard/pandatouch.conf
     // and open a real MQTT session to the printer (see android_glue.cpp).
     load_settings();
+    filament_track_init();                   // load persisted spool weights
     bambu_mqtt_setup();
     webctl_start();                          // LAN control page (http://<ip>:8080)
     scale_client_start();                    // background poller for the PandaScale
@@ -165,6 +168,7 @@ int main(int argc, char **argv) {
         tablet_setup_loop(); // apply a queued Save from the Printer setup screen
         screensaver_loop();  // show/hide the idle print dashboard
         gcode_maybe_load();  // fetch + parse the print's gcode (background thread)
+        filament_track_loop(); // tick down the active spool's remaining grams
         webctl_loop();       // apply moves queued by the web control page
 #endif
         drain_pending_action();
@@ -178,6 +182,7 @@ int main(int argc, char **argv) {
 #ifdef __ANDROID__
             update_move_ui();   // refresh live nozzle temp if the Move screen is open
             update_weigh_ui();  // refresh live weight if the Scale screen is open
+            update_filament_ui(); // live remaining grams as the print consumes
 #endif
         }
         SDL_Delay(5);

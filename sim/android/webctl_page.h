@@ -147,7 +147,7 @@ h3{margin:0 0 10px;font-size:15px;color:var(--muted);font-weight:600}
 </section>
 
 <script>
-var step="1",curState="",curLight=false,curFan=0,cfgFilled=false,curPath="/",scaleHost="";
+var step="1",curState="",curLight=false,curFan=0,cfgFilled=false,curPath="/",scaleHost="",lowG=100;
 function $(id){return document.getElementById(id);}
 function tab(n){
  document.querySelectorAll('nav button').forEach(function(b){b.classList.toggle('on',b.dataset.tab===n);});
@@ -189,17 +189,21 @@ function loadFiles(path){curPath=path;$('fpath').textContent=path;$('flist').inn
 }
 $('fUp').onclick=function(){var p=curPath.replace(/\/[^\/]*\/?$/,'');loadFiles(p||'/');};
 $('fRef').onclick=function(){loadFiles(curPath);};
+function amt(t){
+ if(t.gram>=0){return '<div class="muted"'+(t.gram<lowG?' style="color:#e74c3c;font-weight:600"':'')+'>'+t.gram+' g</div>';}
+ return '<div class="muted">'+(t.remain>=0?t.remain+'%':'–')+'</div>';
+}
 function amsHtml(ams,ext){
  var h='';
  (ams||[]).forEach(function(u){
   h+='<div class="amsbox"><div class="muted">AMS '+u.id+(u.humidity>0?(' · vocht '+u.humidity):'')+'</div><div class="trays">';
   u.trays.forEach(function(t){
-   if(t.present)h+='<div class="tray"><div class="sw" style="background:'+t.rgb+'"></div><div>'+t.type+'</div><div class="muted">'+(t.remain>=0?t.remain+'%':'–')+'</div></div>';
+   if(t.present)h+='<div class="tray"><div class="sw" style="background:'+t.rgb+'"></div><div>'+t.type+'</div>'+amt(t)+'</div>';
    else h+='<div class="tray"><div class="sw empty"></div><div class="muted">leeg</div><div></div></div>';
   });
   h+='</div></div>';
  });
- if(ext&&ext.present)h+='<div class="amsbox"><div class="muted">Externe spoel</div><div class="trays"><div class="tray"><div class="sw" style="background:'+ext.rgb+'"></div><div>'+ext.type+'</div><div class="muted">'+(ext.remain>=0?ext.remain+'%':'–')+'</div></div></div></div>';
+ if(ext&&ext.present)h+='<div class="amsbox"><div class="muted">Externe spoel</div><div class="trays"><div class="tray"><div class="sw" style="background:'+ext.rgb+'"></div><div>'+ext.type+'</div>'+amt(ext)+'</div></div></div>';
  return h||'<div class="muted">geen AMS</div>';
 }
 function poll(){
@@ -217,6 +221,7 @@ function poll(){
   var a=amsHtml(s.ams,s.ext);$('amsStrip').innerHTML=a;$('amsDetail').innerHTML=a;
   $('movenoz').textContent='Nozzle '+s.nozzle+'/'+s.nozzle_t+'°C';
   if(s.cfg&&s.cfg.scale_ip){scaleHost=s.cfg.scale_ip;var si=$('sIp');if(si&&!si.value)si.value=s.cfg.scale_ip;}
+  if(s.cfg&&s.cfg.low)lowG=s.cfg.low;
   if(!cfgFilled&&s.cfg){cfgFilled=true;
    $('cIp').value=s.cfg.ip;$('cSerial').value=s.cfg.serial;$('cBri').value=s.cfg.bri;
    var b=$('cView');b.dataset.v=s.cfg.view3d?'1':'0';b.textContent='Screensaver: '+(s.cfg.view3d?'3D':'2D');

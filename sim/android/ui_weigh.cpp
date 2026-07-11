@@ -5,6 +5,7 @@
 #include "ui_weigh.h"
 #include "ui_printer.h"
 #include "scale_client.h"
+#include "filament_track.h"   // filament_weigh_assign()
 #include "storage.h"       // g_scale_ip, save_settings()
 #include <lvgl.h>
 #include <cstdio>
@@ -20,6 +21,8 @@ static lv_obj_t* g_ta_known = nullptr;
 static lv_obj_t* g_ta_ssid = nullptr;
 static lv_obj_t* g_ta_pass = nullptr;
 static lv_obj_t* g_ta_ip = nullptr;
+static lv_obj_t* g_ta_empty = nullptr;
+static lv_obj_t* g_slot_dd = nullptr;
 static lv_obj_t* g_kb = nullptr;
 
 // percent-encode a query value into out (bounded).
@@ -46,7 +49,8 @@ static void kb_hide() {
 
 static void ta_focus_cb(lv_event_t* e) {
     lv_obj_t* ta = (lv_obj_t*)lv_event_get_target(e);
-    lv_keyboard_set_mode(g_kb, ta == g_ta_known ? LV_KEYBOARD_MODE_NUMBER : LV_KEYBOARD_MODE_TEXT_LOWER);
+    bool num = (ta == g_ta_known || ta == g_ta_empty);
+    lv_keyboard_set_mode(g_kb, num ? LV_KEYBOARD_MODE_NUMBER : LV_KEYBOARD_MODE_TEXT_LOWER);
     lv_keyboard_set_textarea(g_kb, ta);
     lv_obj_clear_flag(g_kb, LV_OBJ_FLAG_HIDDEN);
     lv_obj_move_foreground(g_kb);
@@ -58,6 +62,18 @@ static void kb_event_cb(lv_event_t* e) {
 }
 
 static void tare_cb(lv_event_t*) { scale_cmd("/tare"); }
+
+// Weigh the spool now on the scale and assign the filament grams to a slot.
+static void assign_cb(lv_event_t*) {
+    int idx = (int)lv_dropdown_get_selected(g_slot_dd);
+    int slot = (idx >= 8) ? 254 : idx;          // 0..7 = AMS1/2 trays, 8 = external
+    float empty = (float)atof(lv_textarea_get_text(g_ta_empty));
+    float g = scale_grams();
+    filament_weigh_assign(slot, g, empty);
+    float fil = g - empty; if (fil < 0) fil = 0;
+    if (g_msg) lv_label_set_text_fmt(g_msg, "toegewezen: %.0f g filament", fil);
+    kb_hide();
+}
 
 static void cal_cb(lv_event_t*) {
     const char* k = lv_textarea_get_text(g_ta_known);
@@ -188,6 +204,17 @@ void create_weigh_ui() {
     make_btn(r1, "Tarra", 0x2c3e50, tare_cb, 120);
     g_ta_known = make_ta(r1, "gram", "500", false, 110);
     make_btn(r1, "Kalibreer", 0x27ae60, cal_cb, 130);
+
+    // Weigh the current spool and assign the filament grams to an AMS slot
+    lv_obj_t* rw = make_row(root);
+    g_slot_dd = lv_dropdown_create(rw);
+    lv_dropdown_set_options_static(g_slot_dd,
+        "AMS1 T1\nAMS1 T2\nAMS1 T3\nAMS1 T4\nAMS2 T1\nAMS2 T2\nAMS2 T3\nAMS2 T4\nExterne spoel");
+    lv_obj_set_width(g_slot_dd, PT_SZ(150));
+    lv_obj_set_height(g_slot_dd, PT_SZ(46));
+    lv_obj_set_style_text_font(g_slot_dd, &lv_font_montserrat_14, 0);
+    g_ta_empty = make_ta(rw, "leeg g", "250", false, 90);
+    make_btn(rw, "Weeg naar slot", 0x8e44ad, assign_cb, 150);
 
     // Network info
     g_infolbl = lv_label_create(root);

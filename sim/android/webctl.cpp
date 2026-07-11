@@ -12,6 +12,7 @@
 #include "webctl.h"
 #include "ui_move.h"
 #include "scale_client.h"     // g_scale_ip (exposed to the web Scale tab)
+#include "filament_track.h"   // filament_remaining(), g_low_threshold_g
 #include "ui_screensaver.h"   // g_screensaver_3d, screensaver_view_changed()
 #include "bambu_mqtt.h"
 #include "bambu_ftp.h"
@@ -236,9 +237,9 @@ static void build_status(char* o, int n) {
     p += snprintf(o + p, n - p, "\"light\":%s,\"fan\":%d,\"speed\":%d,\"active_tray\":%d,",
         s.light_on ? "true" : "false", s.fan_speed_pct, s.speed_level, s.active_tray_now);
     p += snprintf(o + p, n - p,
-        "\"cfg\":{\"ip\":\"%s\",\"serial\":\"%s\",\"view3d\":%s,\"bri\":%d,\"code_set\":%s,\"scale_ip\":\"%s\"},",
+        "\"cfg\":{\"ip\":\"%s\",\"serial\":\"%s\",\"view3d\":%s,\"bri\":%d,\"code_set\":%s,\"scale_ip\":\"%s\",\"low\":%d},",
         g_printer_ip, g_printer_serial, g_screensaver_3d ? "true" : "false",
-        g_brightness, g_printer_access_code[0] ? "true" : "false", g_scale_ip);
+        g_brightness, g_printer_access_code[0] ? "true" : "false", g_scale_ip, g_low_threshold_g);
 
     p += snprintf(o + p, n - p, "\"ams\":[");
     bool first = true;
@@ -250,18 +251,18 @@ static void build_status(char* o, int n) {
         first = false;
         for (int t = 0; t < AMS_MAX_TRAYS; t++) {
             AmsTraySlot& tr = un.trays[t];
-            p += snprintf(o + p, n - p, "%s{\"present\":%s,\"type\":\"%s\",\"rgb\":\"#%06X\",\"remain\":%d}",
+            p += snprintf(o + p, n - p, "%s{\"present\":%s,\"type\":\"%s\",\"rgb\":\"#%06X\",\"remain\":%d,\"gram\":%.0f}",
                 t ? "," : "", tr.present ? "true" : "false", tr.present ? tr.type : "",
-                (unsigned)(tr.color & 0xFFFFFF), tr.remain);
+                (unsigned)(tr.color & 0xFFFFFF), tr.remain, filament_remaining(u * AMS_MAX_TRAYS + t));
         }
         p += snprintf(o + p, n - p, "]}");
     }
     p += snprintf(o + p, n - p, "],");
 
     AmsTraySlot& e = s.external_spool;
-    snprintf(o + p, n - p, "\"ext\":{\"present\":%s,\"type\":\"%s\",\"rgb\":\"#%06X\",\"remain\":%d}}",
+    snprintf(o + p, n - p, "\"ext\":{\"present\":%s,\"type\":\"%s\",\"rgb\":\"#%06X\",\"remain\":%d,\"gram\":%.0f}}",
         e.present ? "true" : "false", e.present ? e.type : "",
-        (unsigned)(e.color & 0xFFFFFF), e.remain);
+        (unsigned)(e.color & 0xFFFFFF), e.remain, filament_remaining(254));
 }
 
 static void build_files(const char* path, char* o, int n) {
