@@ -88,6 +88,11 @@ void bambu_cmd_set_light(bool on);
 void bambu_cmd_set_speed_level(int level);      // 1-4
 void bambu_cmd_gcode(const char* gcode_line);   // e.g. "M106 P1 S255\n"
 
+// Set one AMS tray's filament type/colour/temps (like the slicer's AMS sync).
+// rgb is 0xRRGGBB. May be rejected by newer printer firmware like print-start.
+void bambu_cmd_set_ams_filament(int ams_id, int tray_id, const char* tray_info_idx,
+                                uint32_t rgb, int nozzle_min, int nozzle_max, const char* type);
+
 // Starts printing a .3mf project already on the printer's storage (SD card
 // or its internal "cache" folder - see bambu_ftp.h for browsing those).
 // `ftp_path` is the path as seen over FTP, e.g. "/my_print.3mf" or

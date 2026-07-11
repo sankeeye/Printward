@@ -23,6 +23,7 @@
 #include "ui_weigh.h"          // Scale screen (live weight refresh)
 #include "scale_client.h"      // background HTTP client to the PandaScale
 #include "filament_track.h"    // scale-fed remaining-filament tracking
+#include "spool_db.h"          // spool library + load-to-AMS
 #include "webctl.h"            // LAN web control server (same Move actions)
 #include "bambu_ftp.h"
 #include "gcode_view.h"
@@ -136,6 +137,7 @@ int main(int argc, char **argv) {
     // and open a real MQTT session to the printer (see android_glue.cpp).
     load_settings();
     filament_track_init();                   // load persisted spool weights
+    spool_db_load();                         // load the spool library
     bambu_mqtt_setup();
     webctl_start();                          // LAN control page (http://<ip>:8080)
     scale_client_start();                    // background poller for the PandaScale

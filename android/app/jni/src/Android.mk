@@ -41,6 +41,7 @@ LOCAL_SRC_FILES := \
     ourui/src/ui_weigh.cpp \
     ourui/src/scale_client.cpp \
     ourui/src/filament_track.cpp \
+    ourui/src/spool_db.cpp \
     ourui/src/webctl.cpp
 
 LOCAL_CFLAGS := -DLV_CONF_INCLUDE_SIMPLE -DARDUINOJSON_ENABLE_ARDUINO_STRING=1 -w

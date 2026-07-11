@@ -13,6 +13,7 @@
 #include "ui_move.h"
 #include "scale_client.h"     // g_scale_ip (exposed to the web Scale tab)
 #include "filament_track.h"   // filament_remaining(), g_low_threshold_g
+#include "spool_db.h"         // spool library + load-to-AMS
 #include "ui_screensaver.h"   // g_screensaver_3d, screensaver_view_changed()
 #include "bambu_mqtt.h"
 #include "bambu_ftp.h"
@@ -37,14 +38,14 @@
 extern bool g_screensaver_3d;
 
 // --- thread-safe request queue (web thread -> main thread) ---------------
-enum QKind { Q_MOVE = 1, Q_CTL, Q_CFG, Q_START };
+enum QKind { Q_MOVE = 1, Q_CTL, Q_CFG, Q_START, Q_SPOOL_SAVE, Q_SPOOL_DEL, Q_SPOOL_LOAD };
 enum CtlCode { CTL_PAUSE = 1, CTL_RESUME, CTL_STOP, CTL_LIGHT, CTL_FAN, CTL_SPEED };
 
 struct QCmd {
     int kind;
-    int code;       // MOVE_* for Q_MOVE, CTL_* for Q_CTL
-    float step;     // step (mm) for Q_MOVE, value for Q_CTL
-    char arg[256];  // query for Q_CFG, path for Q_START
+    int code;       // MOVE_* for Q_MOVE, CTL_* for Q_CTL, idx for Q_SPOOL_*
+    float step;     // step (mm) for Q_MOVE, value for Q_CTL, slot for Q_SPOOL_LOAD
+    char arg[512];  // query for Q_CFG / Q_SPOOL_SAVE, path for Q_START
 };
 #define QCAP 32
 static QCmd g_q[QCAP];
@@ -217,6 +218,23 @@ void webctl_loop() {
                 }
                 break;
             }
+            case Q_SPOOL_SAVE: {
+                Spool s; memset(&s, 0, sizeof(s));
+                char v[96];
+                parse_query(c.arg, "name", s.name, sizeof(s.name));
+                parse_query(c.arg, "material", s.material, sizeof(s.material));
+                parse_query(c.arg, "code", s.code, sizeof(s.code));
+                parse_query(c.arg, "note", s.note, sizeof(s.note));
+                if (parse_query(c.arg, "color", v, sizeof(v))) s.color = (uint32_t)strtoul(v[0] == '#' ? v + 1 : v, nullptr, 16);
+                if (parse_query(c.arg, "rem", v, sizeof(v))) s.remaining_g = (float)atof(v);
+                if (parse_query(c.arg, "empty", v, sizeof(v))) s.empty_g = (float)atof(v);
+                if (parse_query(c.arg, "nmin", v, sizeof(v))) s.nmin = atoi(v);
+                if (parse_query(c.arg, "nmax", v, sizeof(v))) s.nmax = atoi(v);
+                spool_upsert(c.code, s);          // c.code = idx (-1 = add)
+                break;
+            }
+            case Q_SPOOL_DEL:  spool_delete(c.code); break;
+            case Q_SPOOL_LOAD: spool_load_to_slot(c.code, (int)c.step); break;
         }
     }
 }
@@ -291,6 +309,24 @@ static void build_files(const char* path, char* o, int n) {
             i ? "," : "", nm, entries[i].is_dir ? "true" : "false", (unsigned)entries[i].size);
     }
     snprintf(o + p, n - p, "]}");
+}
+
+static void build_spools(char* o, int n) {
+    int p = 0;
+    p += snprintf(o + p, n - p, "[");
+    for (int i = 0; i < g_spool_count; i++) {
+        Spool& s = g_spools[i];
+        char nm[80], mat[24], code[24], note[160];
+        json_escape(s.name, nm, sizeof(nm));
+        json_escape(s.material, mat, sizeof(mat));
+        json_escape(s.code, code, sizeof(code));
+        json_escape(s.note, note, sizeof(note));
+        p += snprintf(o + p, n - p,
+            "%s{\"i\":%d,\"name\":\"%s\",\"material\":\"%s\",\"rgb\":\"#%06X\",\"rem\":%.0f,\"empty\":%.0f,\"nmin\":%d,\"nmax\":%d,\"code\":\"%s\",\"note\":\"%s\"}",
+            i ? "," : "", i, nm, mat, (unsigned)(s.color & 0xFFFFFF),
+            s.remaining_g, s.empty_g, s.nmin, s.nmax, code, note);
+    }
+    snprintf(o + p, n - p, "]");
 }
 
 // --- the single-page control app ----------------------------------------
@@ -371,6 +407,34 @@ static void handle_conn(int fd) {
     if (!strcmp(path, "/setcfg")) {
         q_push(Q_CFG, 0, 0, query ? query : "");
         send_resp(fd, "200 OK", "text/plain; charset=utf-8", "opgeslagen", 10);
+        return;
+    }
+    if (!strcmp(path, "/spools")) {
+        char* js = (char*)malloc(12000);
+        if (js) { build_spools(js, 12000); send_resp(fd, "200 OK", "application/json", js, (int)strlen(js)); free(js); }
+        else send_resp(fd, "500 Error", "text/plain", "", 0);
+        return;
+    }
+    if (!strcmp(path, "/spool_save")) {
+        char idxs[8];
+        parse_query(query, "idx", idxs, sizeof(idxs));
+        q_push(Q_SPOOL_SAVE, idxs[0] ? atoi(idxs) : -1, 0, query ? query : "");
+        send_resp(fd, "200 OK", "text/plain; charset=utf-8", "opgeslagen", 10);
+        return;
+    }
+    if (!strcmp(path, "/spool_del")) {
+        char idxs[8];
+        parse_query(query, "idx", idxs, sizeof(idxs));
+        q_push(Q_SPOOL_DEL, atoi(idxs), 0, nullptr);
+        send_resp(fd, "200 OK", "text/plain; charset=utf-8", "verwijderd", 10);
+        return;
+    }
+    if (!strcmp(path, "/spool_load")) {
+        char idxs[8], slots[8];
+        parse_query(query, "idx", idxs, sizeof(idxs));
+        parse_query(query, "slot", slots, sizeof(slots));
+        q_push(Q_SPOOL_LOAD, atoi(idxs), (float)atoi(slots), nullptr);
+        send_resp(fd, "200 OK", "text/plain; charset=utf-8", "geladen", 7);
         return;
     }
     send_resp(fd, "404 Not Found", "text/plain", "", 0);

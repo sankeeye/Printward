@@ -75,6 +75,7 @@ h3{margin:0 0 10px;font-size:15px;color:var(--muted);font-weight:600}
  <button data-tab="files">Files</button>
  <button data-tab="move">Move</button>
  <button data-tab="scale">Scale</button>
+ <button data-tab="spools">Spools</button>
  <button data-tab="set">Settings</button>
 </nav>
 
@@ -134,6 +135,28 @@ h3{margin:0 0 10px;font-size:15px;color:var(--muted);font-weight:600}
  </div>
 </section>
 
+<section id="spools">
+ <div class="card"><h3 id="spTitle">Nieuwe rol</h3>
+  <div class="frow"><label class="muted">Naam / merk</label><input type="text" id="spName" placeholder="bv. Bambu PLA Zwart"></div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+   <div class="frow"><label class="muted">Materiaal</label><select id="spMat"><option>PLA</option><option>PETG</option><option>ABS</option><option>TPU</option><option>ASA</option><option>PC</option><option>PA</option><option>PVA</option></select></div>
+   <div class="frow"><label class="muted">Kleur</label><input type="color" id="spColor" value="#22aa55" style="width:70px;height:44px;padding:2px"></div>
+   <div class="frow"><label class="muted">Resterend (g)</label><input type="number" id="spRem" value="1000" style="width:110px"></div>
+   <div class="frow"><label class="muted">Leeg spoel (g)</label><input type="number" id="spEmpty" value="250" style="width:110px"></div>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+   <div class="frow"><label class="muted">Nozzle min</label><input type="number" id="spNmin" placeholder="auto" style="width:90px"></div>
+   <div class="frow"><label class="muted">Nozzle max</label><input type="number" id="spNmax" placeholder="auto" style="width:90px"></div>
+   <div class="frow"><label class="muted">Bambu-code</label><input type="text" id="spCode" placeholder="auto" style="width:110px"></div>
+   <div class="frow" style="flex:1;min-width:160px"><label class="muted">Notitie</label><input type="text" id="spNote" placeholder="bv. gedroogd 3/7"></div>
+  </div>
+  <input type="hidden" id="spIdx" value="-1">
+  <div style="display:flex;gap:8px"><button id="spSave" class="ext">Opslaan</button><button id="spNew">Nieuw</button></div>
+  <div id="spMsg" class="muted" style="margin-top:8px"></div>
+ </div>
+ <div class="card"><h3>Rollen</h3><div id="spList" class="muted">…</div></div>
+</section>
+
 <section id="set">
  <div class="card"><h3>Printer</h3>
   <div class="frow"><label class="muted">Printer IP</label><input type="text" id="cIp"></div>
@@ -147,12 +170,13 @@ h3{margin:0 0 10px;font-size:15px;color:var(--muted);font-weight:600}
 </section>
 
 <script>
-var step="1",curState="",curLight=false,curFan=0,cfgFilled=false,curPath="/",scaleHost="",lowG=100;
+var step="1",curState="",curLight=false,curFan=0,cfgFilled=false,curPath="/",scaleHost="",lowG=100,spCache=[];
 function $(id){return document.getElementById(id);}
 function tab(n){
  document.querySelectorAll('nav button').forEach(function(b){b.classList.toggle('on',b.dataset.tab===n);});
  document.querySelectorAll('section').forEach(function(s){s.classList.toggle('on',s.id===n);});
  if(n==='files')loadFiles(curPath);
+ if(n==='spools')loadSpools();
 }
 document.querySelectorAll('nav button').forEach(function(b){b.onclick=function(){tab(b.dataset.tab);};});
 document.querySelectorAll('.step button').forEach(function(b){b.onclick=function(){step=b.dataset.s;
@@ -247,4 +271,32 @@ $('sIpFix').onclick=function(){sGet('/setip?ip='+encodeURIComponent($('sIp').val
 $('sWifi').onclick=function(){sGet('/setwifi?ssid='+encodeURIComponent($('sSsid').value)+'&pass='+encodeURIComponent($('sPass').value));};
 $('sIpSave').onclick=function(){var v=$('sIp').value;fetch('/setcfg?scale_ip='+encodeURIComponent(v)).then(function(){scaleHost=v;sMsg('opgeslagen op tablet');});};
 setInterval(scalePoll,1200);
+function spMsg(t){$('spMsg').textContent=t;}
+function spSlotOpts(){var o='';for(var u=0;u<2;u++)for(var t=0;t<4;t++){o+='<option value="'+(u*4+t)+'">AMS'+(u+1)+' T'+(t+1)+'</option>';}return o+'<option value="254">Externe spoel</option>';}
+function loadSpools(){
+ fetch('/spools').then(function(r){return r.json();}).then(function(list){
+  spCache=list;var h='';
+  list.forEach(function(s){
+   h+='<div class="fitem"><div style="display:flex;align-items:center;gap:8px;min-width:0"><div class="sw" style="width:26px;height:20px;flex:0 0 auto;background:'+s.rgb+'"></div><span><b>'+s.name+'</b> <span class="muted">'+s.material+' • '+s.rem+' g</span></span></div>'
+    +'<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><select id="ss'+s.i+'">'+spSlotOpts()+'</select>'
+    +'<button class="fstart" onclick="spLoad('+s.i+')">Laad</button>'
+    +'<button onclick="spEdit('+s.i+')">Bewerk</button>'
+    +'<button class="b-red" onclick="spDel('+s.i+')">X</button></div></div>';
+  });
+  $('spList').innerHTML=h||'<div class="muted">nog geen rollen</div>';
+ }).catch(function(){$('spList').innerHTML='<div class="muted">geen tablet</div>';});
+}
+function spLoad(i){var sl=$('ss'+i).value;fetch('/spool_load?idx='+i+'&slot='+sl).then(function(r){return r.text();}).then(function(t){spMsg(t+' in slot');});}
+function spDel(i){if(confirm('Rol verwijderen?'))fetch('/spool_del?idx='+i).then(function(){loadSpools();});}
+function spEdit(i){var s=spCache[i];$('spTitle').textContent='Rol bewerken';$('spIdx').value=i;
+ $('spName').value=s.name;$('spMat').value=s.material;$('spColor').value=s.rgb;$('spRem').value=s.rem;$('spEmpty').value=s.empty;
+ $('spNmin').value=s.nmin||'';$('spNmax').value=s.nmax||'';$('spCode').value=s.code||'';$('spNote').value=s.note||'';}
+function spReset(){$('spTitle').textContent='Nieuwe rol';$('spIdx').value=-1;$('spName').value='';$('spNote').value='';$('spCode').value='';$('spNmin').value='';$('spNmax').value='';}
+$('spNew').onclick=spReset;
+$('spSave').onclick=function(){
+ var q='idx='+$('spIdx').value+'&name='+encodeURIComponent($('spName').value)+'&material='+encodeURIComponent($('spMat').value)
+  +'&color='+encodeURIComponent($('spColor').value)+'&rem='+($('spRem').value||0)+'&empty='+($('spEmpty').value||0)
+  +'&nmin='+($('spNmin').value||0)+'&nmax='+($('spNmax').value||0)+'&code='+encodeURIComponent($('spCode').value)+'&note='+encodeURIComponent($('spNote').value);
+ fetch('/spool_save?'+q).then(function(r){return r.text();}).then(function(t){spMsg(t);spReset();setTimeout(loadSpools,300);});
+};
 </script></body></html>)PAGE"

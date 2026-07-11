@@ -321,6 +321,26 @@ void bambu_cmd_gcode(const char* gcode_line) {
     publish_json(doc);
 }
 
+// Configure one AMS tray's filament (type/colour/temps) - what the slicer's
+// "sync AMS" does. rgb is 0xRRGGBB; tray_color goes out as RRGGBBFF.
+void bambu_cmd_set_ams_filament(int ams_id, int tray_id, const char* tray_info_idx,
+                                uint32_t rgb, int nozzle_min, int nozzle_max, const char* type) {
+    JsonDocument doc;
+    doc["print"]["sequence_id"] = "0";
+    doc["print"]["command"] = "ams_filament_setting";
+    doc["print"]["ams_id"] = ams_id;
+    doc["print"]["tray_id"] = tray_id;
+    doc["print"]["tray_info_idx"] = tray_info_idx;
+    char col[9];
+    snprintf(col, sizeof(col), "%06XFF", (unsigned)(rgb & 0xFFFFFF));
+    doc["print"]["tray_color"] = col;
+    doc["print"]["nozzle_temp_min"] = nozzle_min;
+    doc["print"]["nozzle_temp_max"] = nozzle_max;
+    doc["print"]["tray_type"] = type;
+    publish_json(doc);
+    Serial.printf("BAMBU: ams_filament_setting AMS%d T%d %s %s\n", ams_id, tray_id, type, col);
+}
+
 void bambu_cmd_start_project_file(const String& ftp_path, bool use_ams, const int ams_mapping[5]) {
     JsonDocument doc;
     doc["print"]["sequence_id"] = "0";
