@@ -257,7 +257,7 @@ section#spools{max-width:1040px}
  <div id="rollList"></div>
 </div></div>
 <script>
-var step="1",curState="",curLight=false,curFan=0,cfgFilled=false,curPath="/",scaleHost="",lowG=100,spCache=[],emCache=[],pickSlot=-1,spSel={};
+var step="1",curState="",curLight=false,curFan=0,cfgFilled=false,curPath="/",scaleHost="",lowG=100,spCache=[],emCache=[],pickSlot=-1,spSel={},lastS=null;
 function $(id){return document.getElementById(id);}
 function tab(n){
  document.querySelectorAll('nav button').forEach(function(b){b.classList.toggle('on',b.dataset.tab===n);});
@@ -324,11 +324,15 @@ function amsHtml(ams,ext,assign){
  if((ext&&ext.present)||assign)h+='<div class="amsbox"><div class="muted">Externe spoel</div><div class="trays">'+trayCell(ext,254,assign)+'</div></div>';
  return h||'<div class="muted">geen AMS</div>';
 }
+function slotMat(slot){if(!lastS)return'';if(slot===254)return(lastS.ext&&lastS.ext.type)||'';var u=Math.floor(slot/4),t=slot%4;if(lastS.ams)for(var i=0;i<lastS.ams.length;i++){if(lastS.ams[i].id===u+1){var tr=lastS.ams[i].trays[t];return(tr&&tr.type)||'';}}return'';}
 function pickRoll(slot){pickSlot=slot;$('rollTitle').textContent='Kies rol voor '+slotName(slot);
+ var mat=slotMat(slot);
  fetch('/spools').then(function(r){return r.json();}).then(function(list){
+  if(mat)list.sort(function(a,b){return (b.material===mat?1:0)-(a.material===mat?1:0);});
   var h='';
   if(!list.length)h='<div class="muted">Nog geen rollen — maak ze aan op de Spools-tab.</div>';
-  list.forEach(function(s){h+='<div class="fitem rollpick" onclick="chooseRoll('+s.i+')"><div style="display:flex;align-items:center;gap:8px"><div class="sw" style="width:26px;height:20px;flex:0 0 auto;background:'+s.rgb+'"></div><span><b>'+s.name+'</b> <span class="muted">'+s.material+' · '+s.rem+' g</span></span></div></div>';});
+  list.forEach(function(s){var pas=(mat&&s.material===mat)?' <span class="badge" style="margin-left:6px;background:#1e5f3a;color:#b9f5cf">past</span>':'';
+   h+='<div class="fitem rollpick" onclick="chooseRoll('+s.i+')"><div style="display:flex;align-items:center;gap:8px"><div class="sw" style="width:26px;height:20px;flex:0 0 auto;background:'+s.rgb+'"></div><span><b>'+s.name+'</b> <span class="muted">'+s.material+' · '+s.rem+' g</span>'+pas+'</span></div></div>';});
   $('rollList').innerHTML=h;$('rollModal').style.display='flex';
  }).catch(function(){});
 }
@@ -337,7 +341,7 @@ function closeRoll(){$('rollModal').style.display='none';}
 function poll(){
  fetch('/status').then(function(r){return r.json();}).then(function(s){
   $('conn').textContent=s.conn?'● verbonden':'○ offline';$('conn').style.color=s.conn?'#2ecc71':'#e74c3c';
-  curState=s.state;curLight=s.light;curFan=s.fan;
+  curState=s.state;curLight=s.light;curFan=s.fan;lastS=s;
   $('state').textContent=s.state||'–';$('task').textContent=s.name||'';
   $('fill').style.width=(s.pct||0)+'%';
   $('prog').textContent=(s.pct||0)+'%'+(s.total?('  laag '+s.layer+'/'+s.total):'')+(s.remain?('  ~'+s.remain+' min'):'');
