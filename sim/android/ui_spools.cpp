@@ -196,7 +196,11 @@ void create_spools_ui() {
         lv_obj_clear_flag(sw, LV_OBJ_FLAG_SCROLLABLE);
 
         lv_obj_t* lbl = lv_label_create(row);
-        lv_label_set_text_fmt(lbl, "%s  %s  %.0f g", s.name, s.material, s.remaining_g);
+        if (s.price_kg > 0)
+            lv_label_set_text_fmt(lbl, "%s  %s  %.0f g  EUR %.2f", s.name, s.material,
+                                  s.remaining_g, s.remaining_g * s.price_kg / 1000.0f);
+        else
+            lv_label_set_text_fmt(lbl, "%s  %s  %.0f g", s.name, s.material, s.remaining_g);
         lv_obj_set_style_text_font(lbl, &lv_font_montserrat_14, 0);
         lv_obj_set_style_text_color(lbl, lv_color_hex(0xFFFFFF), 0);
         lv_obj_set_flex_grow(lbl, 1);

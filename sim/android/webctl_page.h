@@ -405,8 +405,9 @@ function renderSpList(){
   h+='<div class="rollcard"><input type="checkbox" '+(spSel[s.i]?'checked':'')+' onchange="selToggle('+s.i+',this.checked)" style="width:20px;height:20px;flex:0 0 auto">'
    +'<div style="width:38px;height:38px;border-radius:8px;flex:0 0 auto;border:1px solid #3a434d;background:'+s.rgb+'"></div>'
    +'<div style="min-width:0"><div class="name">'+s.name+'<span class="badge">'+s.material+'</span></div>'
-   +(s.note?'<div class="muted" style="font-size:12px">'+s.note+'</div>':'')+'</div>'
-   +'<div class="grams">'+s.rem+' g</div>'
+   +(s.note?'<div class="muted" style="font-size:12px">'+s.note+'</div>':'')
+   +(s.price>0?'<div class="muted" style="font-size:12px">€ '+s.price.toFixed(2)+'/kg</div>':'')+'</div>'
+   +'<div class="grams">'+s.rem+' g'+(s.price>0?'<div class="muted" style="font-size:12px;font-weight:400">€ '+(s.rem*s.price/1000).toFixed(2)+'</div>':'')+'</div>'
    +'<button class="iconbtn" title="Weeg de rol" onclick="spWeigh('+s.i+')">⚖</button>'
    +'<button class="iconbtn" title="Kopieer" onclick="spCopy('+s.i+')">⧉</button>'
    +'<button class="iconbtn" title="Bewerk" onclick="spEdit('+s.i+')">✎</button>'
