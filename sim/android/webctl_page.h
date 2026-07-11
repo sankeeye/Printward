@@ -176,9 +176,15 @@ section#spools{max-width:1040px}
     <span class="muted">g</span>
    </div>
   </div>
+  <div class="field" style="margin-bottom:14px"><label>Resterend filament (g)</label>
+   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <input type="number" id="spRem" value="1000" style="width:130px">
+    <button class="formbtn sec" onclick="spRemWeigh()">⚖ Weeg rol</button>
+    <span class="muted" style="font-size:12px">= gewogen − leeg-spoel</span>
+   </div>
+  </div>
   <div class="grid">
    <div class="field"><label>Materiaal</label><select id="spMat"><option>PLA</option><option>PETG</option><option>ABS</option><option>TPU</option><option>ASA</option><option>PC</option><option>PA</option><option>PVA</option></select></div>
-   <div class="field"><label>Resterend (g)</label><div style="display:flex;gap:6px"><input type="number" id="spRem" value="1000" style="flex:1;min-width:0"><button class="formbtn sec" style="padding:0 12px" onclick="spRemWeigh()" title="weeg de rol (resterend = gewogen − leeg)">⚖</button></div></div>
    <div class="field"><label>Nozzle min</label><input type="number" id="spNmin" placeholder="auto"></div>
    <div class="field"><label>Nozzle max</label><input type="number" id="spNmax" placeholder="auto"></div>
    <div class="field"><label>Bambu-code</label><input type="text" id="spCode" placeholder="auto"></div>
