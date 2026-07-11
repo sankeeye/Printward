@@ -13,12 +13,14 @@ spool‑weight tracking. See [Hardware](#hardware).
 
 ## Features
 
-- **Live printer status & control** over the printer's local (LAN‑only) **MQTT** feed:
-  print progress, temperatures, and pause/resume/stop/light controls.
+- **Live printer status & control** over the printer's **local MQTT** feed (the broker
+  inside the P1S, reached on your network with the LAN access code — this works in the
+  printer's normal cloud mode too, no *"LAN Only"* mode required): print progress,
+  temperatures, and pause/resume/stop/light controls.
 - **Filament / AMS & spool weight tracking**, including automatic subtraction of the
   grams used by each finished print (see the weight relay below).
 - **File browser** over the printer's **FTP** service.
-- **Bambu Cloud integration** for the one thing LAN‑only MQTT never exposes: how many
+- **Bambu Cloud integration** for the one thing the local MQTT feed never exposes: how many
   grams a finished print actually used.
 - **LVGL touch UI** (LVGL 9.3): printer screen, filament/AMS, file browser, settings.
 - **On‑screen setup** for the printer connection (IP / serial / LAN access code).
@@ -34,10 +36,16 @@ On the **Android‑tablet / web build**, additionally:
 - **ntfy push notifications** (print done/failed, filament short), **print history &
   statistics**, and kiosk crash‑restart.
 
+> **Note — starting prints.** On P1S firmware ≥ 01.08, Bambu rejects *start‑print* commands
+> from third‑party tools (error `0x05024007`) unless the printer is in **LAN Only** or
+> **Developer** mode. So kick prints off from Bambu Studio / Handy; everything else here
+> (monitoring, pause/stop, light, move/jog, AMS settings) is unaffected and works in normal
+> cloud mode.
+
 ## Hardware
 
 - **Android tablet** — runs the LVGL UI (`src/ui_*`) as a standalone printer
-  monitor/controller with a live LAN‑MQTT link to the printer, **plus a full web UI** on
+  monitor/controller with a live local‑MQTT link to the printer, **plus a full web UI** on
   `http://<tablet>:8080`. Verified on a Samsung SM‑T280 (Android 5.1.1).
   See [`android/README.md`](android/README.md).
 - **PandaScale** — an ESP32‑S3 + HX711 load‑cell scale (the SpoolEase Scale hardware flashed
