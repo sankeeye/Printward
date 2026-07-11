@@ -294,27 +294,44 @@ static void create_spool_edit(int idx) {
     { char b[16]; snprintf(b, sizeof(b), "%.0f", cur.remaining_g); lv_textarea_set_text(g_e_rem, b); }
 
     lv_obj_t* r2 = form_row(root);
-    // empty picker + value
+    // "Leeg spoel" group: pick from the library OR type the grams, one label
     lv_obj_t* ebox = lv_obj_create(r2);
-    lv_obj_set_size(ebox, PT_SZ(180), LV_SIZE_CONTENT);
+    lv_obj_set_size(ebox, PT_SZ(320), LV_SIZE_CONTENT);
     lv_obj_set_style_bg_opa(ebox, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(ebox, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(ebox, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_gap(ebox, PT_SZ(4), LV_PART_MAIN);
     lv_obj_set_flex_flow(ebox, LV_FLEX_FLOW_COLUMN);
     lv_obj_clear_flag(ebox, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_t* el = lv_label_create(ebox); lv_label_set_text(el, "Leeg spoel");
+    lv_obj_t* el = lv_label_create(ebox); lv_label_set_text(el, "Leeg spoel (kies of gram)");
     lv_obj_set_style_text_font(el, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(el, lv_color_hex(0x93a0ad), 0);
-    g_e_emptysel = lv_dropdown_create(ebox);
-    char eopts[512]; int en = snprintf(eopts, sizeof(eopts), "kies...");
+    lv_obj_t* erow = lv_obj_create(ebox);
+    lv_obj_set_size(erow, lv_pct(100), LV_SIZE_CONTENT);
+    lv_obj_set_style_bg_opa(erow, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_border_width(erow, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(erow, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_gap(erow, PT_SZ(6), LV_PART_MAIN);
+    lv_obj_set_flex_flow(erow, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(erow, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_clear_flag(erow, LV_OBJ_FLAG_SCROLLABLE);
+    g_e_emptysel = lv_dropdown_create(erow);
+    char eopts[512]; int en = snprintf(eopts, sizeof(eopts), "uit bibliotheek...");
     for (int i = 0; i < g_empty_count && en < (int)sizeof(eopts) - 48; i++)
         en += snprintf(eopts + en, sizeof(eopts) - en, "\n%s (%.0fg)", g_empties[i].name, g_empties[i].weight_g);
     lv_dropdown_set_options(g_e_emptysel, eopts);
-    lv_obj_set_width(g_e_emptysel, lv_pct(100));
+    lv_obj_set_flex_grow(g_e_emptysel, 1);
     lv_obj_set_style_text_font(g_e_emptysel, &lv_font_montserrat_14, 0);
     lv_obj_add_event_cb(g_e_emptysel, emptysel_cb, LV_EVENT_VALUE_CHANGED, nullptr);
-    g_e_empty = mk_labeled_ta(r2, "Leeg (g)", nullptr, 100);
+    g_e_empty = lv_textarea_create(erow);
+    lv_obj_set_size(g_e_empty, PT_SZ(84), PT_SZ(44));
+    lv_textarea_set_one_line(g_e_empty, true);
+    lv_obj_add_event_cb(g_e_empty, ta_focus_cb, LV_EVENT_FOCUSED, nullptr);
+    lv_obj_add_event_cb(g_e_empty, ta_focus_cb, LV_EVENT_CLICKED, nullptr);
     { char b[16]; snprintf(b, sizeof(b), "%.0f", cur.empty_g); lv_textarea_set_text(g_e_empty, b); }
+    lv_obj_t* eg = lv_label_create(erow); lv_label_set_text(eg, "g");
+    lv_obj_set_style_text_font(eg, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(eg, lv_color_hex(0x93a0ad), 0);
     g_e_nmin = mk_labeled_ta(r2, "Nozzle min", nullptr, 100);
     g_e_nmax = mk_labeled_ta(r2, "Nozzle max", nullptr, 100);
     if (cur.nmin > 0) { char b[8]; snprintf(b, sizeof(b), "%d", cur.nmin); lv_textarea_set_text(g_e_nmin, b); }

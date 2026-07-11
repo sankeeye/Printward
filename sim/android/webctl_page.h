@@ -169,11 +169,16 @@ section#spools{max-width:1040px}
   <div class="field" style="margin-bottom:14px"><label>Kleur</label>
    <div class="swatches"><input type="color" id="spColor" value="#22aa55" class="chip"><span id="spSw" class="swatches"></span></div>
   </div>
+  <div class="field" style="margin-bottom:14px"><label>Leeg spoel</label>
+   <div style="display:flex;gap:8px;align-items:center">
+    <select id="spEmptySel" style="flex:1"><option value="">— kies uit bibliotheek —</option></select>
+    <input type="number" id="spEmpty" value="250" style="width:100px" title="gewicht van de lege spoel in gram">
+    <span class="muted">g</span>
+   </div>
+  </div>
   <div class="grid">
    <div class="field"><label>Materiaal</label><select id="spMat"><option>PLA</option><option>PETG</option><option>ABS</option><option>TPU</option><option>ASA</option><option>PC</option><option>PA</option><option>PVA</option></select></div>
    <div class="field"><label>Resterend (g)</label><input type="number" id="spRem" value="1000"></div>
-   <div class="field"><label>Leeg spoel</label><select id="spEmptySel"><option value="">— kies —</option></select></div>
-   <div class="field"><label>Leeg (g)</label><input type="number" id="spEmpty" value="250"></div>
    <div class="field"><label>Nozzle min</label><input type="number" id="spNmin" placeholder="auto"></div>
    <div class="field"><label>Nozzle max</label><input type="number" id="spNmax" placeholder="auto"></div>
    <div class="field"><label>Bambu-code</label><input type="text" id="spCode" placeholder="auto"></div>
