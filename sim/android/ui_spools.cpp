@@ -112,8 +112,20 @@ static lv_obj_t* mk_labeled_ta(lv_obj_t* parent, const char* label, const char* 
 }
 
 // --- list screen ---------------------------------------------------------
-static void back_cb(lv_event_t*) { lv_scr_load(g_main_screen); }
+static void back_cb(lv_event_t*) { scale_set_polling(false); lv_scr_load(g_main_screen); }
 static void new_cb(lv_event_t*) { create_spool_edit(-1); }
+// Weigh the whole roll: remaining = scale - this roll's empty-spool weight.
+static void rowweigh_cb(lv_event_t* e) {
+    int i = (int)(intptr_t)lv_event_get_user_data(e);
+    if (i < 0 || i >= g_spool_count) return;
+    Spool s = g_spools[i];
+    float rem = scale_grams() - s.empty_g;
+    if (rem < 0) rem = 0;
+    s.remaining_g = rem;
+    spool_upsert(i, s);
+    create_spools_ui();
+    if (g_msg) lv_label_set_text_fmt(g_msg, "'%s' gewogen: %.0f g resterend", s.name, rem);
+}
 static void empties_cb(lv_event_t*) { create_empties_ui(); }
 static void edit_cb(lv_event_t* e) { create_spool_edit((int)(intptr_t)lv_event_get_user_data(e)); }
 static void del_cb(lv_event_t* e) { spool_delete((int)(intptr_t)lv_event_get_user_data(e)); create_spools_ui(); }
@@ -121,6 +133,7 @@ static void del_cb(lv_event_t* e) { spool_delete((int)(intptr_t)lv_event_get_use
 void create_spools_ui() {
     if (g_screen) { lv_obj_del(g_screen); g_screen = nullptr; }
     g_kb = nullptr;
+    scale_set_polling(true);   // keep the live weight fresh for the Weeg buttons
 
     g_screen = mk_screen();
     lv_obj_t* root = mk_root(g_screen, false);
@@ -188,6 +201,7 @@ void create_spools_ui() {
         lv_obj_set_flex_grow(lbl, 1);
         lv_label_set_long_mode(lbl, LV_LABEL_LONG_DOT);
 
+        mk_btn(row, "Weeg", 0x2980b9, rowweigh_cb, (void*)(intptr_t)i, 90, 40);
         mk_btn(row, "Bewerk", 0x3465a4, edit_cb, (void*)(intptr_t)i, 100, 40);
         mk_btn(row, "X", 0xa40000, del_cb, (void*)(intptr_t)i, 48, 40);
     }
@@ -211,6 +225,14 @@ static void emptysel_cb(lv_event_t*) {
         char b[16]; snprintf(b, sizeof(b), "%.0f", g_empties[sel - 1].weight_g);
         lv_textarea_set_text(g_e_empty, b);
     }
+}
+// Weigh the roll now: remaining = live scale weight - the empty-spool field.
+static void rem_weigh_cb(lv_event_t*) {
+    float empty = (float)atof(lv_textarea_get_text(g_e_empty));
+    float rem = scale_grams() - empty;
+    if (rem < 0) rem = 0;
+    char b[16]; snprintf(b, sizeof(b), "%.0f", rem);
+    lv_textarea_set_text(g_e_rem, b);
 }
 static void edit_cancel_cb(lv_event_t*) { create_spools_ui(); }
 static void edit_save_cb(lv_event_t*) {
@@ -249,6 +271,7 @@ static void create_spool_edit(int idx) {
     g_e_color = cur.color & 0xFFFFFF;
 
     if (g_screen) { lv_obj_del(g_screen); g_screen = nullptr; }
+    scale_set_polling(true);   // live weight for the Weeg button
     g_screen = mk_screen();
     lv_obj_t* root = mk_root(g_screen, true);
 
@@ -290,8 +313,9 @@ static void create_spool_edit(int idx) {
         }
         lv_dropdown_set_selected(g_e_mat, sel);
     }
-    g_e_rem = mk_labeled_ta(r1, "Resterend (g)", nullptr, 120);
+    g_e_rem = mk_labeled_ta(r1, "Resterend (g)", nullptr, 110);
     { char b[16]; snprintf(b, sizeof(b), "%.0f", cur.remaining_g); lv_textarea_set_text(g_e_rem, b); }
+    mk_btn(r1, "Weeg", 0x2980b9, rem_weigh_cb, nullptr, 90, 44);
 
     lv_obj_t* r2 = form_row(root);
     // "Leeg spoel" group: pick from the library OR type the grams, one label

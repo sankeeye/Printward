@@ -178,7 +178,7 @@ section#spools{max-width:1040px}
   </div>
   <div class="grid">
    <div class="field"><label>Materiaal</label><select id="spMat"><option>PLA</option><option>PETG</option><option>ABS</option><option>TPU</option><option>ASA</option><option>PC</option><option>PA</option><option>PVA</option></select></div>
-   <div class="field"><label>Resterend (g)</label><input type="number" id="spRem" value="1000"></div>
+   <div class="field"><label>Resterend (g)</label><div style="display:flex;gap:6px"><input type="number" id="spRem" value="1000" style="flex:1;min-width:0"><button class="formbtn sec" style="padding:0 12px" onclick="spRemWeigh()" title="weeg de rol (resterend = gewogen − leeg)">⚖</button></div></div>
    <div class="field"><label>Nozzle min</label><input type="number" id="spNmin" placeholder="auto"></div>
    <div class="field"><label>Nozzle max</label><input type="number" id="spNmax" placeholder="auto"></div>
    <div class="field"><label>Bambu-code</label><input type="text" id="spCode" placeholder="auto"></div>
@@ -364,6 +364,7 @@ function renderSpList(){
    +'<div style="min-width:0"><div class="name">'+s.name+'<span class="badge">'+s.material+'</span></div>'
    +(s.note?'<div class="muted" style="font-size:12px">'+s.note+'</div>':'')+'</div>'
    +'<div class="grams">'+s.rem+' g</div>'
+   +'<button class="iconbtn" title="Weeg de rol" onclick="spWeigh('+s.i+')">⚖</button>'
    +'<button class="iconbtn" title="Kopieer" onclick="spCopy('+s.i+')">⧉</button>'
    +'<button class="iconbtn" title="Bewerk" onclick="spEdit('+s.i+')">✎</button>'
    +'<button class="iconbtn del" title="Verwijder" onclick="spDel('+s.i+')">✕</button></div>';
@@ -381,6 +382,14 @@ function bulkDel(){if(confirm(selIds().length+' rollen verwijderen?'))bulkGo('ac
 function bulkColorGo(){bulkGo('act=color&v='+encodeURIComponent($('bulkColor').value));}
 function bulkWeightGo(){if($('bulkWeight').value!=='')bulkGo('act=weight&v='+$('bulkWeight').value);}
 function bulkMatGo(){if($('bulkMat').value)bulkGo('act=material&v='+encodeURIComponent($('bulkMat').value));}
+function spRemWeigh(){if(!scaleHost){alert('Geen schaal-IP bekend — stel het in op de Scale-tab.');return;}
+ fetch('http://'+scaleHost+'/weight').then(function(r){return r.json();}).then(function(d){var e=parseFloat($('spEmpty').value)||0;$('spRem').value=Math.max(0,Math.round(d.g-e));}).catch(function(){alert('Geen verbinding met de schaal.');});}
+function spWeigh(i){var s=spCache[i];if(!scaleHost){alert('Geen schaal-IP bekend.');return;}
+ fetch('http://'+scaleHost+'/weight').then(function(r){return r.json();}).then(function(d){
+  var rem=Math.max(0,Math.round(d.g-s.empty));
+  if(!confirm('Rol \''+s.name+'\' wegen?\nGewogen '+Math.round(d.g)+' g − leeg '+s.empty+' g = '+rem+' g resterend.'))return;
+  fetch('/spool_save?idx='+i+'&name='+encodeURIComponent(s.name)+'&material='+encodeURIComponent(s.material)+'&color='+encodeURIComponent(s.rgb)+'&rem='+rem+'&empty='+s.empty+'&nmin='+(s.nmin||0)+'&nmax='+(s.nmax||0)+'&code='+encodeURIComponent(s.code||'')+'&note='+encodeURIComponent(s.note||'')).then(function(){setTimeout(loadSpools,300);});
+ }).catch(function(){alert('Geen verbinding met de schaal.');});}
 function spCopy(i){var s=spCache[i];fetch('/spool_save?idx=&name='+encodeURIComponent(s.name+' (kopie)')+'&material='+encodeURIComponent(s.material)+'&color='+encodeURIComponent(s.rgb)+'&rem='+s.rem+'&empty='+s.empty+'&nmin='+(s.nmin||0)+'&nmax='+(s.nmax||0)+'&code='+encodeURIComponent(s.code||'')+'&note='+encodeURIComponent(s.note||'')).then(function(){setTimeout(loadSpools,300);});}
 function spLoad(i){var sl=$('ss'+i).value;fetch('/spool_load?idx='+i+'&slot='+sl).then(function(r){return r.text();}).then(function(t){spMsg(t+' in slot');});}
 function spDel(i){if(confirm('Rol verwijderen?'))fetch('/spool_del?idx='+i).then(function(){loadSpools();});}
