@@ -12,3 +12,12 @@ access_code=00000000
 # optional
 brightness=70
 wifi_ssid=HomeWiFi
+view3d=1                    # screensaver g-code view: 1 = 3D isometric, 0 = 2D top-down
+scale_ip=192.168.2.60      # PandaScale host (fixed IP, or a name if mDNS works)
+ntfy_topic=                # ntfy.sh topic for push notifications (empty = off)
+
+# Not in this file (managed on the tablet itself):
+#   /sdcard/pandatouch_weights.conf   per-slot filament weight/price tracking
+#   /sdcard/pandatouch_spools.conf    the spool library
+#   /sdcard/pandatouch_empties.conf   empty-spool weight library
+#   /sdcard/pandatouch_history.conf   recent-print log
