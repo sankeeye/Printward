@@ -10,8 +10,11 @@
 
 Spool g_spools[SPOOL_MAX];
 int   g_spool_count = 0;
+EmptySpool g_empties[EMPTY_MAX];
+int        g_empty_count = 0;
 
-#define SPOOLS_PATH "/sdcard/pandatouch_spools.conf"
+#define SPOOLS_PATH  "/sdcard/pandatouch_spools.conf"
+#define EMPTIES_PATH "/sdcard/pandatouch_empties.conf"
 
 // Bambu generic filament codes + typical temps per material. Best-effort - the
 // per-spool `code` field overrides these when the user fills it in.
@@ -95,6 +98,48 @@ void spool_delete(int idx) {
     for (int i = idx; i < g_spool_count - 1; i++) g_spools[i] = g_spools[i + 1];
     g_spool_count--;
     spool_db_save();
+}
+
+// --- empty-spool library -------------------------------------------------
+void empty_db_save() {
+    FILE* f = fopen(EMPTIES_PATH, "w");
+    if (!f) { Serial.println("EMPTIES: save failed"); return; }
+    for (int i = 0; i < g_empty_count; i++) {
+        EmptySpool e = g_empties[i];
+        sanitize(e.name);
+        fprintf(f, "%s|%.1f\n", e.name, e.weight_g);
+    }
+    fclose(f);
+}
+void empty_db_load() {
+    g_empty_count = 0;
+    FILE* f = fopen(EMPTIES_PATH, "r");
+    if (!f) return;
+    char line[128];
+    while (fgets(line, sizeof(line), f) && g_empty_count < EMPTY_MAX) {
+        char* nl = strpbrk(line, "\r\n"); if (nl) *nl = 0;
+        if (!line[0]) continue;
+        char* p = line;
+        EmptySpool e; memset(&e, 0, sizeof(e));
+        strncpy(e.name, field(&p), sizeof(e.name) - 1);
+        e.weight_g = (float)atof(field(&p));
+        g_empties[g_empty_count++] = e;
+    }
+    fclose(f);
+    Serial.printf("EMPTIES: loaded %d\n", g_empty_count);
+}
+int empty_upsert(int idx, const EmptySpool& e) {
+    if (idx < 0) { if (g_empty_count >= EMPTY_MAX) return -1; idx = g_empty_count++; }
+    else if (idx >= g_empty_count) return -1;
+    g_empties[idx] = e;
+    empty_db_save();
+    return idx;
+}
+void empty_delete(int idx) {
+    if (idx < 0 || idx >= g_empty_count) return;
+    for (int i = idx; i < g_empty_count - 1; i++) g_empties[i] = g_empties[i + 1];
+    g_empty_count--;
+    empty_db_save();
 }
 
 void spool_load_to_slot(int idx, int slot) {

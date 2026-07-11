@@ -38,7 +38,8 @@
 extern bool g_screensaver_3d;
 
 // --- thread-safe request queue (web thread -> main thread) ---------------
-enum QKind { Q_MOVE = 1, Q_CTL, Q_CFG, Q_START, Q_SPOOL_SAVE, Q_SPOOL_DEL, Q_SPOOL_LOAD };
+enum QKind { Q_MOVE = 1, Q_CTL, Q_CFG, Q_START, Q_SPOOL_SAVE, Q_SPOOL_DEL, Q_SPOOL_LOAD,
+             Q_EMPTY_SAVE, Q_EMPTY_DEL };
 enum CtlCode { CTL_PAUSE = 1, CTL_RESUME, CTL_STOP, CTL_LIGHT, CTL_FAN, CTL_SPEED };
 
 struct QCmd {
@@ -235,6 +236,15 @@ void webctl_loop() {
             }
             case Q_SPOOL_DEL:  spool_delete(c.code); break;
             case Q_SPOOL_LOAD: spool_load_to_slot(c.code, (int)c.step); break;
+            case Q_EMPTY_SAVE: {
+                EmptySpool e; memset(&e, 0, sizeof(e));
+                char v[24];
+                parse_query(c.arg, "name", e.name, sizeof(e.name));
+                if (parse_query(c.arg, "weight", v, sizeof(v))) e.weight_g = (float)atof(v);
+                empty_upsert(c.code, e);
+                break;
+            }
+            case Q_EMPTY_DEL: empty_delete(c.code); break;
         }
     }
 }
@@ -325,6 +335,18 @@ static void build_spools(char* o, int n) {
             "%s{\"i\":%d,\"name\":\"%s\",\"material\":\"%s\",\"rgb\":\"#%06X\",\"rem\":%.0f,\"empty\":%.0f,\"nmin\":%d,\"nmax\":%d,\"code\":\"%s\",\"note\":\"%s\"}",
             i ? "," : "", i, nm, mat, (unsigned)(s.color & 0xFFFFFF),
             s.remaining_g, s.empty_g, s.nmin, s.nmax, code, note);
+    }
+    snprintf(o + p, n - p, "]");
+}
+
+static void build_empties(char* o, int n) {
+    int p = 0;
+    p += snprintf(o + p, n - p, "[");
+    for (int i = 0; i < g_empty_count; i++) {
+        char nm[80];
+        json_escape(g_empties[i].name, nm, sizeof(nm));
+        p += snprintf(o + p, n - p, "%s{\"i\":%d,\"name\":\"%s\",\"weight\":%.0f}",
+                      i ? "," : "", i, nm, g_empties[i].weight_g);
     }
     snprintf(o + p, n - p, "]");
 }
@@ -435,6 +457,26 @@ static void handle_conn(int fd) {
         parse_query(query, "slot", slots, sizeof(slots));
         q_push(Q_SPOOL_LOAD, atoi(idxs), (float)atoi(slots), nullptr);
         send_resp(fd, "200 OK", "text/plain; charset=utf-8", "geladen", 7);
+        return;
+    }
+    if (!strcmp(path, "/empties")) {
+        char* js = (char*)malloc(4000);
+        if (js) { build_empties(js, 4000); send_resp(fd, "200 OK", "application/json", js, (int)strlen(js)); free(js); }
+        else send_resp(fd, "500 Error", "text/plain", "", 0);
+        return;
+    }
+    if (!strcmp(path, "/empty_save")) {
+        char idxs[8];
+        parse_query(query, "idx", idxs, sizeof(idxs));
+        q_push(Q_EMPTY_SAVE, idxs[0] ? atoi(idxs) : -1, 0, query ? query : "");
+        send_resp(fd, "200 OK", "text/plain; charset=utf-8", "opgeslagen", 10);
+        return;
+    }
+    if (!strcmp(path, "/empty_del")) {
+        char idxs[8];
+        parse_query(query, "idx", idxs, sizeof(idxs));
+        q_push(Q_EMPTY_DEL, atoi(idxs), 0, nullptr);
+        send_resp(fd, "200 OK", "text/plain; charset=utf-8", "verwijderd", 10);
         return;
     }
     send_resp(fd, "404 Not Found", "text/plain", "", 0);

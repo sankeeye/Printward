@@ -25,6 +25,21 @@ struct Spool {
 extern Spool g_spools[SPOOL_MAX];
 extern int   g_spool_count;
 
+// A small library of empty-spool weights (per brand/type) to pick from when
+// weighing or creating a roll, so you don't retype the empty weight each time.
+#define EMPTY_MAX 24
+struct EmptySpool {
+    char name[40];
+    float weight_g;
+};
+extern EmptySpool g_empties[EMPTY_MAX];
+extern int        g_empty_count;
+
+void empty_db_load();
+void empty_db_save();
+int  empty_upsert(int idx, const EmptySpool& e);   // idx<0 = add
+void empty_delete(int idx);
+
 void spool_db_load();
 void spool_db_save();
 

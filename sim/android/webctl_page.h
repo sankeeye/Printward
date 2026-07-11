@@ -142,7 +142,8 @@ h3{margin:0 0 10px;font-size:15px;color:var(--muted);font-weight:600}
    <div class="frow"><label class="muted">Materiaal</label><select id="spMat"><option>PLA</option><option>PETG</option><option>ABS</option><option>TPU</option><option>ASA</option><option>PC</option><option>PA</option><option>PVA</option></select></div>
    <div class="frow"><label class="muted">Kleur</label><input type="color" id="spColor" value="#22aa55" style="width:70px;height:44px;padding:2px"></div>
    <div class="frow"><label class="muted">Resterend (g)</label><input type="number" id="spRem" value="1000" style="width:110px"></div>
-   <div class="frow"><label class="muted">Leeg spoel (g)</label><input type="number" id="spEmpty" value="250" style="width:110px"></div>
+   <div class="frow"><label class="muted">Leeg spoel</label><select id="spEmptySel" style="width:150px"><option value="">— kies —</option></select></div>
+   <div class="frow"><label class="muted">Leeg (g)</label><input type="number" id="spEmpty" value="250" style="width:90px"></div>
   </div>
   <div style="display:flex;gap:10px;flex-wrap:wrap">
    <div class="frow"><label class="muted">Nozzle min</label><input type="number" id="spNmin" placeholder="auto" style="width:90px"></div>
@@ -155,6 +156,14 @@ h3{margin:0 0 10px;font-size:15px;color:var(--muted);font-weight:600}
   <div id="spMsg" class="muted" style="margin-top:8px"></div>
  </div>
  <div class="card"><h3>Rollen</h3><div id="spList" class="muted">…</div></div>
+ <div class="card"><h3>Lege spoelen (bibliotheek)</h3>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+   <div class="frow"><label class="muted">Naam</label><input type="text" id="emName" placeholder="bv. Bambu herbruikbaar"></div>
+   <div class="frow"><label class="muted">Gewicht (g)</label><input type="number" id="emWeight" value="250" style="width:110px"></div>
+   <button id="emSave" class="ext">Toevoegen</button>
+  </div>
+  <div id="emList" class="muted" style="margin-top:10px"></div>
+ </div>
 </section>
 
 <section id="set">
@@ -170,13 +179,13 @@ h3{margin:0 0 10px;font-size:15px;color:var(--muted);font-weight:600}
 </section>
 
 <script>
-var step="1",curState="",curLight=false,curFan=0,cfgFilled=false,curPath="/",scaleHost="",lowG=100,spCache=[];
+var step="1",curState="",curLight=false,curFan=0,cfgFilled=false,curPath="/",scaleHost="",lowG=100,spCache=[],emCache=[];
 function $(id){return document.getElementById(id);}
 function tab(n){
  document.querySelectorAll('nav button').forEach(function(b){b.classList.toggle('on',b.dataset.tab===n);});
  document.querySelectorAll('section').forEach(function(s){s.classList.toggle('on',s.id===n);});
  if(n==='files')loadFiles(curPath);
- if(n==='spools')loadSpools();
+ if(n==='spools'){loadSpools();loadEmpties();}
 }
 document.querySelectorAll('nav button').forEach(function(b){b.onclick=function(){tab(b.dataset.tab);};});
 document.querySelectorAll('.step button').forEach(function(b){b.onclick=function(){step=b.dataset.s;
@@ -299,4 +308,21 @@ $('spSave').onclick=function(){
   +'&nmin='+($('spNmin').value||0)+'&nmax='+($('spNmax').value||0)+'&code='+encodeURIComponent($('spCode').value)+'&note='+encodeURIComponent($('spNote').value);
  fetch('/spool_save?'+q).then(function(r){return r.text();}).then(function(t){spMsg(t);spReset();setTimeout(loadSpools,300);});
 };
+function loadEmpties(){
+ fetch('/empties').then(function(r){return r.json();}).then(function(list){
+  emCache=list;
+  var sel=$('spEmptySel'),cur=sel.value,o='<option value="">— kies —</option>';
+  list.forEach(function(e){o+='<option value="'+e.weight+'">'+e.name+' ('+e.weight+' g)</option>';});
+  sel.innerHTML=o;sel.value=cur;
+  var h='';
+  list.forEach(function(e){h+='<div class="fitem"><span>'+e.name+' <span class="muted">'+e.weight+' g</span></span><button class="b-red" onclick="emDel('+e.i+')">X</button></div>';});
+  $('emList').innerHTML=h||'<div class="muted">nog geen lege spoelen</div>';
+ }).catch(function(){});
+}
+$('spEmptySel').onchange=function(){if(this.value)$('spEmpty').value=this.value;};
+$('emSave').onclick=function(){
+ var q='idx=&name='+encodeURIComponent($('emName').value)+'&weight='+($('emWeight').value||0);
+ fetch('/empty_save?'+q).then(function(){$('emName').value='';setTimeout(loadEmpties,300);});
+};
+function emDel(i){if(confirm('Verwijderen?'))fetch('/empty_del?idx='+i).then(function(){loadEmpties();});}
 </script></body></html>)PAGE"

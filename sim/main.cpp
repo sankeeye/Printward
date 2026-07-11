@@ -138,6 +138,7 @@ int main(int argc, char **argv) {
     load_settings();
     filament_track_init();                   // load persisted spool weights
     spool_db_load();                         // load the spool library
+    empty_db_load();                         // load the empty-spool weights
     bambu_mqtt_setup();
     webctl_start();                          // LAN control page (http://<ip>:8080)
     scale_client_start();                    // background poller for the PandaScale

@@ -6,6 +6,7 @@
 #include "ui_printer.h"
 #include "scale_client.h"
 #include "filament_track.h"   // filament_weigh_assign()
+#include "spool_db.h"         // g_empties (empty-spool library)
 #include "storage.h"       // g_scale_ip, save_settings()
 #include <lvgl.h>
 #include <cstdio>
@@ -23,6 +24,7 @@ static lv_obj_t* g_ta_pass = nullptr;
 static lv_obj_t* g_ta_ip = nullptr;
 static lv_obj_t* g_ta_empty = nullptr;
 static lv_obj_t* g_slot_dd = nullptr;
+static lv_obj_t* g_empty_dd = nullptr;
 static lv_obj_t* g_kb = nullptr;
 
 // percent-encode a query value into out (bounded).
@@ -62,6 +64,16 @@ static void kb_event_cb(lv_event_t* e) {
 }
 
 static void tare_cb(lv_event_t*) { scale_cmd("/tare"); }
+
+// Picking a known empty-spool fills the empty-weight field.
+static void empty_dd_cb(lv_event_t*) {
+    int sel = (int)lv_dropdown_get_selected(g_empty_dd);
+    if (sel >= 1 && sel - 1 < g_empty_count) {
+        char b[16];
+        snprintf(b, sizeof(b), "%.0f", g_empties[sel - 1].weight_g);
+        lv_textarea_set_text(g_ta_empty, b);
+    }
+}
 
 // Weigh the spool now on the scale and assign the filament grams to a slot.
 static void assign_cb(lv_event_t*) {
@@ -213,8 +225,18 @@ void create_weigh_ui() {
     lv_obj_set_width(g_slot_dd, PT_SZ(150));
     lv_obj_set_height(g_slot_dd, PT_SZ(46));
     lv_obj_set_style_text_font(g_slot_dd, &lv_font_montserrat_14, 0);
-    g_ta_empty = make_ta(rw, "leeg g", "250", false, 90);
-    make_btn(rw, "Weeg naar slot", 0x8e44ad, assign_cb, 150);
+    // empty-spool picker (fills the leeg-g field from the library)
+    g_empty_dd = lv_dropdown_create(rw);
+    char eopts[512];
+    int en = snprintf(eopts, sizeof(eopts), "handmatig");
+    for (int i = 0; i < g_empty_count && en < (int)sizeof(eopts) - 48; i++)
+        en += snprintf(eopts + en, sizeof(eopts) - en, "\n%s (%.0fg)", g_empties[i].name, g_empties[i].weight_g);
+    lv_dropdown_set_options(g_empty_dd, eopts);
+    lv_obj_set_width(g_empty_dd, PT_SZ(150));
+    lv_obj_set_style_text_font(g_empty_dd, &lv_font_montserrat_14, 0);
+    lv_obj_add_event_cb(g_empty_dd, empty_dd_cb, LV_EVENT_VALUE_CHANGED, nullptr);
+    g_ta_empty = make_ta(rw, "leeg g", "250", false, 80);
+    make_btn(rw, "Weeg naar slot", 0x8e44ad, assign_cb, 140);
 
     // Network info
     g_infolbl = lv_label_create(root);
