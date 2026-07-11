@@ -377,10 +377,10 @@ setInterval(poll,1500);poll();
 function sMsg(t){$('sMsg').textContent=t;}
 function scalePoll(){
  if(!$('scale').classList.contains('on')||!scaleHost)return;
- fetch('http://'+scaleHost+'/weight').then(function(r){return r.json();}).then(function(d){
+ fetch('http://'+scaleHost+'/weight?t='+Date.now()).then(function(r){return r.json();}).then(function(d){
   $('swt').textContent=d.g.toFixed(0)+' g';$('sst').textContent=d.stable?'stabiel':'…meten';
  }).catch(function(){$('sst').textContent='geen verbinding met schaal';});
- fetch('http://'+scaleHost+'/info').then(function(r){return r.json();}).then(function(d){
+ fetch('http://'+scaleHost+'/info?t='+Date.now()).then(function(r){return r.json();}).then(function(d){
   $('sInfo').textContent=(d.connected?'verbonden':'AP-modus')+' · '+d.ip+' · '+d.ssid+' · '+d.rssi+'dBm'+(d.static?' · vast IP':'');
  }).catch(function(){});
 }
@@ -426,9 +426,9 @@ function bulkColorGo(){bulkGo('act=color&v='+encodeURIComponent($('bulkColor').v
 function bulkWeightGo(){if($('bulkWeight').value!=='')bulkGo('act=weight&v='+$('bulkWeight').value);}
 function bulkMatGo(){if($('bulkMat').value)bulkGo('act=material&v='+encodeURIComponent($('bulkMat').value));}
 function spRemWeigh(){if(!scaleHost){alert('Geen schaal-IP bekend — stel het in op de Scale-tab.');return;}
- fetch('http://'+scaleHost+'/weight').then(function(r){return r.json();}).then(function(d){var e=parseFloat($('spEmpty').value)||0;$('spRem').value=Math.max(0,Math.round(d.g-e));}).catch(function(){alert('Geen verbinding met de schaal.');});}
+ fetch('http://'+scaleHost+'/weight?t='+Date.now()).then(function(r){return r.json();}).then(function(d){var e=parseFloat($('spEmpty').value)||0;$('spRem').value=Math.max(0,Math.round(d.g-e));}).catch(function(){alert('Geen verbinding met de schaal.');});}
 function spWeigh(i){var s=spCache[i];if(!scaleHost){alert('Geen schaal-IP bekend.');return;}
- fetch('http://'+scaleHost+'/weight').then(function(r){return r.json();}).then(function(d){
+ fetch('http://'+scaleHost+'/weight?t='+Date.now()).then(function(r){return r.json();}).then(function(d){
   var rem=Math.max(0,Math.round(d.g-s.empty));
   if(!confirm('Rol \''+s.name+'\' wegen?\nGewogen '+Math.round(d.g)+' g − leeg '+s.empty+' g = '+rem+' g resterend.'))return;
   fetch('/spool_save?idx='+i+'&name='+encodeURIComponent(s.name)+'&material='+encodeURIComponent(s.material)+'&color='+encodeURIComponent(s.rgb)+'&rem='+rem+'&empty='+s.empty+'&nmin='+(s.nmin||0)+'&nmax='+(s.nmax||0)+'&code='+encodeURIComponent(s.code||'')+'&note='+encodeURIComponent(s.note||'')).then(function(){setTimeout(loadSpools,300);});
@@ -465,7 +465,7 @@ $('emSave').onclick=function(){
 };
 function emDel(i){if(confirm('Verwijderen?'))fetch('/empty_del?idx='+i).then(function(){loadEmpties();});}
 function emWeigh(){if(!scaleHost){alert('Geen schaal-IP bekend — stel het in op de Scale-tab.');return;}
- fetch('http://'+scaleHost+'/weight').then(function(r){return r.json();}).then(function(d){$('emWeight').value=Math.round(d.g);}).catch(function(){alert('Geen verbinding met de schaal.');});}
+ fetch('http://'+scaleHost+'/weight?t='+Date.now()).then(function(r){return r.json();}).then(function(d){$('emWeight').value=Math.round(d.g);}).catch(function(){alert('Geen verbinding met de schaal.');});}
 function downloadBackup(){
  Promise.all([fetch('/spools').then(function(r){return r.json();}),fetch('/empties').then(function(r){return r.json();})]).then(function(a){
   var blob=new Blob([JSON.stringify({spools:a[0],empties:a[1]},null,1)],{type:'application/json'});
