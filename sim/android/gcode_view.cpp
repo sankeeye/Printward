@@ -108,6 +108,35 @@ static int cmp_i16(const void* a, const void* b) {
 }
 
 static float g_minf, g_maxf_x, g_minf_y, g_maxf_y;   // running bounds (mm)
+static float g_filament_g = 0;   // total filament for this print (grams), 0 = unknown
+
+// The slicer writes the filament total as a comment, e.g.
+//   ; total filament weight [g] : 15.67
+//   ; filament used [g] = 10.5,5.2     (multi-material -> summed)
+// Scan the whole gcode for it so the weight tracker can estimate consumption.
+static float scan_filament_g(const char* g, uint32_t len) {
+    const char* keys[] = {"total filament weight [g]", "filament used [g]"};
+    const char* e = g + len;
+    for (int k = 0; k < 2; k++) {
+        size_t kl = strlen(keys[k]);
+        const char* p = (const char*)memmem(g, len, keys[k], kl);
+        if (!p) continue;
+        const char* q = p + kl;
+        while (q < e && *q != '=' && *q != ':' && *q != '\n') q++;   // skip to = or :
+        if (q >= e || *q == '\n') continue;
+        q++;
+        float sum = 0; bool any = false;
+        while (q < e && *q != '\n') {
+            while (q < e && (*q == ' ' || *q == ',' || *q == '\t')) q++;
+            if (q < e && (*q == '.' || (*q >= '0' && *q <= '9'))) {
+                sum += (float)atof(q); any = true;
+                while (q < e && *q != ',' && *q != '\n') q++;
+            } else break;
+        }
+        if (any && sum > 0) return sum;
+    }
+    return 0;
+}
 
 static inline void add_seg(float x1, float y1, float x2, float y2, float z, int layer) {
     float dx = x2 - x1, dy = y2 - y1;
@@ -132,6 +161,7 @@ static inline void add_seg(float x1, float y1, float x2, float y2, float z, int 
 
 static void parse_gcode(const char* g, uint32_t len) {
     g_seg_count = 0; g_max_layer = 0; g_maxz = 0;
+    g_filament_g = scan_filament_g(g, len);
     float px = 0, py = 0, pz = 0; bool have_prev = false;
     int layer = 0;
     g_minf = 1e9f; g_maxf_x = -1e9f; g_minf_y = 1e9f; g_maxf_y = -1e9f;
@@ -223,8 +253,8 @@ static void parse_gcode(const char* g, uint32_t len) {
         free(xs); free(ys);
     }
 
-    Serial.printf("GCODE: %u bytes, %d segs, %d layers, bounds x[%d..%d] y[%d..%d]\n",
-                  (unsigned)len, g_seg_count, g_max_layer, g_minx, g_maxx, g_miny, g_maxy);
+    Serial.printf("GCODE: %u bytes, %d segs, %d layers, filament=%.1fg, bounds x[%d..%d] y[%d..%d]\n",
+                  (unsigned)len, g_seg_count, g_max_layer, g_filament_g, g_minx, g_maxx, g_miny, g_maxy);
 }
 
 void gcode_view_load(const char* gcode_file_name) {
@@ -261,6 +291,7 @@ bool gcode_view_ready() { return g_ready; }
 const GcodeSeg* gcode_view_segments() { return g_ready ? g_segs : nullptr; }
 int gcode_view_seg_count() { return g_seg_count; }
 int gcode_view_max_layer() { return g_max_layer; }
+float gcode_view_filament_g() { return g_filament_g; }
 int16_t gcode_view_max_z() { return g_maxz; }
 void gcode_view_bounds(int16_t* minx, int16_t* miny, int16_t* maxx, int16_t* maxy) {
     *minx = g_minx; *miny = g_miny; *maxx = g_maxx; *maxy = g_maxy;

@@ -22,5 +22,7 @@ bool gcode_view_ready();                 // parse finished, segments available
 const GcodeSeg* gcode_view_segments();   // segment array (or nullptr)
 int gcode_view_seg_count();
 int gcode_view_max_layer();
+// Total filament for this print in grams (from the slicer comment), 0 = unknown.
+float gcode_view_filament_g();
 // Model XY bounds (0.1 mm units) for scaling to the canvas.
 void gcode_view_bounds(int16_t* minx, int16_t* miny, int16_t* maxx, int16_t* maxy);
