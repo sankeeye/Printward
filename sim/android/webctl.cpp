@@ -284,6 +284,10 @@ void webctl_loop() {
                         g_spools[ids[a]].material[sizeof(g_spools[0].material) - 1] = 0;
                     }
                     spool_db_save();
+                } else if (!strcmp(act, "price")) {
+                    float pr = (float)atof(v);
+                    for (int a = 0; a < n; a++) if (ids[a] >= 0 && ids[a] < g_spool_count) g_spools[ids[a]].price_kg = pr;
+                    spool_db_save();
                 }
                 break;
             }

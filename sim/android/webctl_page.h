@@ -217,6 +217,7 @@ section#spools{max-width:1040px}
    <span style="display:flex;align-items:center;gap:5px"><input type="color" id="bulkColor" value="#22aa55" class="chip" style="width:34px;height:32px"><button class="formbtn sec" style="padding:8px 12px" onclick="bulkColorGo()">Kleur</button></span>
    <span style="display:flex;align-items:center;gap:5px"><input type="number" id="bulkWeight" placeholder="g" style="width:74px;padding:8px;border-radius:8px;border:1px solid #333b44;background:var(--bg);color:#fff"><button class="formbtn sec" style="padding:8px 12px" onclick="bulkWeightGo()">Gewicht</button></span>
    <span style="display:flex;align-items:center;gap:5px"><select id="bulkMat" style="padding:8px;border-radius:8px;border:1px solid #333b44;background:var(--bg);color:#fff"><option value="">materiaal…</option><option>PLA</option><option>PETG</option><option>ABS</option><option>TPU</option><option>ASA</option><option>PC</option><option>PA</option><option>PVA</option></select><button class="formbtn sec" style="padding:8px 12px" onclick="bulkMatGo()">Zet</button></span>
+   <span style="display:flex;align-items:center;gap:5px"><input type="number" id="bulkPrice" placeholder="€/kg" step="0.01" style="width:74px;padding:8px;border-radius:8px;border:1px solid #333b44;background:var(--bg);color:#fff"><button class="formbtn sec" style="padding:8px 12px" onclick="bulkPriceGo()">Prijs</button></span>
    <button class="formbtn sec" style="padding:8px 12px" onclick="clearSel()">Deselecteer</button>
   </div>
   <div id="spList" class="muted">…</div>
@@ -426,6 +427,7 @@ function bulkDel(){if(confirm(selIds().length+' rollen verwijderen?'))bulkGo('ac
 function bulkColorGo(){bulkGo('act=color&v='+encodeURIComponent($('bulkColor').value));}
 function bulkWeightGo(){if($('bulkWeight').value!=='')bulkGo('act=weight&v='+$('bulkWeight').value);}
 function bulkMatGo(){if($('bulkMat').value)bulkGo('act=material&v='+encodeURIComponent($('bulkMat').value));}
+function bulkPriceGo(){if($('bulkPrice').value!=='')bulkGo('act=price&v='+$('bulkPrice').value);}
 function spRemWeigh(){if(!scaleHost){alert('Geen schaal-IP bekend — stel het in op de Scale-tab.');return;}
  fetch('http://'+scaleHost+'/weight?t='+Date.now()).then(function(r){return r.json();}).then(function(d){var e=parseFloat($('spEmpty').value)||0;$('spRem').value=Math.max(0,Math.round(d.g-e));}).catch(function(){alert('Geen verbinding met de schaal.');});}
 function spWeigh(i){var s=spCache[i];if(!scaleHost){alert('Geen schaal-IP bekend.');return;}
