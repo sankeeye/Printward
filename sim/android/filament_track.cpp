@@ -139,3 +139,20 @@ bool filament_any_low() {
             if (filament_slot_low(u * AMS_MAX_TRAYS + t)) return true;
     return false;
 }
+
+float filament_shortfall() {
+    PrinterStatus& s = g_printer_status;
+    bool printing = (strcmp(s.gcode_state, "RUNNING") == 0 || strcmp(s.gcode_state, "PAUSE") == 0);
+    if (!printing) return -1;
+    int slot = s.active_tray_now;
+    if (slot < 0 || slot == 255) return -1;
+    if (!(slot == EXT_SLOT || (slot / AMS_MAX_TRAYS) < AMS_MAX_UNITS)) return -1;
+    float total = gcode_view_ready() ? gcode_view_filament_g() : 0.0f;
+    if (total <= 0) return -1;
+    float have = filament_remaining(slot);          // -1 if the slot wasn't weighed
+    if (have < 0) return -1;
+    float pct = (float)s.progress_pct; if (pct < 0) pct = 0; if (pct > 100) pct = 100;
+    float need = total * (100.0f - pct) / 100.0f;    // filament still to be printed
+    float shortfall = need - have;
+    return shortfall > 0 ? shortfall : 0;
+}

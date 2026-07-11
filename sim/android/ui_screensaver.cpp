@@ -6,6 +6,7 @@
 #include "ui_screensaver.h"
 #include "bambu_mqtt.h"
 #include "gcode_view.h"
+#include "filament_track.h"   // filament_shortfall() for the low-filament warning
 #include <lvgl.h>
 #include <ctime>
 #include <cstring>
@@ -29,7 +30,7 @@ static lv_obj_t* g_ss = nullptr;
 static lv_obj_t* g_page1 = nullptr;   // dashboard
 static lv_obj_t* g_page2 = nullptr;   // g-code view
 // dashboard widgets
-static lv_obj_t* g_clock, *g_date, *g_name, *g_pct, *g_bar, *g_layers, *g_time, *g_ams, *g_temps;
+static lv_obj_t* g_clock, *g_date, *g_name, *g_pct, *g_bar, *g_layers, *g_time, *g_ams, *g_temps, *g_warn;
 // g-code page
 static lv_obj_t* g_gcanvas = nullptr;
 static lv_obj_t* g_ghdr = nullptr;
@@ -188,6 +189,10 @@ void create_screensaver() {
     g_time   = mk_label(g_page1, &lv_font_montserrat_28, 0xFFFFFF);
     g_ams    = mk_label(g_page1, &lv_font_montserrat_22, 0xAAAAAA);
     g_temps  = mk_label(g_page1, &lv_font_montserrat_22, 0xAAAAAA);
+    g_warn   = mk_label(g_page1, &lv_font_montserrat_28, 0xe74c3c);
+    lv_label_set_long_mode(g_warn, LV_LABEL_LONG_WRAP);
+    lv_obj_set_width(g_warn, lv_pct(90));
+    lv_obj_set_style_text_align(g_warn, LV_TEXT_ALIGN_CENTER, 0);
 
     // --- Page 2: g-code build-up ---
     g_page2 = lv_obj_create(g_ss);
@@ -246,6 +251,9 @@ static void update_dashboard() {
     }
     lv_label_set_text_fmt(g_temps, "Nozzle %.0f\xC2\xB0   Bed %.0f\xC2\xB0   Chamber %.0f\xC2\xB0",
                           s.nozzle_temp, s.bed_temp, s.chamber_temp);
+    float sh = filament_shortfall();
+    if (sh > 0) lv_label_set_text_fmt(g_warn, LV_SYMBOL_WARNING " Filament tekort: ~%.0f g te kort", sh);
+    else lv_label_set_text(g_warn, "");
 }
 
 static void update_gcode_page() {

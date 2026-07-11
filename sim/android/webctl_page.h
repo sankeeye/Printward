@@ -107,6 +107,7 @@ section#spools{max-width:1040px}
 </nav>
 
 <section id="dash" class="on">
+ <div id="warn" style="display:none;background:#5a2020;color:#ffd0d0;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-weight:600"></div>
  <div class="card"><div id="state">–</div><div id="task" class="muted"></div>
   <div class="bar"><div id="fill"></div></div><div id="prog" class="muted"></div></div>
  <div class="card temps"><div>Nozzle <b id="noz">–</b></div><div>Bed <b id="bed">–</b></div><div>Kamer <b id="cham">–</b></div></div>
@@ -320,6 +321,7 @@ function poll(){
   $('state').textContent=s.state||'–';$('task').textContent=s.name||'';
   $('fill').style.width=(s.pct||0)+'%';
   $('prog').textContent=(s.pct||0)+'%'+(s.total?('  laag '+s.layer+'/'+s.total):'')+(s.remain?('  ~'+s.remain+' min'):'');
+  var w=$('warn');if(w){if(s.short>0){w.style.display='block';w.textContent='⚠ Filament tekort — komt ~'+s.short+' g te kort voor deze print op het actieve slot. Overweeg een vollere spoel.';}else{w.style.display='none';}}
   $('noz').textContent=s.nozzle+'/'+s.nozzle_t+'°';$('bed').textContent=s.bed+'/'+s.bed_t+'°';$('cham').textContent=s.chamber+'°';
   $('bPause').textContent=(s.state==='PAUSE')?'Resume':'Pause';
   $('bLight').textContent='Licht: '+(s.light?'aan':'uit');

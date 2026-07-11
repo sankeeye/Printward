@@ -296,8 +296,8 @@ static void build_status(char* o, int n) {
     p += snprintf(o + p, n - p,
         "\"nozzle\":%.0f,\"nozzle_t\":%.0f,\"bed\":%.0f,\"bed_t\":%.0f,\"chamber\":%.0f,",
         s.nozzle_temp, s.nozzle_target, s.bed_temp, s.bed_target, s.chamber_temp);
-    p += snprintf(o + p, n - p, "\"light\":%s,\"fan\":%d,\"speed\":%d,\"active_tray\":%d,",
-        s.light_on ? "true" : "false", s.fan_speed_pct, s.speed_level, s.active_tray_now);
+    p += snprintf(o + p, n - p, "\"light\":%s,\"fan\":%d,\"speed\":%d,\"active_tray\":%d,\"short\":%.0f,",
+        s.light_on ? "true" : "false", s.fan_speed_pct, s.speed_level, s.active_tray_now, filament_shortfall());
     p += snprintf(o + p, n - p,
         "\"cfg\":{\"ip\":\"%s\",\"serial\":\"%s\",\"view3d\":%s,\"bri\":%d,\"code_set\":%s,\"scale_ip\":\"%s\",\"low\":%d},",
         g_printer_ip, g_printer_serial, g_screensaver_3d ? "true" : "false",

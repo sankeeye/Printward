@@ -23,4 +23,9 @@ float filament_remaining(int slot);   // grams left, or -1 if no capacity set
 bool  filament_slot_low(int slot);    // capacity set AND remaining < threshold
 bool  filament_any_low();             // any slot low
 
+// While a print runs on a weighed slot: how many grams the active slot will
+// fall SHORT for the rest of this print. >0 = shortage, 0 = enough, -1 = N/A
+// (not printing / no gcode filament total / active slot not weighed).
+float filament_shortfall();
+
 #endif
