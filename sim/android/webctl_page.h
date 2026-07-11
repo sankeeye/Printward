@@ -91,6 +91,9 @@ h3{margin:0 0 10px;font-size:15px;color:var(--muted);font-weight:600}
 .chiprow{display:flex;align-items:center;gap:10px;background:var(--panel2);border-radius:8px;padding:9px 12px;margin-bottom:6px}
 .formbtn{border:0;border-radius:9px;padding:11px 20px;font-size:15px;cursor:pointer}
 .formbtn.pri{background:#27ae60;color:#fff}.formbtn.sec{background:#3a434d;color:#eceff2}
+.sprow{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;margin-bottom:16px}
+.sprow .card{margin-bottom:0}
+section#spools{max-width:1040px}
 </style></head><body>
 <header><div class="t">PandaTouch</div><div id="conn" class="muted">verbinden…</div></header>
 <nav>
@@ -160,7 +163,8 @@ h3{margin:0 0 10px;font-size:15px;color:var(--muted);font-weight:600}
 </section>
 
 <section id="spools">
- <div class="card"><h3 id="spTitle">Nieuwe rol</h3>
+ <div class="sprow">
+ <div class="card" style="flex:1 1 360px"><h3 id="spTitle">Nieuwe rol</h3>
   <div class="field" style="margin-bottom:14px"><label>Naam / merk</label><input type="text" id="spName" placeholder="bv. Bambu PLA Zwart"></div>
   <div class="field" style="margin-bottom:14px"><label>Kleur</label>
    <div class="swatches"><input type="color" id="spColor" value="#22aa55" class="chip"><span id="spSw" class="swatches"></span></div>
@@ -179,8 +183,7 @@ h3{margin:0 0 10px;font-size:15px;color:var(--muted);font-weight:600}
   <div style="display:flex;gap:10px;margin-top:16px"><button id="spSave" class="formbtn pri">Opslaan</button><button id="spNew" class="formbtn sec">Nieuw</button></div>
   <div id="spMsg" class="muted" style="margin-top:8px"></div>
  </div>
- <div class="card"><h3>Rollen</h3><div id="spList" class="muted">…</div></div>
- <div class="card"><h3>Lege spoelen</h3>
+ <div class="card" style="flex:1 1 300px"><h3>Lege spoelen</h3>
   <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px">
    <div class="field" style="flex:1;min-width:160px"><label>Naam</label><input type="text" id="emName" placeholder="bv. Bambu herbruikbaar"></div>
    <div class="field" style="width:120px"><label>Gewicht (g)</label><input type="number" id="emWeight" value="250"></div>
@@ -188,6 +191,8 @@ h3{margin:0 0 10px;font-size:15px;color:var(--muted);font-weight:600}
   </div>
   <div id="emList"></div>
  </div>
+ </div>
+ <div class="card"><h3>Rollen</h3><div id="spList" class="muted">…</div></div>
 </section>
 
 <section id="set">
