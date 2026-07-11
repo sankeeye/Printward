@@ -39,7 +39,7 @@ extern bool g_screensaver_3d;
 
 // --- thread-safe request queue (web thread -> main thread) ---------------
 enum QKind { Q_MOVE = 1, Q_CTL, Q_CFG, Q_START, Q_SPOOL_SAVE, Q_SPOOL_DEL, Q_SPOOL_LOAD,
-             Q_EMPTY_SAVE, Q_EMPTY_DEL };
+             Q_EMPTY_SAVE, Q_EMPTY_DEL, Q_SPOOL_BULK };
 enum CtlCode { CTL_PAUSE = 1, CTL_RESUME, CTL_STOP, CTL_LIGHT, CTL_FAN, CTL_SPEED };
 
 struct QCmd {
@@ -245,6 +245,40 @@ void webctl_loop() {
                 break;
             }
             case Q_EMPTY_DEL: empty_delete(c.code); break;
+            case Q_SPOOL_BULK: {
+                char act[16], v[64], idxs[300];
+                parse_query(c.arg, "act", act, sizeof(act));
+                parse_query(c.arg, "v", v, sizeof(v));
+                parse_query(c.arg, "idx", idxs, sizeof(idxs));
+                int ids[80], n = 0;
+                for (char* p = idxs; *p && n < 80; ) {
+                    ids[n++] = atoi(p);
+                    char* comma = strchr(p, ',');
+                    if (!comma) break;
+                    p = comma + 1;
+                }
+                if (!strcmp(act, "del")) {
+                    for (int a = 0; a < n; a++)          // delete high->low so indices stay valid
+                        for (int b = a + 1; b < n; b++)
+                            if (ids[b] > ids[a]) { int t = ids[a]; ids[a] = ids[b]; ids[b] = t; }
+                    for (int a = 0; a < n; a++) spool_delete(ids[a]);
+                } else if (!strcmp(act, "color")) {
+                    uint32_t col = (uint32_t)strtoul(v[0] == '#' ? v + 1 : v, nullptr, 16);
+                    for (int a = 0; a < n; a++) if (ids[a] >= 0 && ids[a] < g_spool_count) g_spools[ids[a]].color = col;
+                    spool_db_save();
+                } else if (!strcmp(act, "weight")) {
+                    float g = (float)atof(v);
+                    for (int a = 0; a < n; a++) if (ids[a] >= 0 && ids[a] < g_spool_count) g_spools[ids[a]].remaining_g = g;
+                    spool_db_save();
+                } else if (!strcmp(act, "material")) {
+                    for (int a = 0; a < n; a++) if (ids[a] >= 0 && ids[a] < g_spool_count) {
+                        strncpy(g_spools[ids[a]].material, v, sizeof(g_spools[0].material) - 1);
+                        g_spools[ids[a]].material[sizeof(g_spools[0].material) - 1] = 0;
+                    }
+                    spool_db_save();
+                }
+                break;
+            }
         }
     }
 }
@@ -477,6 +511,11 @@ static void handle_conn(int fd) {
         parse_query(query, "idx", idxs, sizeof(idxs));
         q_push(Q_EMPTY_DEL, atoi(idxs), 0, nullptr);
         send_resp(fd, "200 OK", "text/plain; charset=utf-8", "verwijderd", 10);
+        return;
+    }
+    if (!strcmp(path, "/spool_bulk")) {
+        q_push(Q_SPOOL_BULK, 0, 0, query ? query : "");
+        send_resp(fd, "200 OK", "text/plain; charset=utf-8", "ok", 2);
         return;
     }
     send_resp(fd, "404 Not Found", "text/plain", "", 0);

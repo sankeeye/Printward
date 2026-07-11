@@ -192,7 +192,21 @@ section#spools{max-width:1040px}
   <div id="emList"></div>
  </div>
  </div>
- <div class="card"><h3>Rollen</h3><div id="spList" class="muted">…</div></div>
+ <div class="card"><h3>Rollen</h3>
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+   <input type="text" id="spSearch" placeholder="Zoek op naam of materiaal…" oninput="renderSpList()" style="flex:1;min-width:150px;padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff;font-size:15px">
+   <label class="muted" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="spAll" onchange="toggleAll(this.checked)" style="width:18px;height:18px"> alles</label>
+  </div>
+  <div id="spBulk" style="display:none;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;background:var(--panel2);border-radius:8px;padding:9px 12px">
+   <b id="spSelCount"></b>
+   <button class="formbtn" style="background:#4a2323;color:#ff9a9a;padding:8px 14px" onclick="bulkDel()">Verwijder</button>
+   <span style="display:flex;align-items:center;gap:5px"><input type="color" id="bulkColor" value="#22aa55" class="chip" style="width:34px;height:32px"><button class="formbtn sec" style="padding:8px 12px" onclick="bulkColorGo()">Kleur</button></span>
+   <span style="display:flex;align-items:center;gap:5px"><input type="number" id="bulkWeight" placeholder="g" style="width:74px;padding:8px;border-radius:8px;border:1px solid #333b44;background:var(--bg);color:#fff"><button class="formbtn sec" style="padding:8px 12px" onclick="bulkWeightGo()">Gewicht</button></span>
+   <span style="display:flex;align-items:center;gap:5px"><select id="bulkMat" style="padding:8px;border-radius:8px;border:1px solid #333b44;background:var(--bg);color:#fff"><option value="">materiaal…</option><option>PLA</option><option>PETG</option><option>ABS</option><option>TPU</option><option>ASA</option><option>PC</option><option>PA</option><option>PVA</option></select><button class="formbtn sec" style="padding:8px 12px" onclick="bulkMatGo()">Zet</button></span>
+   <button class="formbtn sec" style="padding:8px 12px" onclick="clearSel()">Deselecteer</button>
+  </div>
+  <div id="spList" class="muted">…</div>
+ </div>
 </section>
 
 <section id="set">
@@ -212,7 +226,7 @@ section#spools{max-width:1040px}
  <div id="rollList"></div>
 </div></div>
 <script>
-var step="1",curState="",curLight=false,curFan=0,cfgFilled=false,curPath="/",scaleHost="",lowG=100,spCache=[],emCache=[],pickSlot=-1;
+var step="1",curState="",curLight=false,curFan=0,cfgFilled=false,curPath="/",scaleHost="",lowG=100,spCache=[],emCache=[],pickSlot=-1,spSel={};
 function $(id){return document.getElementById(id);}
 function tab(n){
  document.querySelectorAll('nav button').forEach(function(b){b.classList.toggle('on',b.dataset.tab===n);});
@@ -331,19 +345,37 @@ setInterval(scalePoll,1200);
 function spMsg(t){$('spMsg').textContent=t;}
 function spSlotOpts(){var o='';for(var u=0;u<2;u++)for(var t=0;t<4;t++){o+='<option value="'+(u*4+t)+'">AMS'+(u+1)+' T'+(t+1)+'</option>';}return o+'<option value="254">Externe spoel</option>';}
 function loadSpools(){
- fetch('/spools').then(function(r){return r.json();}).then(function(list){
-  spCache=list;var h='';
-  list.forEach(function(s){
-   h+='<div class="rollcard"><div style="width:42px;height:42px;border-radius:9px;flex:0 0 auto;border:1px solid #3a434d;background:'+s.rgb+'"></div>'
-    +'<div style="min-width:0"><div class="name">'+s.name+'<span class="badge">'+s.material+'</span></div>'
-    +(s.note?'<div class="muted" style="font-size:12px">'+s.note+'</div>':'')+'</div>'
-    +'<div class="grams">'+s.rem+' g</div>'
-    +'<button class="iconbtn" title="Bewerk" onclick="spEdit('+s.i+')">✎</button>'
-    +'<button class="iconbtn del" title="Verwijder" onclick="spDel('+s.i+')">✕</button></div>';
-  });
-  $('spList').innerHTML=h||'<div class="muted">Nog geen rollen — vul hierboven een rol in.</div>';
- }).catch(function(){$('spList').innerHTML='<div class="muted">geen tablet</div>';});
+ fetch('/spools').then(function(r){return r.json();}).then(function(list){spCache=list;renderSpList();})
+ .catch(function(){$('spList').innerHTML='<div class="muted">geen tablet</div>';});
 }
+function renderSpList(){
+ var q=(($('spSearch')&&$('spSearch').value)||'').toLowerCase();
+ var h='';
+ spCache.forEach(function(s){
+  if(q&&(s.name+' '+s.material).toLowerCase().indexOf(q)<0)return;
+  h+='<div class="rollcard"><input type="checkbox" '+(spSel[s.i]?'checked':'')+' onchange="selToggle('+s.i+',this.checked)" style="width:20px;height:20px;flex:0 0 auto">'
+   +'<div style="width:38px;height:38px;border-radius:8px;flex:0 0 auto;border:1px solid #3a434d;background:'+s.rgb+'"></div>'
+   +'<div style="min-width:0"><div class="name">'+s.name+'<span class="badge">'+s.material+'</span></div>'
+   +(s.note?'<div class="muted" style="font-size:12px">'+s.note+'</div>':'')+'</div>'
+   +'<div class="grams">'+s.rem+' g</div>'
+   +'<button class="iconbtn" title="Kopieer" onclick="spCopy('+s.i+')">⧉</button>'
+   +'<button class="iconbtn" title="Bewerk" onclick="spEdit('+s.i+')">✎</button>'
+   +'<button class="iconbtn del" title="Verwijder" onclick="spDel('+s.i+')">✕</button></div>';
+ });
+ $('spList').innerHTML=h||'<div class="muted">Geen rollen gevonden.</div>';
+ updateBulk();
+}
+function selToggle(i,c){if(c)spSel[i]=true;else delete spSel[i];updateBulk();}
+function selIds(){return Object.keys(spSel);}
+function updateBulk(){var bar=$('spBulk');if(!bar)return;var ids=selIds();bar.style.display=ids.length?'flex':'none';if($('spSelCount'))$('spSelCount').textContent=ids.length+' geselecteerd';}
+function toggleAll(c){spSel={};if(c){var q=(($('spSearch')&&$('spSearch').value)||'').toLowerCase();spCache.forEach(function(s){if(!q||(s.name+' '+s.material).toLowerCase().indexOf(q)>=0)spSel[s.i]=true;});}renderSpList();}
+function clearSel(){spSel={};if($('spAll'))$('spAll').checked=false;renderSpList();}
+function bulkGo(qs){fetch('/spool_bulk?idx='+selIds().join(',')+'&'+qs).then(function(){spSel={};if($('spAll'))$('spAll').checked=false;setTimeout(loadSpools,300);});}
+function bulkDel(){if(confirm(selIds().length+' rollen verwijderen?'))bulkGo('act=del');}
+function bulkColorGo(){bulkGo('act=color&v='+encodeURIComponent($('bulkColor').value));}
+function bulkWeightGo(){if($('bulkWeight').value!=='')bulkGo('act=weight&v='+$('bulkWeight').value);}
+function bulkMatGo(){if($('bulkMat').value)bulkGo('act=material&v='+encodeURIComponent($('bulkMat').value));}
+function spCopy(i){var s=spCache[i];fetch('/spool_save?idx=&name='+encodeURIComponent(s.name+' (kopie)')+'&material='+encodeURIComponent(s.material)+'&color='+encodeURIComponent(s.rgb)+'&rem='+s.rem+'&empty='+s.empty+'&nmin='+(s.nmin||0)+'&nmax='+(s.nmax||0)+'&code='+encodeURIComponent(s.code||'')+'&note='+encodeURIComponent(s.note||'')).then(function(){setTimeout(loadSpools,300);});}
 function spLoad(i){var sl=$('ss'+i).value;fetch('/spool_load?idx='+i+'&slot='+sl).then(function(r){return r.text();}).then(function(t){spMsg(t+' in slot');});}
 function spDel(i){if(confirm('Rol verwijderen?'))fetch('/spool_del?idx='+i).then(function(){loadSpools();});}
 function spEdit(i){var s=spCache[i];$('spTitle').textContent='Rol bewerken';$('spIdx').value=i;
