@@ -4,6 +4,7 @@
 #include "ui_settings.h"
 #include "ui_filament.h"
 #include "ui_files.h"
+#include "ui_move.h"
 #include "pt/pt_display.h"
 #include "ui_scale.h"   // tablet font scaling (Android only)
 
@@ -170,6 +171,10 @@ static void files_btn_cb(lv_event_t* e) {
     create_files_ui();
 }
 
+static void move_btn_cb(lv_event_t* e) {
+    create_move_ui();
+}
+
 static lv_obj_t* make_row(lv_obj_t* parent, int32_t height) {
     lv_obj_t* row = lv_obj_create(parent);
     lv_obj_set_size(row, lv_pct(100), PT_SZ(height));
@@ -229,6 +234,15 @@ void create_printer_ui() {
 
     g_conn_label = lv_label_create(header);
     lv_obj_set_style_text_font(g_conn_label, &lv_font_montserrat_14, 0);
+
+    lv_obj_t* move_btn = lv_btn_create(header);
+    lv_obj_set_size(move_btn, PT_SZ(74), PT_SZ(26));
+    lv_obj_set_style_bg_color(move_btn, lv_color_hex(0x333333), LV_PART_MAIN);
+    lv_obj_t* move_label = lv_label_create(move_btn);
+    lv_label_set_text(move_label, "Move");
+    lv_obj_set_style_text_font(move_label, &lv_font_montserrat_12, 0);
+    lv_obj_center(move_label);
+    lv_obj_add_event_cb(move_btn, move_btn_cb, LV_EVENT_CLICKED, NULL);
 
     lv_obj_t* filament_btn = lv_btn_create(header);
     lv_obj_set_size(filament_btn, PT_SZ(90), PT_SZ(26));

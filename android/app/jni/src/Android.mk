@@ -33,6 +33,7 @@ LOCAL_SRC_FILES := \
     ourui/src/ui_files.cpp \
     ourui/src/ui_settings.cpp \
     ourui/src/ui_filament.cpp \
+    ourui/src/ui_move.cpp \
     ourui/src/ui_wifi.cpp \
     ourui/src/ui_tablet_setup.cpp \
     ourui/src/ui_screensaver.cpp \

@@ -18,6 +18,7 @@
 #ifdef __ANDROID__
 #include "ui_tablet_setup.h"   // on-screen printer config (tablet only)
 #include "ui_screensaver.h"    // idle print dashboard (tablet only)
+#include "ui_move.h"           // manual motion screen (live nozzle temp refresh)
 #include "bambu_ftp.h"
 #include "gcode_view.h"
 #include <cstdio>
@@ -168,6 +169,9 @@ int main(int argc, char **argv) {
         if (now - last_refresh > 500) {
             last_refresh = now;
             update_printer_ui();
+#ifdef __ANDROID__
+            update_move_ui();   // refresh live nozzle temp if the Move screen is open
+#endif
         }
         SDL_Delay(5);
     }
