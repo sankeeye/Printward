@@ -25,6 +25,7 @@
 #include "filament_track.h"    // scale-fed remaining-filament tracking
 #include "spool_db.h"          // spool library + load-to-AMS
 #include "notify.h"            // ntfy.sh push notifications
+#include "stats.h"             // lifetime print statistics
 #include "webctl.h"            // LAN web control server (same Move actions)
 #include "bambu_ftp.h"
 #include "gcode_view.h"
@@ -140,6 +141,7 @@ int main(int argc, char **argv) {
     filament_track_init();                   // load persisted spool weights
     spool_db_load();                         // load the spool library
     empty_db_load();                         // load the empty-spool weights
+    stats_init();                            // load lifetime print stats
     bambu_mqtt_setup();
     webctl_start();                          // LAN control page (http://<ip>:8080)
     scale_client_start();                    // background poller for the PandaScale
@@ -174,6 +176,7 @@ int main(int argc, char **argv) {
         gcode_maybe_load();  // fetch + parse the print's gcode (background thread)
         filament_track_loop(); // tick down the active spool's remaining grams
         notify_loop();       // push ntfy on print done/failed / filament short
+        stats_loop();        // count finished prints + filament used
         webctl_loop();       // apply moves queued by the web control page
 #endif
         drain_pending_action();

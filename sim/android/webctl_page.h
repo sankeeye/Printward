@@ -246,6 +246,10 @@ section#spools{max-width:1040px}
   <div class="muted" style="font-size:12px;margin-top:8px">Installeer de gratis <b>ntfy</b>-app (of ntfy.sh in de browser) en abonneer op dit topic. Je krijgt een melding bij print klaar/mislukt en filament tekort.</div>
   <div id="cNtfyMsg" class="muted" style="margin-top:6px"></div>
  </div>
+ <div class="card"><h3>Statistieken</h3>
+  <div class="muted" style="font-size:16px">Voltooide prints: <b id="stPrints">–</b></div>
+  <div class="muted" style="font-size:16px;margin-top:4px">Totaal filament gebruikt: <b id="stUsed">–</b></div>
+ </div>
 </section>
 
 <div id="rollModal" class="modal"><div class="modalbox">
@@ -345,6 +349,7 @@ function poll(){
   if(document.activeElement!==$('speed'))$('speed').value=s.speed;
   if(!$('rollModal')||$('rollModal').style.display!=='flex'){$('amsStrip').innerHTML=amsHtml(s.ams,s.ext,false);$('amsDetail').innerHTML=amsHtml(s.ams,s.ext,true);}
   $('movenoz').textContent='Nozzle '+s.nozzle+'/'+s.nozzle_t+'°C';
+  if(s.prints!==undefined&&$('stPrints')){$('stPrints').textContent=s.prints;$('stUsed').textContent=(s.used>=1000?(s.used/1000).toFixed(2)+' kg':s.used+' g');}
   if(s.cfg&&s.cfg.scale_ip){scaleHost=s.cfg.scale_ip;var si=$('sIp');if(si&&!si.value)si.value=s.cfg.scale_ip;}
   if(s.cfg&&s.cfg.low)lowG=s.cfg.low;
   if(!cfgFilled&&s.cfg){cfgFilled=true;
