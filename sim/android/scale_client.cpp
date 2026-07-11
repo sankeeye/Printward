@@ -71,11 +71,95 @@ static bool http_get(const char* host, int port, const char* path, char* out, in
     return ok;
 }
 
+// --- minimal mDNS A-record resolver, so a "*.local" scale host works --------
+static bool is_numeric_ip(const char* s) {
+    struct in_addr a;
+    return inet_pton(AF_INET, s, &a) == 1;
+}
+static bool mdns_resolve(const char* host, char* ip_out) {
+    ip_out[0] = 0;
+    unsigned char q[256]; int qn = 0;
+    q[qn++] = 0x12; q[qn++] = 0x34;                     // id
+    q[qn++] = 0; q[qn++] = 0;                           // flags
+    q[qn++] = 0; q[qn++] = 1;                           // qdcount = 1
+    q[qn++] = 0; q[qn++] = 0; q[qn++] = 0; q[qn++] = 0; q[qn++] = 0; q[qn++] = 0;
+    const char* p = host;
+    while (*p && qn < 240) {
+        const char* dot = strchr(p, '.');
+        int len = dot ? (int)(dot - p) : (int)strlen(p);
+        if (len > 63) len = 63;
+        q[qn++] = (unsigned char)len;
+        for (int i = 0; i < len; i++) q[qn++] = (unsigned char)p[i];
+        if (!dot) break;
+        p = dot + 1;
+    }
+    q[qn++] = 0;
+    q[qn++] = 0; q[qn++] = 1;                           // qtype A
+    q[qn++] = 0x80; q[qn++] = 1;                        // qclass IN | unicast-response
+
+    int s = socket(AF_INET, SOCK_DGRAM, 0);
+    if (s < 0) return false;
+    struct timeval tv; tv.tv_sec = 1; tv.tv_usec = 0;
+    setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+    sockaddr_in dst;
+    memset(&dst, 0, sizeof(dst));
+    dst.sin_family = AF_INET;
+    dst.sin_port = htons(5353);
+    dst.sin_addr.s_addr = inet_addr("224.0.0.251");
+    if (sendto(s, q, qn, 0, (sockaddr*)&dst, sizeof(dst)) < 0) { close(s); return false; }
+
+    unsigned char r[512];
+    for (int attempt = 0; attempt < 4; attempt++) {
+        int rn = (int)recv(s, r, sizeof(r), 0);
+        if (rn < 12) continue;
+        int an = (r[6] << 8) | r[7];
+        int pos = 12;
+        while (pos < rn && r[pos] != 0) pos += r[pos] + 1;   // question name
+        pos += 1 + 4;                                        // zero byte + qtype + qclass
+        for (int i = 0; i < an && pos + 10 <= rn; i++) {
+            if ((r[pos] & 0xC0) == 0xC0) pos += 2;            // compressed name pointer
+            else { while (pos < rn && r[pos] != 0) pos += r[pos] + 1; pos += 1; }
+            if (pos + 10 > rn) break;
+            int type = (r[pos] << 8) | r[pos + 1];
+            int rdlen = (r[pos + 8] << 8) | r[pos + 9];
+            pos += 10;
+            if (type == 1 && rdlen == 4 && pos + 4 <= rn) {  // A record
+                snprintf(ip_out, 40, "%u.%u.%u.%u", r[pos], r[pos + 1], r[pos + 2], r[pos + 3]);
+                close(s);
+                return true;
+            }
+            pos += rdlen;
+        }
+    }
+    close(s);
+    return false;
+}
+
+static char g_cached_ip[40] = "";
+static char g_cached_name[40] = "";
+// Resolve the configured scale host to a numeric IP: used as-is if numeric,
+// else looked up over mDNS and cached.
+static void resolve_host(char* out, int n) {
+    char name[40];
+    SDL_LockMutex(g_mtx);
+    strncpy(name, g_scale_ip, sizeof(name) - 1); name[sizeof(name) - 1] = 0;
+    SDL_UnlockMutex(g_mtx);
+    out[0] = 0;
+    if (!name[0]) return;
+    if (is_numeric_ip(name)) { strncpy(out, name, n - 1); out[n - 1] = 0; return; }
+    if (!strcmp(g_cached_name, name) && g_cached_ip[0]) { strncpy(out, g_cached_ip, n - 1); out[n - 1] = 0; return; }
+    char ip[40];
+    if (mdns_resolve(name, ip)) {
+        strncpy(g_cached_name, name, sizeof(g_cached_name) - 1); g_cached_name[sizeof(g_cached_name) - 1] = 0;
+        strncpy(g_cached_ip, ip, sizeof(g_cached_ip) - 1); g_cached_ip[sizeof(g_cached_ip) - 1] = 0;
+        strncpy(out, ip, n - 1); out[n - 1] = 0;
+    }
+}
+static void resolve_flush() { g_cached_ip[0] = 0; }
+
 static void poll_once() {
     char host[40];
-    SDL_LockMutex(g_mtx);
-    strncpy(host, g_scale_ip, sizeof(host) - 1); host[sizeof(host) - 1] = 0;
-    SDL_UnlockMutex(g_mtx);
+    resolve_host(host, sizeof(host));
     if (!host[0]) return;
 
     char body[256];
@@ -87,6 +171,8 @@ static void poll_once() {
         SDL_LockMutex(g_mtx);
         g_grams = g; g_stable = st; g_last_ok = SDL_GetTicks();
         SDL_UnlockMutex(g_mtx);
+    } else {
+        resolve_flush();   // scale unreachable -> re-resolve the name next time
     }
     if (http_get(host, 80, "/info", body, sizeof(body))) {
         SDL_LockMutex(g_mtx);
@@ -110,10 +196,8 @@ static int worker(void*) {
         char path[128];
         while (pop_cmd(path, sizeof(path))) {
             char host[40], body[160];
-            SDL_LockMutex(g_mtx);
-            strncpy(host, g_scale_ip, sizeof(host) - 1); host[sizeof(host) - 1] = 0;
-            SDL_UnlockMutex(g_mtx);
-            bool ok = http_get(host, 80, path, body, sizeof(body));
+            resolve_host(host, sizeof(host));
+            bool ok = host[0] && http_get(host, 80, path, body, sizeof(body));
             SDL_LockMutex(g_mtx);
             if (ok && body[0]) { strncpy(g_msg, body, sizeof(g_msg) - 1); g_msg[sizeof(g_msg) - 1] = 0; }
             else strncpy(g_msg, "geen verbinding met schaal", sizeof(g_msg) - 1);

@@ -31,6 +31,8 @@
 #include "bambu_ftp.h"
 #include "gcode_view.h"
 #include <cstdio>
+#include <unistd.h>
+#include <signal.h>
 #endif
 
 extern void sim_load_mock_data();
@@ -122,8 +124,50 @@ static void drain_pending_action() {
     }
 }
 
+#ifdef __ANDROID__
+// Crash watchdog: fork a child before anything else. The child blocks on a pipe
+// held open by us; if we CRASH, the signal handler writes a byte and the child
+// relaunches the app. On a normal exit / force-stop / kill the pipe just closes
+// (EOF, no byte) so the child exits without relaunching - stopping stays stopped.
+static int g_wd_fd = -1;
+static void crash_handler(int sig) {
+    if (g_wd_fd >= 0) { char b = 1; ssize_t n = write(g_wd_fd, &b, 1); (void)n; }
+    signal(sig, SIG_DFL);
+    raise(sig);
+}
+static void install_watchdog() {
+    int pfd[2];
+    if (pipe(pfd) != 0) return;
+    pid_t pid = fork();
+    if (pid == 0) {                        // watchdog child
+        close(pfd[1]);
+        char b;
+        ssize_t r = read(pfd[0], &b, 1);   // 1 = crash byte, 0 = EOF (normal death)
+        if (r == 1) {
+            execl("/system/bin/sh", "sh", "-c",
+                  "sleep 3; am start -n org.libsdl.app/org.libsdl.app.SDLActivity",
+                  (char*)NULL);
+        }
+        _exit(0);
+    } else if (pid > 0) {                  // parent: keep the write end, catch crashes
+        close(pfd[0]);
+        g_wd_fd = pfd[1];
+        signal(SIGSEGV, crash_handler);
+        signal(SIGABRT, crash_handler);
+        signal(SIGBUS,  crash_handler);
+        signal(SIGILL,  crash_handler);
+        signal(SIGFPE,  crash_handler);
+    } else {
+        close(pfd[0]); close(pfd[1]);
+    }
+}
+#endif
+
 int main(int argc, char **argv) {
     (void)argc; (void)argv;
+#ifdef __ANDROID__
+    install_watchdog();
+#endif
 #ifndef __ANDROID__
     SDL_SetMainReady();
 #endif
