@@ -2,6 +2,8 @@
 
 Firmware that turns a **BigTreeTech PandaTouch** (ESP32‑S3 touchscreen module) into a
 standalone **control panel and monitor for a Bambu Lab P1S** 3D printer — no PC required.
+The same UI also runs on a **PC simulator** and — the way it's mainly used now — on an
+**Android tablet** with a full web interface (see [Hardware & where it runs](#hardware--where-it-runs)).
 
 > This is a Bambu‑printer fork of the excellent
 > [PandaTouch StreamDeck by Disttrack](https://github.com/Disttrack/PandaTouch_streamDeck).
@@ -21,10 +23,34 @@ standalone **control panel and monitor for a Bambu Lab P1S** 3D printer — no P
 - **LVGL touch UI** (LVGL 9.3): printer screen, filament/AMS, file browser, settings.
 - **WiFi setup**, a **web configuration dashboard**, and **OTA** firmware updates.
 
-## Hardware
+On the **Android‑tablet / web build**, additionally:
 
-- BigTreeTech **PandaTouch**: ESP32‑S3, RGB parallel panel, GT911 capacitive touch,
-  16 MB flash, PSRAM.
+- **Manual motion** ("Move"): jog X/Y/Z, home, extrude/retract, preheat/cooldown.
+- **Full web control** on `:8080` mirroring every tablet screen (dashboard, filament, files,
+  move, scale, spools, settings).
+- **Scale‑based filament manager**: a spool library (create/edit/copy/search/bulk‑edit),
+  weigh spools with the **PandaScale**, live remaining grams that tick down during a print,
+  price / cost / remaining‑value, and a *"will this print run short?"* warning.
+- **ntfy push notifications** (print done/failed, filament short), **print history &
+  statistics**, and kiosk crash‑restart.
+
+## Hardware & where it runs
+
+The same LVGL UI (`src/ui_*`) runs on **three targets**:
+
+- **BigTreeTech PandaTouch** — ESP32‑S3, RGB parallel panel, GT911 capacitive touch,
+  16 MB flash, PSRAM. The original device, built with PlatformIO (env `pandatouch`).
+- **Android tablet** — the same UI as a standalone printer monitor/controller with a live
+  LAN‑MQTT link, **plus a full web UI** on `http://<tablet>:8080`. This is how the project
+  is mainly used now (the physical PandaTouch here runs stock BTT firmware). Verified on a
+  Samsung SM‑T280 (Android 5.1.1). See [`android/README.md`](android/README.md).
+- **PC simulator** — the UI in an SDL window for fast iteration (`sim/`).
+
+Optional companion hardware:
+
+- **PandaScale** — an ESP32‑S3 + HX711 load‑cell scale (the SpoolEase Scale hardware flashed
+  with our own firmware) that feeds real spool weights to the tablet for filament tracking,
+  cost, and low/short‑filament warnings. See [`scale/`](scale/).
 
 ## Build & flash (PlatformIO)
 
