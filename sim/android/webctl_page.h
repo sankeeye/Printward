@@ -220,6 +220,14 @@ section#spools{max-width:1040px}
   </div>
   <div id="spList" class="muted">…</div>
  </div>
+ <div class="card"><h3>Back-up</h3>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+   <button class="formbtn sec" onclick="downloadBackup()">⬇ Download back-up</button>
+   <label class="formbtn sec" style="cursor:pointer">⬆ Importeer<input type="file" accept=".json,application/json" style="display:none" onchange="importBackup(this.files)"></label>
+   <span class="muted" style="font-size:12px">rollen + lege spoelen als bestand (import voegt toe)</span>
+  </div>
+  <div id="bkMsg" class="muted" style="margin-top:8px"></div>
+ </div>
 </section>
 
 <section id="set">
@@ -231,6 +239,12 @@ section#spools{max-width:1040px}
   <div class="frow" style="margin-top:12px"><label class="muted">Helderheid</label><input type="range" id="cBri" min="5" max="100"></div>
   <button id="cSave">Opslaan &amp; verbinden</button>
   <div id="cMsg"></div>
+ </div>
+ <div class="card"><h3>Meldingen (ntfy)</h3>
+  <div class="frow"><label class="muted">ntfy topic (leeg = uit)</label><input type="text" id="cNtfy" placeholder="bv. pandatouch-geheim-x9k2"></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button id="cNtfySave" class="formbtn pri">Opslaan</button><button id="cNtfyTest" class="formbtn sec">Test</button></div>
+  <div class="muted" style="font-size:12px;margin-top:8px">Installeer de gratis <b>ntfy</b>-app (of ntfy.sh in de browser) en abonneer op dit topic. Je krijgt een melding bij print klaar/mislukt en filament tekort.</div>
+  <div id="cNtfyMsg" class="muted" style="margin-top:6px"></div>
  </div>
 </section>
 
@@ -263,6 +277,8 @@ $('cSave').onclick=function(){
  if($('cCode').value)q+='&code='+encodeURIComponent($('cCode').value);
  fetch('/setcfg?'+q).then(function(r){return r.text();}).then(function(t){$('cMsg').textContent=t+' – verbinden…';$('cCode').value='';});
 };
+$('cNtfySave').onclick=function(){fetch('/setcfg?ntfy='+encodeURIComponent($('cNtfy').value)).then(function(r){return r.text();}).then(function(t){$('cNtfyMsg').textContent=t;});};
+$('cNtfyTest').onclick=function(){$('cNtfyMsg').textContent='versturen…';fetch('/setcfg?ntfy='+encodeURIComponent($('cNtfy').value)).then(function(){setTimeout(function(){fetch('/notify_test').then(function(r){return r.text();}).then(function(t){$('cNtfyMsg').textContent=t;});},500);});};
 function joinPath(b,n){return (b==='/'?'':b)+'/'+n;}
 function fmtSize(b){return b>1048576?(b/1048576).toFixed(1)+' MB':b>1024?(b/1024).toFixed(0)+' KB':b+' B';}
 function loadFiles(path){curPath=path;$('fpath').textContent=path;$('flist').innerHTML='<div class=muted>laden…</div>';
@@ -335,6 +351,7 @@ function poll(){
    $('cIp').value=s.cfg.ip;$('cSerial').value=s.cfg.serial;$('cBri').value=s.cfg.bri;
    var b=$('cView');b.dataset.v=s.cfg.view3d?'1':'0';b.textContent='Screensaver: '+(s.cfg.view3d?'3D':'2D');
    if(s.cfg.code_set)$('cCode').placeholder='•••••••• (ingesteld, laat leeg = ongewijzigd)';
+   if(s.cfg.ntfy!==undefined)$('cNtfy').value=s.cfg.ntfy;
   }
  }).catch(function(){$('conn').textContent='○ geen tablet';$('conn').style.color='#e74c3c';});
 }
@@ -431,6 +448,21 @@ $('emSave').onclick=function(){
 function emDel(i){if(confirm('Verwijderen?'))fetch('/empty_del?idx='+i).then(function(){loadEmpties();});}
 function emWeigh(){if(!scaleHost){alert('Geen schaal-IP bekend — stel het in op de Scale-tab.');return;}
  fetch('http://'+scaleHost+'/weight').then(function(r){return r.json();}).then(function(d){$('emWeight').value=Math.round(d.g);}).catch(function(){alert('Geen verbinding met de schaal.');});}
+function downloadBackup(){
+ Promise.all([fetch('/spools').then(function(r){return r.json();}),fetch('/empties').then(function(r){return r.json();})]).then(function(a){
+  var blob=new Blob([JSON.stringify({spools:a[0],empties:a[1]},null,1)],{type:'application/json'});
+  var url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='pandatouch_spools_backup.json';link.click();URL.revokeObjectURL(url);
+ }).catch(function(){$('bkMsg').textContent='geen verbinding';});
+}
+function importBackup(files){
+ if(!files||!files.length)return;var rd=new FileReader();
+ rd.onload=function(){try{var d=JSON.parse(rd.result),chain=Promise.resolve();
+  (d.empties||[]).forEach(function(e){chain=chain.then(function(){return fetch('/empty_save?idx=&name='+encodeURIComponent(e.name)+'&weight='+e.weight);});});
+  (d.spools||[]).forEach(function(s){chain=chain.then(function(){return fetch('/spool_save?idx=&name='+encodeURIComponent(s.name)+'&material='+encodeURIComponent(s.material)+'&color='+encodeURIComponent(s.rgb)+'&rem='+s.rem+'&empty='+s.empty+'&nmin='+(s.nmin||0)+'&nmax='+(s.nmax||0)+'&code='+encodeURIComponent(s.code||'')+'&note='+encodeURIComponent(s.note||''));});});
+  chain.then(function(){$('bkMsg').textContent='Geïmporteerd.';loadSpools();loadEmpties();});
+ }catch(e){$('bkMsg').textContent='Ongeldig back-up-bestand.';}};
+ rd.readAsText(files[0]);
+}
 function setSpColor(c){$('spColor').value=c;}
 function buildSwatches(){var p=['#111111','#eeeeee','#9aa0a6','#c0392b','#e67e22','#f1c40f','#27ae60','#2980b9','#8e44ad','#ec407a','#6d4c41','#16a085'];var h='';p.forEach(function(c){h+='<button class="swatch" style="background:'+c+'" onclick="setSpColor(\''+c+'\')"></button>';});if($('spSw'))$('spSw').innerHTML=h;}
 buildSwatches();

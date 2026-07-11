@@ -32,6 +32,7 @@ char g_printer_ip[40] = "";
 char g_printer_serial[32] = "";
 char g_printer_access_code[24] = "";
 char g_scale_ip[40] = "192.168.2.60";   // PandaScale host (scale_ip= in the conf)
+char g_ntfy_topic[64] = "";             // ntfy.sh topic for push notifications
 float g_tray_capacity_g[AMS_MAX_UNITS][AMS_MAX_TRAYS] = {{0}};
 float g_tray_used_g[AMS_MAX_UNITS][AMS_MAX_TRAYS] = {{0}};
 float g_ext_capacity_g = 0;
@@ -65,6 +66,7 @@ void save_settings() {
     fprintf(f, "brightness=%d\n", (int)g_brightness);
     fprintf(f, "view3d=%d\n", g_screensaver_3d ? 1 : 0);
     fprintf(f, "scale_ip=%s\n", g_scale_ip);
+    fprintf(f, "ntfy_topic=%s\n", g_ntfy_topic);
     if (g_wifi_ssid[0]) fprintf(f, "wifi_ssid=%s\n", g_wifi_ssid);
     fclose(f);
     Serial.println("CONF: saved /sdcard/pandatouch.conf");
@@ -102,6 +104,7 @@ void load_settings() {
         else if (!strcmp(key, "wifi_ssid"))      strncpy(g_wifi_ssid, val, sizeof(g_wifi_ssid) - 1);
         else if (!strcmp(key, "view3d"))         g_screensaver_3d = (atoi(val) != 0);
         else if (!strcmp(key, "scale_ip"))       strncpy(g_scale_ip, val, sizeof(g_scale_ip) - 1);
+        else if (!strcmp(key, "ntfy_topic"))     strncpy(g_ntfy_topic, val, sizeof(g_ntfy_topic) - 1);
     }
     fclose(f);
     // Never log the access code itself - only whether it was provided.

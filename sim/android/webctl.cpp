@@ -14,6 +14,7 @@
 #include "scale_client.h"     // g_scale_ip (exposed to the web Scale tab)
 #include "filament_track.h"   // filament_remaining(), g_low_threshold_g
 #include "spool_db.h"         // spool library + load-to-AMS
+#include "notify.h"           // g_ntfy_topic
 #include "ui_screensaver.h"   // g_screensaver_3d, screensaver_view_changed()
 #include "bambu_mqtt.h"
 #include "bambu_ftp.h"
@@ -198,6 +199,10 @@ void webctl_loop() {
                     strncpy(g_scale_ip, v, sizeof(g_scale_ip) - 1);
                     g_scale_ip[sizeof(g_scale_ip) - 1] = 0;
                 }
+                if (parse_query(c.arg, "ntfy", v, sizeof(v))) {   // may be cleared to empty
+                    strncpy(g_ntfy_topic, v, sizeof(g_ntfy_topic) - 1);
+                    g_ntfy_topic[sizeof(g_ntfy_topic) - 1] = 0;
+                }
                 if (parse_query(c.arg, "bri", v, sizeof(v)) && v[0]) {
                     int b = atoi(v); if (b < 5) b = 5; if (b > 100) b = 100;
                     g_brightness = (uint8_t)b;
@@ -299,9 +304,9 @@ static void build_status(char* o, int n) {
     p += snprintf(o + p, n - p, "\"light\":%s,\"fan\":%d,\"speed\":%d,\"active_tray\":%d,\"short\":%.0f,",
         s.light_on ? "true" : "false", s.fan_speed_pct, s.speed_level, s.active_tray_now, filament_shortfall());
     p += snprintf(o + p, n - p,
-        "\"cfg\":{\"ip\":\"%s\",\"serial\":\"%s\",\"view3d\":%s,\"bri\":%d,\"code_set\":%s,\"scale_ip\":\"%s\",\"low\":%d},",
+        "\"cfg\":{\"ip\":\"%s\",\"serial\":\"%s\",\"view3d\":%s,\"bri\":%d,\"code_set\":%s,\"scale_ip\":\"%s\",\"low\":%d,\"ntfy\":\"%s\"},",
         g_printer_ip, g_printer_serial, g_screensaver_3d ? "true" : "false",
-        g_brightness, g_printer_access_code[0] ? "true" : "false", g_scale_ip, g_low_threshold_g);
+        g_brightness, g_printer_access_code[0] ? "true" : "false", g_scale_ip, g_low_threshold_g, g_ntfy_topic);
 
     p += snprintf(o + p, n - p, "\"ams\":[");
     bool first = true;
@@ -516,6 +521,11 @@ static void handle_conn(int fd) {
     if (!strcmp(path, "/spool_bulk")) {
         q_push(Q_SPOOL_BULK, 0, 0, query ? query : "");
         send_resp(fd, "200 OK", "text/plain; charset=utf-8", "ok", 2);
+        return;
+    }
+    if (!strcmp(path, "/notify_test")) {
+        notify_send("PandaTouch", "Test melding - het werkt!");
+        send_resp(fd, "200 OK", "text/plain; charset=utf-8", "testmelding verstuurd", 21);
         return;
     }
     send_resp(fd, "404 Not Found", "text/plain", "", 0);

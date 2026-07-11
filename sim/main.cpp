@@ -24,6 +24,7 @@
 #include "scale_client.h"      // background HTTP client to the PandaScale
 #include "filament_track.h"    // scale-fed remaining-filament tracking
 #include "spool_db.h"          // spool library + load-to-AMS
+#include "notify.h"            // ntfy.sh push notifications
 #include "webctl.h"            // LAN web control server (same Move actions)
 #include "bambu_ftp.h"
 #include "gcode_view.h"
@@ -172,6 +173,7 @@ int main(int argc, char **argv) {
         screensaver_loop();  // show/hide the idle print dashboard
         gcode_maybe_load();  // fetch + parse the print's gcode (background thread)
         filament_track_loop(); // tick down the active spool's remaining grams
+        notify_loop();       // push ntfy on print done/failed / filament short
         webctl_loop();       // apply moves queued by the web control page
 #endif
         drain_pending_action();
