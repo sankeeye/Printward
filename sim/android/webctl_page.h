@@ -67,6 +67,13 @@ h3{margin:0 0 10px;font-size:15px;color:var(--muted);font-weight:600}
 #cView{background:var(--btn);color:#fff;border:0;border-radius:8px;padding:11px;font-size:16px;cursor:pointer}
 #cSave{background:#27ae60;color:#fff;border:0;border-radius:10px;padding:13px;font-size:17px;width:100%;cursor:pointer;margin-top:6px}
 #cMsg{margin-top:10px;color:var(--muted)}
+.rolbtn{background:var(--accent);color:#fff;border:0;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer;margin-top:5px}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:30;align-items:center;justify-content:center;padding:16px}
+.modalbox{background:var(--panel);border:2px solid var(--accent);border-radius:12px;padding:16px;width:100%;max-width:460px;max-height:82vh;overflow:auto}
+.modalhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.modalhead b{font-size:17px}
+.modalhead button{background:#555;color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer}
+.rollpick{cursor:pointer}.rollpick:active{filter:brightness(1.3)}
 </style></head><body>
 <header><div class="t">PandaTouch</div><div id="conn" class="muted">verbinden…</div></header>
 <nav>
@@ -178,8 +185,12 @@ h3{margin:0 0 10px;font-size:15px;color:var(--muted);font-weight:600}
  </div>
 </section>
 
+<div id="rollModal" class="modal"><div class="modalbox">
+ <div class="modalhead"><b id="rollTitle">Kies rol</b><button onclick="closeRoll()">Sluit</button></div>
+ <div id="rollList"></div>
+</div></div>
 <script>
-var step="1",curState="",curLight=false,curFan=0,cfgFilled=false,curPath="/",scaleHost="",lowG=100,spCache=[],emCache=[];
+var step="1",curState="",curLight=false,curFan=0,cfgFilled=false,curPath="/",scaleHost="",lowG=100,spCache=[],emCache=[],pickSlot=-1;
 function $(id){return document.getElementById(id);}
 function tab(n){
  document.querySelectorAll('nav button').forEach(function(b){b.classList.toggle('on',b.dataset.tab===n);});
@@ -226,19 +237,34 @@ function amt(t){
  if(t.gram>=0){return '<div class="muted"'+(t.gram<lowG?' style="color:#e74c3c;font-weight:600"':'')+'>'+t.gram+' g</div>';}
  return '<div class="muted">'+(t.remain>=0?t.remain+'%':'–')+'</div>';
 }
-function amsHtml(ams,ext){
+function slotName(slot){return slot===254?'externe spoel':('AMS'+(Math.floor(slot/4)+1)+' T'+(slot%4+1));}
+function trayCell(t,slot,assign){
+ var inner;
+ if(t&&t.present)inner='<div class="sw" style="background:'+t.rgb+'"></div><div>'+t.type+'</div>'+amt(t);
+ else inner='<div class="sw empty"></div><div class="muted">leeg</div><div></div>';
+ if(assign)inner+='<button class="rolbtn" onclick="pickRoll('+slot+')">Rol</button>';
+ return '<div class="tray">'+inner+'</div>';
+}
+function amsHtml(ams,ext,assign){
  var h='';
  (ams||[]).forEach(function(u){
   h+='<div class="amsbox"><div class="muted">AMS '+u.id+(u.humidity>0?(' · vocht '+u.humidity):'')+'</div><div class="trays">';
-  u.trays.forEach(function(t){
-   if(t.present)h+='<div class="tray"><div class="sw" style="background:'+t.rgb+'"></div><div>'+t.type+'</div>'+amt(t)+'</div>';
-   else h+='<div class="tray"><div class="sw empty"></div><div class="muted">leeg</div><div></div></div>';
-  });
+  u.trays.forEach(function(t,ti){h+=trayCell(t,(u.id-1)*4+ti,assign);});
   h+='</div></div>';
  });
- if(ext&&ext.present)h+='<div class="amsbox"><div class="muted">Externe spoel</div><div class="trays"><div class="tray"><div class="sw" style="background:'+ext.rgb+'"></div><div>'+ext.type+'</div>'+amt(ext)+'</div></div></div>';
+ if((ext&&ext.present)||assign)h+='<div class="amsbox"><div class="muted">Externe spoel</div><div class="trays">'+trayCell(ext,254,assign)+'</div></div>';
  return h||'<div class="muted">geen AMS</div>';
 }
+function pickRoll(slot){pickSlot=slot;$('rollTitle').textContent='Kies rol voor '+slotName(slot);
+ fetch('/spools').then(function(r){return r.json();}).then(function(list){
+  var h='';
+  if(!list.length)h='<div class="muted">Nog geen rollen — maak ze aan op de Spools-tab.</div>';
+  list.forEach(function(s){h+='<div class="fitem rollpick" onclick="chooseRoll('+s.i+')"><div style="display:flex;align-items:center;gap:8px"><div class="sw" style="width:26px;height:20px;flex:0 0 auto;background:'+s.rgb+'"></div><span><b>'+s.name+'</b> <span class="muted">'+s.material+' · '+s.rem+' g</span></span></div></div>';});
+  $('rollList').innerHTML=h;$('rollModal').style.display='flex';
+ }).catch(function(){});
+}
+function chooseRoll(i){fetch('/spool_load?idx='+i+'&slot='+pickSlot).then(function(){closeRoll();});}
+function closeRoll(){$('rollModal').style.display='none';}
 function poll(){
  fetch('/status').then(function(r){return r.json();}).then(function(s){
   $('conn').textContent=s.conn?'● verbonden':'○ offline';$('conn').style.color=s.conn?'#2ecc71':'#e74c3c';
@@ -251,7 +277,7 @@ function poll(){
   $('bLight').textContent='Licht: '+(s.light?'aan':'uit');
   $('bFan').textContent='Fan '+s.fan+'%';
   if(document.activeElement!==$('speed'))$('speed').value=s.speed;
-  var a=amsHtml(s.ams,s.ext);$('amsStrip').innerHTML=a;$('amsDetail').innerHTML=a;
+  if(!$('rollModal')||$('rollModal').style.display!=='flex'){$('amsStrip').innerHTML=amsHtml(s.ams,s.ext,false);$('amsDetail').innerHTML=amsHtml(s.ams,s.ext,true);}
   $('movenoz').textContent='Nozzle '+s.nozzle+'/'+s.nozzle_t+'°C';
   if(s.cfg&&s.cfg.scale_ip){scaleHost=s.cfg.scale_ip;var si=$('sIp');if(si&&!si.value)si.value=s.cfg.scale_ip;}
   if(s.cfg&&s.cfg.low)lowG=s.cfg.low;
@@ -287,9 +313,7 @@ function loadSpools(){
   spCache=list;var h='';
   list.forEach(function(s){
    h+='<div class="fitem"><div style="display:flex;align-items:center;gap:8px;min-width:0"><div class="sw" style="width:26px;height:20px;flex:0 0 auto;background:'+s.rgb+'"></div><span><b>'+s.name+'</b> <span class="muted">'+s.material+' • '+s.rem+' g</span></span></div>'
-    +'<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><select id="ss'+s.i+'">'+spSlotOpts()+'</select>'
-    +'<button class="fstart" onclick="spLoad('+s.i+')">Laad</button>'
-    +'<button onclick="spEdit('+s.i+')">Bewerk</button>'
+    +'<div style="display:flex;gap:6px;align-items:center"><button onclick="spEdit('+s.i+')">Bewerk</button>'
     +'<button class="b-red" onclick="spDel('+s.i+')">X</button></div></div>';
   });
   $('spList').innerHTML=h||'<div class="muted">nog geen rollen</div>';
