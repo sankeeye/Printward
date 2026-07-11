@@ -42,27 +42,52 @@ static uint32_t sdl_tick(void) { return SDL_GetTicks(); }
 
 #ifdef __ANDROID__
 // Load + parse the current print's gcode on a background thread (FTP download +
-// unzip + parse would freeze the UI otherwise). Fires once per new print file.
+// unzip + parse would freeze the UI otherwise). Retries every RETRY_MS until the
+// model is actually loaded, so one slow or failed .3mf download doesn't disable
+// filament tracking (and the screensaver model) for the rest of the print.
+static volatile bool g_gcode_loading = false;   // a load thread is in flight
+static char g_gcode_done[128] = "";             // last file that loaded OK (set by the thread)
+
 static int gcode_load_thread(void* data) {
     gcode_view_load((const char*)data);
+    if (gcode_view_ready()) {                    // only mark done on success
+        strncpy(g_gcode_done, (const char*)data, sizeof(g_gcode_done) - 1);
+        g_gcode_done[sizeof(g_gcode_done) - 1] = '\0';
+    }
     free(data);
+    g_gcode_loading = false;
     return 0;
 }
 static void gcode_maybe_load() {
-    static char loaded[128] = "";
+    static char cur[128] = "";        // the file we currently want loaded
     // Remember the last non-empty file so the model still shows after the print
     // finishes (the printer clears gcode_file when idle).
     static char last_seen[128] = "";
+    static uint32_t last_try = 0;
+    const uint32_t RETRY_MS = 30000;
+
     if (!g_printer_status.mqtt_connected) return;
     const char* rep = g_printer_status.gcode_file;
     if (rep[0]) { strncpy(last_seen, rep, sizeof(last_seen) - 1); last_seen[sizeof(last_seen) - 1] = '\0'; }
-    if (!last_seen[0] || strcmp(last_seen, loaded) == 0) return;   // load each new file once
-    strncpy(loaded, last_seen, sizeof(loaded) - 1);
-    loaded[sizeof(loaded) - 1] = '\0';
-    char* copy = strdup(last_seen);
+    if (!last_seen[0]) return;
+
+    if (strcmp(last_seen, cur) != 0) {           // a new print file -> (re)load it
+        strncpy(cur, last_seen, sizeof(cur) - 1); cur[sizeof(cur) - 1] = '\0';
+        last_try = 0;                            // attempt immediately
+    }
+    if (strcmp(g_gcode_done, cur) == 0) return;  // already loaded this file
+    if (g_gcode_loading) return;                 // a load is already running
+
+    uint32_t now = SDL_GetTicks();
+    if (last_try != 0 && (now - last_try) < RETRY_MS) return;   // wait before retrying
+    last_try = now;
+
+    char* copy = strdup(cur);
     if (copy) {
+        g_gcode_loading = true;
         SDL_Thread* th = SDL_CreateThread(gcode_load_thread, "gcode", copy);
-        if (th) SDL_DetachThread(th); else free(copy);
+        if (th) SDL_DetachThread(th);
+        else { free(copy); g_gcode_loading = false; }
     }
 }
 #endif
