@@ -5,6 +5,9 @@
 #include "ui_filament.h"
 #include "ui_files.h"
 #include "ui_move.h"
+#ifdef __ANDROID__
+#include "ui_weigh.h"   // "Scale" screen (tablet only)
+#endif
 #include "pt/pt_display.h"
 #include "ui_scale.h"   // tablet font scaling (Android only)
 
@@ -175,6 +178,12 @@ static void move_btn_cb(lv_event_t* e) {
     create_move_ui();
 }
 
+#ifdef __ANDROID__
+static void scale_btn_cb(lv_event_t* e) {
+    create_weigh_ui();
+}
+#endif
+
 static lv_obj_t* make_row(lv_obj_t* parent, int32_t height) {
     lv_obj_t* row = lv_obj_create(parent);
     lv_obj_set_size(row, lv_pct(100), PT_SZ(height));
@@ -243,6 +252,17 @@ void create_printer_ui() {
     lv_obj_set_style_text_font(move_label, &lv_font_montserrat_12, 0);
     lv_obj_center(move_label);
     lv_obj_add_event_cb(move_btn, move_btn_cb, LV_EVENT_CLICKED, NULL);
+
+#ifdef __ANDROID__
+    lv_obj_t* scale_btn = lv_btn_create(header);
+    lv_obj_set_size(scale_btn, PT_SZ(74), PT_SZ(26));
+    lv_obj_set_style_bg_color(scale_btn, lv_color_hex(0x333333), LV_PART_MAIN);
+    lv_obj_t* scale_label = lv_label_create(scale_btn);
+    lv_label_set_text(scale_label, "Scale");
+    lv_obj_set_style_text_font(scale_label, &lv_font_montserrat_12, 0);
+    lv_obj_center(scale_label);
+    lv_obj_add_event_cb(scale_btn, scale_btn_cb, LV_EVENT_CLICKED, NULL);
+#endif
 
     lv_obj_t* filament_btn = lv_btn_create(header);
     lv_obj_set_size(filament_btn, PT_SZ(90), PT_SZ(26));

@@ -38,6 +38,8 @@ LOCAL_SRC_FILES := \
     ourui/src/ui_tablet_setup.cpp \
     ourui/src/ui_screensaver.cpp \
     ourui/src/gcode_view.cpp \
+    ourui/src/ui_weigh.cpp \
+    ourui/src/scale_client.cpp \
     ourui/src/webctl.cpp
 
 LOCAL_CFLAGS := -DLV_CONF_INCLUDE_SIMPLE -DARDUINOJSON_ENABLE_ARDUINO_STRING=1 -w

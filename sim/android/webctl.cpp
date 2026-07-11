@@ -11,6 +11,7 @@
 // MAIN thread, keeping PubSubClient single-threaded (it is not thread-safe).
 #include "webctl.h"
 #include "ui_move.h"
+#include "scale_client.h"     // g_scale_ip (exposed to the web Scale tab)
 #include "ui_screensaver.h"   // g_screensaver_3d, screensaver_view_changed()
 #include "bambu_mqtt.h"
 #include "bambu_ftp.h"
@@ -190,6 +191,10 @@ void webctl_loop() {
                     bool nv = (v[0] == '1');
                     if (nv != g_screensaver_3d) { g_screensaver_3d = nv; viewchg = true; }
                 }
+                if (parse_query(c.arg, "scale_ip", v, sizeof(v)) && v[0]) {
+                    strncpy(g_scale_ip, v, sizeof(g_scale_ip) - 1);
+                    g_scale_ip[sizeof(g_scale_ip) - 1] = 0;
+                }
                 if (parse_query(c.arg, "bri", v, sizeof(v)) && v[0]) {
                     int b = atoi(v); if (b < 5) b = 5; if (b > 100) b = 100;
                     g_brightness = (uint8_t)b;
@@ -231,9 +236,9 @@ static void build_status(char* o, int n) {
     p += snprintf(o + p, n - p, "\"light\":%s,\"fan\":%d,\"speed\":%d,\"active_tray\":%d,",
         s.light_on ? "true" : "false", s.fan_speed_pct, s.speed_level, s.active_tray_now);
     p += snprintf(o + p, n - p,
-        "\"cfg\":{\"ip\":\"%s\",\"serial\":\"%s\",\"view3d\":%s,\"bri\":%d,\"code_set\":%s},",
+        "\"cfg\":{\"ip\":\"%s\",\"serial\":\"%s\",\"view3d\":%s,\"bri\":%d,\"code_set\":%s,\"scale_ip\":\"%s\"},",
         g_printer_ip, g_printer_serial, g_screensaver_3d ? "true" : "false",
-        g_brightness, g_printer_access_code[0] ? "true" : "false");
+        g_brightness, g_printer_access_code[0] ? "true" : "false", g_scale_ip);
 
     p += snprintf(o + p, n - p, "\"ams\":[");
     bool first = true;

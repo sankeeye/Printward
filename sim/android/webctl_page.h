@@ -74,6 +74,7 @@ h3{margin:0 0 10px;font-size:15px;color:var(--muted);font-weight:600}
  <button data-tab="fil">Filament</button>
  <button data-tab="files">Files</button>
  <button data-tab="move">Move</button>
+ <button data-tab="scale">Scale</button>
  <button data-tab="set">Settings</button>
 </nav>
 
@@ -117,6 +118,22 @@ h3{margin:0 0 10px;font-size:15px;color:var(--muted);font-weight:600}
  <div id="hint"></div>
 </section>
 
+<section id="scale">
+ <div class="card" style="text-align:center"><div id="swt" style="font-size:52px;font-weight:700">– g</div><div id="sst" class="muted">…</div></div>
+ <div class="card"><h3>Kalibratie</h3>
+  <button id="sTare">Tarra (nulstellen)</button>
+  <input type="number" id="sKnown" value="500" style="width:110px">
+  <button id="sCal" class="ext">Kalibreer</button>
+  <div id="sMsg" class="muted" style="margin-top:8px"></div>
+ </div>
+ <div class="card"><h3>Netwerk</h3><div id="sInfo" class="muted" style="margin-bottom:10px">…</div>
+  <div class="frow"><label class="muted">Scale IP (waar de tablet de schaal zoekt)</label><input type="text" id="sIp"></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button id="sIpSave">Opslaan op tablet</button><button id="sIpFix">Vast IP op schaal</button></div>
+  <div class="frow" style="margin-top:12px"><label class="muted">WiFi van de schaal wijzigen</label><input type="text" id="sSsid" placeholder="WiFi naam"><input type="password" id="sPass" placeholder="wachtwoord"></div>
+  <button id="sWifi" class="ph">WiFi wijzigen</button>
+ </div>
+</section>
+
 <section id="set">
  <div class="card"><h3>Printer</h3>
   <div class="frow"><label class="muted">Printer IP</label><input type="text" id="cIp"></div>
@@ -130,7 +147,7 @@ h3{margin:0 0 10px;font-size:15px;color:var(--muted);font-weight:600}
 </section>
 
 <script>
-var step="1",curState="",curLight=false,curFan=0,cfgFilled=false,curPath="/";
+var step="1",curState="",curLight=false,curFan=0,cfgFilled=false,curPath="/",scaleHost="";
 function $(id){return document.getElementById(id);}
 function tab(n){
  document.querySelectorAll('nav button').forEach(function(b){b.classList.toggle('on',b.dataset.tab===n);});
@@ -199,6 +216,7 @@ function poll(){
   if(document.activeElement!==$('speed'))$('speed').value=s.speed;
   var a=amsHtml(s.ams,s.ext);$('amsStrip').innerHTML=a;$('amsDetail').innerHTML=a;
   $('movenoz').textContent='Nozzle '+s.nozzle+'/'+s.nozzle_t+'°C';
+  if(s.cfg&&s.cfg.scale_ip){scaleHost=s.cfg.scale_ip;var si=$('sIp');if(si&&!si.value)si.value=s.cfg.scale_ip;}
   if(!cfgFilled&&s.cfg){cfgFilled=true;
    $('cIp').value=s.cfg.ip;$('cSerial').value=s.cfg.serial;$('cBri').value=s.cfg.bri;
    var b=$('cView');b.dataset.v=s.cfg.view3d?'1':'0';b.textContent='Screensaver: '+(s.cfg.view3d?'3D':'2D');
@@ -207,4 +225,21 @@ function poll(){
  }).catch(function(){$('conn').textContent='○ geen tablet';$('conn').style.color='#e74c3c';});
 }
 setInterval(poll,1500);poll();
+function sMsg(t){$('sMsg').textContent=t;}
+function scalePoll(){
+ if(!$('scale').classList.contains('on')||!scaleHost)return;
+ fetch('http://'+scaleHost+'/weight').then(function(r){return r.json();}).then(function(d){
+  $('swt').textContent=d.g.toFixed(0)+' g';$('sst').textContent=d.stable?'stabiel':'…meten';
+ }).catch(function(){$('sst').textContent='geen verbinding met schaal';});
+ fetch('http://'+scaleHost+'/info').then(function(r){return r.json();}).then(function(d){
+  $('sInfo').textContent=(d.connected?'verbonden':'AP-modus')+' · '+d.ip+' · '+d.ssid+' · '+d.rssi+'dBm'+(d.static?' · vast IP':'');
+ }).catch(function(){});
+}
+function sGet(p){fetch('http://'+scaleHost+p).then(function(r){return r.text();}).then(sMsg).catch(function(){sMsg('geen verbinding met schaal');});}
+$('sTare').onclick=function(){sGet('/tare');};
+$('sCal').onclick=function(){sGet('/cal?known='+$('sKnown').value);};
+$('sIpFix').onclick=function(){sGet('/setip?ip='+encodeURIComponent($('sIp').value));};
+$('sWifi').onclick=function(){sGet('/setwifi?ssid='+encodeURIComponent($('sSsid').value)+'&pass='+encodeURIComponent($('sPass').value));};
+$('sIpSave').onclick=function(){var v=$('sIp').value;fetch('/setcfg?scale_ip='+encodeURIComponent(v)).then(function(){scaleHost=v;sMsg('opgeslagen op tablet');});};
+setInterval(scalePoll,1200);
 </script></body></html>)PAGE"

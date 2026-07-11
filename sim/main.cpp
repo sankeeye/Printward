@@ -19,6 +19,8 @@
 #include "ui_tablet_setup.h"   // on-screen printer config (tablet only)
 #include "ui_screensaver.h"    // idle print dashboard (tablet only)
 #include "ui_move.h"           // manual motion screen (live nozzle temp refresh)
+#include "ui_weigh.h"          // Scale screen (live weight refresh)
+#include "scale_client.h"      // background HTTP client to the PandaScale
 #include "webctl.h"            // LAN web control server (same Move actions)
 #include "bambu_ftp.h"
 #include "gcode_view.h"
@@ -133,6 +135,7 @@ int main(int argc, char **argv) {
     load_settings();
     bambu_mqtt_setup();
     webctl_start();                          // LAN control page (http://<ip>:8080)
+    scale_client_start();                    // background poller for the PandaScale
     create_screensaver();                    // idle dashboard (top layer, hidden)
     pt_set_backlight(g_brightness, false);   // dim overlay sits above the screensaver
 #else
@@ -174,6 +177,7 @@ int main(int argc, char **argv) {
             update_printer_ui();
 #ifdef __ANDROID__
             update_move_ui();   // refresh live nozzle temp if the Move screen is open
+            update_weigh_ui();  // refresh live weight if the Scale screen is open
 #endif
         }
         SDL_Delay(5);
