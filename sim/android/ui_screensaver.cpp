@@ -76,11 +76,16 @@ static void render_gcode(int cur_layer) {
     memset(g_cv, 0, (size_t)CV_W * CV_H * 2);
     if (!gcode_view_ready()) { if (g_gcanvas) lv_obj_invalidate(g_gcanvas); return; }
 
+    if (cur_layer < 0) { if (g_gcanvas) lv_obj_invalidate(g_gcanvas); return; }   // just clear
+
     int16_t minx, miny, maxx, maxy;
     gcode_view_bounds(&minx, &miny, &maxx, &maxy);
     const GcodeSeg* segs = gcode_view_segments();
     int n = gcode_view_seg_count();
-    const uint16_t grey = 0x52AA, accent = 0x07E0;   // dim grey, green
+    // Show the WHOLE model as a faint preview, then colour in the printed part
+    // "as it really is": pass 0 draws the not-yet-printed ghost, pass 1 paints
+    // the done layers on top (bright silver) with the active layer in green.
+    const uint16_t preview = 0x2966, filled = 0xC618, accent = 0x07E0;
 
     if (!g_screensaver_3d) {
         // --- top-down 2D ---
@@ -89,15 +94,18 @@ static void render_gcode(int cur_layer) {
         float margin = 24;
         float s = (CV_W - 2 * margin) / w; float sy = (CV_H - 2 * margin) / h; if (sy < s) s = sy;
         float ox = (CV_W - w * s) * 0.5f, oy = (CV_H - h * s) * 0.5f;
-        for (int i = 0; i < n; i++) {
-            const GcodeSeg& g = segs[i];
-            if (g.layer > cur_layer) continue;
-            uint16_t col = ((int)g.layer >= cur_layer) ? accent : grey;
-            int x1 = (int)(ox + (g.x1 - minx) * s);
-            int y1 = (int)(CV_H - (oy + (g.y1 - miny) * s));   // flip Y (bed up)
-            int x2 = (int)(ox + (g.x2 - minx) * s);
-            int y2 = (int)(CV_H - (oy + (g.y2 - miny) * s));
-            cv_line(x1, y1, x2, y2, col);
+        for (int pass = 0; pass < 2; pass++) {
+            for (int i = 0; i < n; i++) {
+                const GcodeSeg& g = segs[i];
+                bool printed = (int)g.layer <= cur_layer;
+                if (printed != (pass == 1)) continue;   // pass 0 = preview, pass 1 = printed
+                uint16_t col = !printed ? preview : ((int)g.layer == cur_layer ? accent : filled);
+                int x1 = (int)(ox + (g.x1 - minx) * s);
+                int y1 = (int)(CV_H - (oy + (g.y1 - miny) * s));   // flip Y (bed up)
+                int x2 = (int)(ox + (g.x2 - minx) * s);
+                int y2 = (int)(CV_H - (oy + (g.y2 - miny) * s));
+                cv_line(x1, y1, x2, y2, col);
+            }
         }
     } else {
         // --- isometric 3D (z up) ---
@@ -118,17 +126,22 @@ static void render_gcode(int cur_layer) {
         float margin = 30;
         float s = (CV_W - 2 * margin) / w; float sy = (CV_H - 2 * margin) / h; if (sy < s) s = sy;
         float ox = (CV_W - w * s) * 0.5f, oy = (CV_H - h * s) * 0.5f;
-        for (int i = 0; i < n; i++) {
-            const GcodeSeg& g = segs[i];
-            if (g.layer > cur_layer) continue;
-            uint16_t col = ((int)g.layer >= cur_layer) ? accent : grey;
-            float dx1 = g.x1 - cx, dy1 = g.y1 - cy;
-            float dx2 = g.x2 - cx, dy2 = g.y2 - cy;
-            int X1 = (int)(ox + ((dx1 - dy1) * C - ixmin) * s);
-            int Y1 = (int)(CV_H - (oy + (((dx1 + dy1) * S - g.z) - iymin) * s));
-            int X2 = (int)(ox + ((dx2 - dy2) * C - ixmin) * s);
-            int Y2 = (int)(CV_H - (oy + (((dx2 + dy2) * S - g.z) - iymin) * s));
-            cv_line(X1, Y1, X2, Y2, col);
+        for (int pass = 0; pass < 2; pass++) {
+            for (int i = 0; i < n; i++) {
+                const GcodeSeg& g = segs[i];
+                bool printed = (int)g.layer <= cur_layer;
+                if (printed != (pass == 1)) continue;   // pass 0 = preview, pass 1 = printed
+                uint16_t col = !printed ? preview : ((int)g.layer == cur_layer ? accent : filled);
+                float dx1 = g.x1 - cx, dy1 = g.y1 - cy;
+                float dx2 = g.x2 - cx, dy2 = g.y2 - cy;
+                // iy already in screen space (y down, z subtracted -> higher z is up),
+                // so map it directly without another vertical flip.
+                int X1 = (int)(ox + ((dx1 - dy1) * C - ixmin) * s);
+                int Y1 = (int)(oy + (((dx1 + dy1) * S - g.z) - iymin) * s);
+                int X2 = (int)(ox + ((dx2 - dy2) * C - ixmin) * s);
+                int Y2 = (int)(oy + (((dx2 + dy2) * S - g.z) - iymin) * s);
+                cv_line(X1, Y1, X2, Y2, col);
+            }
         }
     }
     if (g_gcanvas) lv_obj_invalidate(g_gcanvas);
