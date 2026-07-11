@@ -13,7 +13,6 @@
 
 static lv_obj_t* g_screen = nullptr;
 static lv_obj_t* g_msg = nullptr;
-static lv_obj_t* g_row_dd[SPOOL_MAX] = {nullptr};
 static lv_obj_t* g_kb = nullptr;
 
 // edit-form widgets
@@ -117,17 +116,9 @@ static void new_cb(lv_event_t*) { create_spool_edit(-1); }
 static void empties_cb(lv_event_t*) { create_empties_ui(); }
 static void edit_cb(lv_event_t* e) { create_spool_edit((int)(intptr_t)lv_event_get_user_data(e)); }
 static void del_cb(lv_event_t* e) { spool_delete((int)(intptr_t)lv_event_get_user_data(e)); create_spools_ui(); }
-static void load_cb(lv_event_t* e) {
-    int idx = (int)(intptr_t)lv_event_get_user_data(e);
-    if (idx < 0 || idx >= g_spool_count) return;
-    int sel = g_row_dd[idx] ? (int)lv_dropdown_get_selected(g_row_dd[idx]) : 0;
-    spool_load_to_slot(idx, (sel >= 8) ? 254 : sel);
-    if (g_msg) lv_label_set_text_fmt(g_msg, "'%s' geladen in slot", g_spools[idx].name);
-}
 
 void create_spools_ui() {
     if (g_screen) { lv_obj_del(g_screen); g_screen = nullptr; }
-    for (int i = 0; i < SPOOL_MAX; i++) g_row_dd[i] = nullptr;
     g_kb = nullptr;
 
     g_screen = mk_screen();
@@ -196,16 +187,8 @@ void create_spools_ui() {
         lv_obj_set_flex_grow(lbl, 1);
         lv_label_set_long_mode(lbl, LV_LABEL_LONG_DOT);
 
-        lv_obj_t* dd = lv_dropdown_create(row);
-        lv_dropdown_set_options_static(dd,
-            "AMS1 T1\nAMS1 T2\nAMS1 T3\nAMS1 T4\nAMS2 T1\nAMS2 T2\nAMS2 T3\nAMS2 T4\nExtern");
-        lv_obj_set_width(dd, PT_SZ(110));
-        lv_obj_set_style_text_font(dd, &lv_font_montserrat_14, 0);
-        g_row_dd[i] = dd;
-
-        mk_btn(row, "Laad", 0x27ae60, load_cb, (void*)(intptr_t)i, 78, 40);
-        mk_btn(row, "Bewerk", 0x3465a4, edit_cb, (void*)(intptr_t)i, 84, 40);
-        mk_btn(row, "X", 0xa40000, del_cb, (void*)(intptr_t)i, 42, 40);
+        mk_btn(row, "Bewerk", 0x3465a4, edit_cb, (void*)(intptr_t)i, 100, 40);
+        mk_btn(row, "X", 0xa40000, del_cb, (void*)(intptr_t)i, 48, 40);
     }
 
     g_msg = lv_label_create(root);
