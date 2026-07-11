@@ -54,11 +54,11 @@ static void send_axis(char axis, float dist, int feed) {
 bool move_blocked(int code, const char** reason) {
     if (code == MOVE_PREHEAT || code == MOVE_COOL) return false;   // always allowed
     if (is_printing()) {
-        *reason = "Bezig met printen \xE2\x80\x93 bewegen uitgeschakeld";
+        *reason = "Bezig met printen - bewegen uitgeschakeld";
         return true;
     }
     if ((code == MOVE_EEXT || code == MOVE_ERET) && g_printer_status.nozzle_temp < MIN_EXTRUDE_TEMP) {
-        *reason = "Nozzle te koud (<170\xC2\xB0" "C) \xE2\x80\x93 eerst opwarmen";
+        *reason = "Nozzle te koud (<170\xC2\xB0" "C) - eerst opwarmen";
         return true;
     }
     return false;

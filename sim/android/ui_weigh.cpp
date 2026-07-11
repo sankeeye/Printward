@@ -175,7 +175,7 @@ void create_weigh_ui() {
 
     // Big weight
     g_weight = lv_label_create(root);
-    lv_label_set_text(g_weight, "– g");
+    lv_label_set_text(g_weight, "- g");
     lv_obj_set_style_text_font(g_weight, &lv_font_montserrat_48, 0);
     lv_obj_set_style_text_color(g_weight, lv_color_hex(0xFFFFFF), 0);
     g_sub = lv_label_create(root);
@@ -228,7 +228,7 @@ void update_weigh_ui() {
     if (!g_screen || !g_weight) return;
     bool on = scale_online();
     if (on) lv_label_set_text_fmt(g_weight, "%.0f g", scale_grams());
-    else lv_label_set_text(g_weight, "– g");
+    else lv_label_set_text(g_weight, "- g");
     lv_label_set_text(g_sub, on ? (scale_stable() ? "stabiel" : "…meten") : "geen verbinding met schaal");
     lv_obj_set_style_text_color(g_sub, lv_color_hex(on ? 0x2ecc71 : 0xe74c3c), 0);
 
@@ -242,7 +242,7 @@ void update_weigh_ui() {
         if ((p = strstr(info, "\"ssid\":\""))) sscanf(p + 8, "%47[^\"]", ssid);
         if ((p = strstr(info, "\"rssi\":"))) rssi = atoi(p + 7);
         bool st = strstr(info, "\"static\":true") != nullptr;
-        lv_label_set_text_fmt(g_infolbl, "netwerk: %s · %s · %ddBm%s", ip, ssid, rssi, st ? " · vast IP" : "");
+        lv_label_set_text_fmt(g_infolbl, "netwerk: %s \xE2\x80\xA2 %s \xE2\x80\xA2 %ddBm%s", ip, ssid, rssi, st ? " \xE2\x80\xA2 vast IP" : "");
     }
 
     char msg[128];
