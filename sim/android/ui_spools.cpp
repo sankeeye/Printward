@@ -4,6 +4,7 @@
 #include "ui_spools.h"
 #include "ui_printer.h"
 #include "spool_db.h"
+#include "scale_client.h"   // read the live scale weight for empty-spool weighing
 #include <lvgl.h>
 #include <cstdio>
 #include <cstring>
@@ -365,7 +366,12 @@ static void empty_add_cb(lv_event_t*) {
     create_empties_ui();
 }
 static void empty_del_cb(lv_event_t* e) { empty_delete((int)(intptr_t)lv_event_get_user_data(e)); create_empties_ui(); }
-static void empties_back_cb(lv_event_t*) { create_spools_ui(); }
+static void em_weigh_cb(lv_event_t*) {
+    char b[16];
+    snprintf(b, sizeof(b), "%.0f", scale_grams());
+    lv_textarea_set_text(g_em_weight, b);
+}
+static void empties_back_cb(lv_event_t*) { scale_set_polling(false); create_spools_ui(); }
 
 static void create_empties_ui() {
     if (g_screen) { lv_obj_del(g_screen); g_screen = nullptr; }
@@ -382,9 +388,12 @@ static void create_empties_ui() {
     mk_btn(header, "Terug", 0x333333, empties_back_cb, nullptr, 100, 40);
 
     lv_obj_t* addrow = form_row(root);
-    g_em_name = mk_labeled_ta(addrow, "Naam", nullptr, 260);
-    g_em_weight = mk_labeled_ta(addrow, "Gewicht (g)", "250", 120);
+    g_em_name = mk_labeled_ta(addrow, "Naam", nullptr, 240);
+    g_em_weight = mk_labeled_ta(addrow, "Gewicht (g)", "250", 110);
+    mk_btn(addrow, "Weeg", 0x3465a4, em_weigh_cb, nullptr, 100, 44);
     mk_btn(addrow, "Toevoegen", 0x27ae60, empty_add_cb, nullptr, 130, 44);
+
+    scale_set_polling(true);   // keep the live weight fresh for the Weeg button
 
     lv_obj_t* list = lv_obj_create(root);
     lv_obj_set_width(list, lv_pct(100));

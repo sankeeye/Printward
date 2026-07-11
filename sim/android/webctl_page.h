@@ -187,6 +187,7 @@ section#spools{max-width:1040px}
   <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px">
    <div class="field" style="flex:1;min-width:160px"><label>Naam</label><input type="text" id="emName" placeholder="bv. Bambu herbruikbaar"></div>
    <div class="field" style="width:120px"><label>Gewicht (g)</label><input type="number" id="emWeight" value="250"></div>
+   <button class="formbtn sec" style="height:42px" onclick="emWeigh()">Weeg</button>
    <button id="emSave" class="formbtn pri" style="height:42px">Toevoegen</button>
   </div>
   <div id="emList"></div>
@@ -406,6 +407,8 @@ $('emSave').onclick=function(){
  fetch('/empty_save?'+q).then(function(){$('emName').value='';setTimeout(loadEmpties,300);});
 };
 function emDel(i){if(confirm('Verwijderen?'))fetch('/empty_del?idx='+i).then(function(){loadEmpties();});}
+function emWeigh(){if(!scaleHost){alert('Geen schaal-IP bekend — stel het in op de Scale-tab.');return;}
+ fetch('http://'+scaleHost+'/weight').then(function(r){return r.json();}).then(function(d){$('emWeight').value=Math.round(d.g);}).catch(function(){alert('Geen verbinding met de schaal.');});}
 function setSpColor(c){$('spColor').value=c;}
 function buildSwatches(){var p=['#111111','#eeeeee','#9aa0a6','#c0392b','#e67e22','#f1c40f','#27ae60','#2980b9','#8e44ad','#ec407a','#6d4c41','#16a085'];var h='';p.forEach(function(c){h+='<button class="swatch" style="background:'+c+'" onclick="setSpColor(\''+c+'\')"></button>';});if($('spSw'))$('spSw').innerHTML=h;}
 buildSwatches();
