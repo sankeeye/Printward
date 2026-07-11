@@ -74,6 +74,23 @@ h3{margin:0 0 10px;font-size:15px;color:var(--muted);font-weight:600}
 .modalhead b{font-size:17px}
 .modalhead button{background:#555;color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer}
 .rollpick{cursor:pointer}.rollpick:active{filter:brightness(1.3)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{color:var(--muted);font-size:12px}
+.field input,.field select{padding:10px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff;font-size:15px;width:100%}
+.chip{width:46px;height:46px;border-radius:10px;border:2px solid #3a434d;flex:0 0 auto;cursor:pointer;padding:2px;background:none}
+.swatches{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.swatch{width:30px;height:30px;border-radius:7px;border:1px solid #4a5560;cursor:pointer;padding:0}
+.rollcard{display:flex;align-items:center;gap:12px;background:var(--panel2);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+.rollcard .name{font-weight:600}
+.badge{display:inline-block;background:#2a323b;color:#cfd6dd;border-radius:20px;padding:2px 10px;font-size:12px;margin-left:8px}
+.grams{margin-left:auto;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+.iconbtn{background:#2a323b;color:#cfd6dd;border:0;border-radius:8px;width:40px;height:36px;font-size:16px;cursor:pointer}
+.iconbtn:active{filter:brightness(1.4)}
+.iconbtn.del{background:#4a2323;color:#ff9a9a}
+.chiprow{display:flex;align-items:center;gap:10px;background:var(--panel2);border-radius:8px;padding:9px 12px;margin-bottom:6px}
+.formbtn{border:0;border-radius:9px;padding:11px 20px;font-size:15px;cursor:pointer}
+.formbtn.pri{background:#27ae60;color:#fff}.formbtn.sec{background:#3a434d;color:#eceff2}
 </style></head><body>
 <header><div class="t">PandaTouch</div><div id="conn" class="muted">verbinden…</div></header>
 <nav>
@@ -144,32 +161,32 @@ h3{margin:0 0 10px;font-size:15px;color:var(--muted);font-weight:600}
 
 <section id="spools">
  <div class="card"><h3 id="spTitle">Nieuwe rol</h3>
-  <div class="frow"><label class="muted">Naam / merk</label><input type="text" id="spName" placeholder="bv. Bambu PLA Zwart"></div>
-  <div style="display:flex;gap:10px;flex-wrap:wrap">
-   <div class="frow"><label class="muted">Materiaal</label><select id="spMat"><option>PLA</option><option>PETG</option><option>ABS</option><option>TPU</option><option>ASA</option><option>PC</option><option>PA</option><option>PVA</option></select></div>
-   <div class="frow"><label class="muted">Kleur</label><input type="color" id="spColor" value="#22aa55" style="width:70px;height:44px;padding:2px"></div>
-   <div class="frow"><label class="muted">Resterend (g)</label><input type="number" id="spRem" value="1000" style="width:110px"></div>
-   <div class="frow"><label class="muted">Leeg spoel</label><select id="spEmptySel" style="width:150px"><option value="">— kies —</option></select></div>
-   <div class="frow"><label class="muted">Leeg (g)</label><input type="number" id="spEmpty" value="250" style="width:90px"></div>
+  <div class="field" style="margin-bottom:14px"><label>Naam / merk</label><input type="text" id="spName" placeholder="bv. Bambu PLA Zwart"></div>
+  <div class="field" style="margin-bottom:14px"><label>Kleur</label>
+   <div class="swatches"><input type="color" id="spColor" value="#22aa55" class="chip"><span id="spSw" class="swatches"></span></div>
   </div>
-  <div style="display:flex;gap:10px;flex-wrap:wrap">
-   <div class="frow"><label class="muted">Nozzle min</label><input type="number" id="spNmin" placeholder="auto" style="width:90px"></div>
-   <div class="frow"><label class="muted">Nozzle max</label><input type="number" id="spNmax" placeholder="auto" style="width:90px"></div>
-   <div class="frow"><label class="muted">Bambu-code</label><input type="text" id="spCode" placeholder="auto" style="width:110px"></div>
-   <div class="frow" style="flex:1;min-width:160px"><label class="muted">Notitie</label><input type="text" id="spNote" placeholder="bv. gedroogd 3/7"></div>
+  <div class="grid">
+   <div class="field"><label>Materiaal</label><select id="spMat"><option>PLA</option><option>PETG</option><option>ABS</option><option>TPU</option><option>ASA</option><option>PC</option><option>PA</option><option>PVA</option></select></div>
+   <div class="field"><label>Resterend (g)</label><input type="number" id="spRem" value="1000"></div>
+   <div class="field"><label>Leeg spoel</label><select id="spEmptySel"><option value="">— kies —</option></select></div>
+   <div class="field"><label>Leeg (g)</label><input type="number" id="spEmpty" value="250"></div>
+   <div class="field"><label>Nozzle min</label><input type="number" id="spNmin" placeholder="auto"></div>
+   <div class="field"><label>Nozzle max</label><input type="number" id="spNmax" placeholder="auto"></div>
+   <div class="field"><label>Bambu-code</label><input type="text" id="spCode" placeholder="auto"></div>
   </div>
+  <div class="field" style="margin-top:12px"><label>Notitie</label><input type="text" id="spNote" placeholder="bv. gedroogd 3/7"></div>
   <input type="hidden" id="spIdx" value="-1">
-  <div style="display:flex;gap:8px"><button id="spSave" class="ext">Opslaan</button><button id="spNew">Nieuw</button></div>
+  <div style="display:flex;gap:10px;margin-top:16px"><button id="spSave" class="formbtn pri">Opslaan</button><button id="spNew" class="formbtn sec">Nieuw</button></div>
   <div id="spMsg" class="muted" style="margin-top:8px"></div>
  </div>
  <div class="card"><h3>Rollen</h3><div id="spList" class="muted">…</div></div>
- <div class="card"><h3>Lege spoelen (bibliotheek)</h3>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
-   <div class="frow"><label class="muted">Naam</label><input type="text" id="emName" placeholder="bv. Bambu herbruikbaar"></div>
-   <div class="frow"><label class="muted">Gewicht (g)</label><input type="number" id="emWeight" value="250" style="width:110px"></div>
-   <button id="emSave" class="ext">Toevoegen</button>
+ <div class="card"><h3>Lege spoelen</h3>
+  <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px">
+   <div class="field" style="flex:1;min-width:160px"><label>Naam</label><input type="text" id="emName" placeholder="bv. Bambu herbruikbaar"></div>
+   <div class="field" style="width:120px"><label>Gewicht (g)</label><input type="number" id="emWeight" value="250"></div>
+   <button id="emSave" class="formbtn pri" style="height:42px">Toevoegen</button>
   </div>
-  <div id="emList" class="muted" style="margin-top:10px"></div>
+  <div id="emList"></div>
  </div>
 </section>
 
@@ -312,11 +329,14 @@ function loadSpools(){
  fetch('/spools').then(function(r){return r.json();}).then(function(list){
   spCache=list;var h='';
   list.forEach(function(s){
-   h+='<div class="fitem"><div style="display:flex;align-items:center;gap:8px;min-width:0"><div class="sw" style="width:26px;height:20px;flex:0 0 auto;background:'+s.rgb+'"></div><span><b>'+s.name+'</b> <span class="muted">'+s.material+' • '+s.rem+' g</span></span></div>'
-    +'<div style="display:flex;gap:6px;align-items:center"><button onclick="spEdit('+s.i+')">Bewerk</button>'
-    +'<button class="b-red" onclick="spDel('+s.i+')">X</button></div></div>';
+   h+='<div class="rollcard"><div style="width:42px;height:42px;border-radius:9px;flex:0 0 auto;border:1px solid #3a434d;background:'+s.rgb+'"></div>'
+    +'<div style="min-width:0"><div class="name">'+s.name+'<span class="badge">'+s.material+'</span></div>'
+    +(s.note?'<div class="muted" style="font-size:12px">'+s.note+'</div>':'')+'</div>'
+    +'<div class="grams">'+s.rem+' g</div>'
+    +'<button class="iconbtn" title="Bewerk" onclick="spEdit('+s.i+')">✎</button>'
+    +'<button class="iconbtn del" title="Verwijder" onclick="spDel('+s.i+')">✕</button></div>';
   });
-  $('spList').innerHTML=h||'<div class="muted">nog geen rollen</div>';
+  $('spList').innerHTML=h||'<div class="muted">Nog geen rollen — vul hierboven een rol in.</div>';
  }).catch(function(){$('spList').innerHTML='<div class="muted">geen tablet</div>';});
 }
 function spLoad(i){var sl=$('ss'+i).value;fetch('/spool_load?idx='+i+'&slot='+sl).then(function(r){return r.text();}).then(function(t){spMsg(t+' in slot');});}
@@ -339,8 +359,8 @@ function loadEmpties(){
   list.forEach(function(e){o+='<option value="'+e.weight+'">'+e.name+' ('+e.weight+' g)</option>';});
   sel.innerHTML=o;sel.value=cur;
   var h='';
-  list.forEach(function(e){h+='<div class="fitem"><span>'+e.name+' <span class="muted">'+e.weight+' g</span></span><button class="b-red" onclick="emDel('+e.i+')">X</button></div>';});
-  $('emList').innerHTML=h||'<div class="muted">nog geen lege spoelen</div>';
+  list.forEach(function(e){h+='<div class="chiprow"><span>'+e.name+'</span><span class="badge" style="margin-left:0">'+e.weight+' g</span><button class="iconbtn del" style="margin-left:auto" onclick="emDel('+e.i+')">✕</button></div>';});
+  $('emList').innerHTML=h||'<div class="muted">Nog geen lege spoelen.</div>';
  }).catch(function(){});
 }
 $('spEmptySel').onchange=function(){if(this.value)$('spEmpty').value=this.value;};
@@ -349,4 +369,7 @@ $('emSave').onclick=function(){
  fetch('/empty_save?'+q).then(function(){$('emName').value='';setTimeout(loadEmpties,300);});
 };
 function emDel(i){if(confirm('Verwijderen?'))fetch('/empty_del?idx='+i).then(function(){loadEmpties();});}
+function setSpColor(c){$('spColor').value=c;}
+function buildSwatches(){var p=['#111111','#eeeeee','#9aa0a6','#c0392b','#e67e22','#f1c40f','#27ae60','#2980b9','#8e44ad','#ec407a','#6d4c41','#16a085'];var h='';p.forEach(function(c){h+='<button class="swatch" style="background:'+c+'" onclick="setSpColor(\''+c+'\')"></button>';});if($('spSw'))$('spSw').innerHTML=h;}
+buildSwatches();
 </script></body></html>)PAGE"
