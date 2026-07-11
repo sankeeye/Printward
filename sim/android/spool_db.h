@@ -20,6 +20,7 @@ struct Spool {
     float remaining_g;   // filament grams left on the roll
     float empty_g;       // empty-spool weight (for re-weighing)
     int nmin, nmax;      // nozzle temp range
+    float price_kg;      // price per kg (for cost tracking), 0 = unknown
 };
 
 extern Spool g_spools[SPOOL_MAX];

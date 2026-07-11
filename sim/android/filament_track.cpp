@@ -14,6 +14,9 @@ int g_low_threshold_g = 100;
 #define WEIGHTS_PATH "/sdcard/pandatouch_weights.conf"
 #define EXT_SLOT 254
 
+static float g_tray_price[AMS_MAX_UNITS][AMS_MAX_TRAYS] = {{0}};   // EUR/kg per slot
+static float g_ext_price = 0;
+
 // --- slot <-> storage mapping --------------------------------------------
 static float cap_of(int slot) {
     if (slot == EXT_SLOT) return g_ext_capacity_g;
@@ -45,12 +48,17 @@ void filament_save() {
     FILE* f = fopen(WEIGHTS_PATH, "w");
     if (!f) { Serial.println("WEIGHTS: save failed"); return; }
     fprintf(f, "low=%d\n", g_low_threshold_g);
-    if (g_ext_capacity_g > 0) { fprintf(f, "ecap=%.1f\n", g_ext_capacity_g); fprintf(f, "eused=%.1f\n", g_ext_used_g); }
+    if (g_ext_capacity_g > 0) {
+        fprintf(f, "ecap=%.1f\n", g_ext_capacity_g);
+        fprintf(f, "eused=%.1f\n", g_ext_used_g);
+        if (g_ext_price > 0) fprintf(f, "eprice=%.2f\n", g_ext_price);
+    }
     for (int u = 0; u < AMS_MAX_UNITS; u++)
         for (int t = 0; t < AMS_MAX_TRAYS; t++)
             if (g_tray_capacity_g[u][t] > 0) {
                 fprintf(f, "cap_%d_%d=%.1f\n", u, t, g_tray_capacity_g[u][t]);
                 fprintf(f, "used_%d_%d=%.1f\n", u, t, g_tray_used_g[u][t]);
+                if (g_tray_price[u][t] > 0) fprintf(f, "price_%d_%d=%.2f\n", u, t, g_tray_price[u][t]);
             }
     fclose(f);
 }
@@ -69,8 +77,10 @@ void filament_track_init() {
         if (!strcmp(key, "low")) g_low_threshold_g = (int)val;
         else if (!strcmp(key, "ecap")) g_ext_capacity_g = val;
         else if (!strcmp(key, "eused")) g_ext_used_g = val;
+        else if (!strcmp(key, "eprice")) g_ext_price = val;
         else if (sscanf(key, "cap_%d_%d", &u, &t) == 2 && u < AMS_MAX_UNITS && t < AMS_MAX_TRAYS) g_tray_capacity_g[u][t] = val;
         else if (sscanf(key, "used_%d_%d", &u, &t) == 2 && u < AMS_MAX_UNITS && t < AMS_MAX_TRAYS) g_tray_used_g[u][t] = val;
+        else if (sscanf(key, "price_%d_%d", &u, &t) == 2 && u < AMS_MAX_UNITS && t < AMS_MAX_TRAYS) g_tray_price[u][t] = val;
     }
     fclose(f);
 }
@@ -155,4 +165,20 @@ float filament_shortfall() {
     float need = total * (100.0f - pct) / 100.0f;    // filament still to be printed
     float shortfall = need - have;
     return shortfall > 0 ? shortfall : 0;
+}
+
+void filament_set_price(int slot, float price_kg) {
+    if (price_kg < 0) price_kg = 0;
+    if (slot == EXT_SLOT) g_ext_price = price_kg;
+    else {
+        int u = slot / AMS_MAX_TRAYS, t = slot % AMS_MAX_TRAYS;
+        if (u >= 0 && u < AMS_MAX_UNITS && t >= 0 && t < AMS_MAX_TRAYS) g_tray_price[u][t] = price_kg;
+    }
+    filament_save();
+}
+float filament_price(int slot) {
+    if (slot == EXT_SLOT) return g_ext_price;
+    int u = slot / AMS_MAX_TRAYS, t = slot % AMS_MAX_TRAYS;
+    if (u >= 0 && u < AMS_MAX_UNITS && t >= 0 && t < AMS_MAX_TRAYS) return g_tray_price[u][t];
+    return 0;
 }

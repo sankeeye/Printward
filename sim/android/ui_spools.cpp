@@ -27,6 +27,7 @@ static lv_obj_t* g_e_nmax = nullptr;
 static lv_obj_t* g_e_code = nullptr;
 static lv_obj_t* g_e_note = nullptr;
 static lv_obj_t* g_e_swatch = nullptr;
+static lv_obj_t* g_e_price = nullptr;
 static uint32_t  g_e_color = 0x22AA55;
 static int       g_edit_idx = -1;
 // empty-form widgets
@@ -247,6 +248,7 @@ static void edit_save_cb(lv_event_t*) {
     s.nmax = atoi(lv_textarea_get_text(g_e_nmax));
     strncpy(s.code, lv_textarea_get_text(g_e_code), sizeof(s.code) - 1);
     strncpy(s.note, lv_textarea_get_text(g_e_note), sizeof(s.note) - 1);
+    s.price_kg = (float)atof(lv_textarea_get_text(g_e_price));
     spool_upsert(g_edit_idx, s);
     create_spools_ui();
 }
@@ -362,8 +364,10 @@ static void create_spool_edit(int idx) {
     if (cur.nmax > 0) { char b[8]; snprintf(b, sizeof(b), "%d", cur.nmax); lv_textarea_set_text(g_e_nmax, b); }
 
     lv_obj_t* r3 = form_row(root);
-    g_e_code = mk_labeled_ta(r3, "Bambu-code (leeg = auto)", cur.code, 200);
-    g_e_note = mk_labeled_ta(r3, "Notitie", cur.note, 250);
+    g_e_code = mk_labeled_ta(r3, "Bambu-code (leeg = auto)", cur.code, 180);
+    g_e_note = mk_labeled_ta(r3, "Notitie", cur.note, 220);
+    g_e_price = mk_labeled_ta(r3, "Prijs (EUR/kg)", nullptr, 130);
+    if (cur.price_kg > 0) { char b[16]; snprintf(b, sizeof(b), "%.2f", cur.price_kg); lv_textarea_set_text(g_e_price, b); }
 
     // colour palette
     lv_obj_t* cl = lv_label_create(root); lv_label_set_text(cl, "Kleur");

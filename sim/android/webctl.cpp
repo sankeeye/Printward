@@ -16,6 +16,7 @@
 #include "spool_db.h"         // spool library + load-to-AMS
 #include "notify.h"           // g_ntfy_topic
 #include "stats.h"            // g_stat_prints, g_stat_grams
+#include "history.h"          // recent-print log + total cost
 #include "ui_screensaver.h"   // g_screensaver_3d, screensaver_view_changed()
 #include "bambu_mqtt.h"
 #include "bambu_ftp.h"
@@ -237,6 +238,7 @@ void webctl_loop() {
                 if (parse_query(c.arg, "empty", v, sizeof(v))) s.empty_g = (float)atof(v);
                 if (parse_query(c.arg, "nmin", v, sizeof(v))) s.nmin = atoi(v);
                 if (parse_query(c.arg, "nmax", v, sizeof(v))) s.nmax = atoi(v);
+                if (parse_query(c.arg, "price", v, sizeof(v))) s.price_kg = (float)atof(v);
                 spool_upsert(c.code, s);          // c.code = idx (-1 = add)
                 break;
             }
@@ -302,9 +304,9 @@ static void build_status(char* o, int n) {
     p += snprintf(o + p, n - p,
         "\"nozzle\":%.0f,\"nozzle_t\":%.0f,\"bed\":%.0f,\"bed_t\":%.0f,\"chamber\":%.0f,",
         s.nozzle_temp, s.nozzle_target, s.bed_temp, s.bed_target, s.chamber_temp);
-    p += snprintf(o + p, n - p, "\"light\":%s,\"fan\":%d,\"speed\":%d,\"active_tray\":%d,\"short\":%.0f,\"prints\":%d,\"used\":%.0f,",
+    p += snprintf(o + p, n - p, "\"light\":%s,\"fan\":%d,\"speed\":%d,\"active_tray\":%d,\"short\":%.0f,\"prints\":%d,\"used\":%.0f,\"cost\":%.2f,",
         s.light_on ? "true" : "false", s.fan_speed_pct, s.speed_level, s.active_tray_now,
-        filament_shortfall(), g_stat_prints, g_stat_grams);
+        filament_shortfall(), g_stat_prints, g_stat_grams, g_hist_total_cost);
     p += snprintf(o + p, n - p,
         "\"cfg\":{\"ip\":\"%s\",\"serial\":\"%s\",\"view3d\":%s,\"bri\":%d,\"code_set\":%s,\"scale_ip\":\"%s\",\"low\":%d,\"ntfy\":\"%s\"},",
         g_printer_ip, g_printer_serial, g_screensaver_3d ? "true" : "false",
@@ -373,9 +375,9 @@ static void build_spools(char* o, int n) {
         json_escape(s.code, code, sizeof(code));
         json_escape(s.note, note, sizeof(note));
         p += snprintf(o + p, n - p,
-            "%s{\"i\":%d,\"name\":\"%s\",\"material\":\"%s\",\"rgb\":\"#%06X\",\"rem\":%.0f,\"empty\":%.0f,\"nmin\":%d,\"nmax\":%d,\"code\":\"%s\",\"note\":\"%s\"}",
+            "%s{\"i\":%d,\"name\":\"%s\",\"material\":\"%s\",\"rgb\":\"#%06X\",\"rem\":%.0f,\"empty\":%.0f,\"nmin\":%d,\"nmax\":%d,\"code\":\"%s\",\"note\":\"%s\",\"price\":%.2f}",
             i ? "," : "", i, nm, mat, (unsigned)(s.color & 0xFFFFFF),
-            s.remaining_g, s.empty_g, s.nmin, s.nmax, code, note);
+            s.remaining_g, s.empty_g, s.nmin, s.nmax, code, note, s.price_kg);
     }
     snprintf(o + p, n - p, "]");
 }
@@ -388,6 +390,19 @@ static void build_empties(char* o, int n) {
         json_escape(g_empties[i].name, nm, sizeof(nm));
         p += snprintf(o + p, n - p, "%s{\"i\":%d,\"name\":\"%s\",\"weight\":%.0f}",
                       i ? "," : "", i, nm, g_empties[i].weight_g);
+    }
+    snprintf(o + p, n - p, "]");
+}
+
+static void build_history(char* o, int n) {
+    int p = 0;
+    p += snprintf(o + p, n - p, "[");
+    for (int i = 0; i < g_hist_count; i++) {
+        PrintRec& r = g_history[i];
+        char nm[96];
+        json_escape(r.name, nm, sizeof(nm));
+        p += snprintf(o + p, n - p, "%s{\"when\":\"%s\",\"name\":\"%s\",\"grams\":%.0f,\"cost\":%.2f,\"ok\":%d}",
+            i ? "," : "", r.when, nm, r.grams, r.cost, r.ok);
     }
     snprintf(o + p, n - p, "]");
 }
@@ -528,6 +543,12 @@ static void handle_conn(int fd) {
     if (!strcmp(path, "/notify_test")) {
         notify_send("PandaTouch", "Test melding - het werkt!");
         send_resp(fd, "200 OK", "text/plain; charset=utf-8", "testmelding verstuurd", 21);
+        return;
+    }
+    if (!strcmp(path, "/history")) {
+        char* js = (char*)malloc(8192);
+        if (js) { build_history(js, 8192); send_resp(fd, "200 OK", "application/json", js, (int)strlen(js)); free(js); }
+        else send_resp(fd, "500 Error", "text/plain", "", 0);
         return;
     }
     send_resp(fd, "404 Not Found", "text/plain", "", 0);

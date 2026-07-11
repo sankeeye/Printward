@@ -189,6 +189,7 @@ section#spools{max-width:1040px}
    <div class="field"><label>Nozzle min</label><input type="number" id="spNmin" placeholder="auto"></div>
    <div class="field"><label>Nozzle max</label><input type="number" id="spNmax" placeholder="auto"></div>
    <div class="field"><label>Bambu-code</label><input type="text" id="spCode" placeholder="auto"></div>
+   <div class="field"><label>Prijs (€/kg)</label><input type="number" id="spPrice" placeholder="0" step="0.01"></div>
   </div>
   <div class="field" style="margin-top:12px"><label>Notitie</label><input type="text" id="spNote" placeholder="bv. gedroogd 3/7"></div>
   <input type="hidden" id="spIdx" value="-1">
@@ -249,7 +250,9 @@ section#spools{max-width:1040px}
  <div class="card"><h3>Statistieken</h3>
   <div class="muted" style="font-size:16px">Voltooide prints: <b id="stPrints">–</b></div>
   <div class="muted" style="font-size:16px;margin-top:4px">Totaal filament gebruikt: <b id="stUsed">–</b></div>
+  <div class="muted" style="font-size:16px;margin-top:4px">Totale filament-uitgave: <b id="stCost">–</b></div>
  </div>
+ <div class="card"><h3>Print-geschiedenis</h3><div id="histList" class="muted">…</div></div>
 </section>
 
 <div id="rollModal" class="modal"><div class="modalbox">
@@ -264,7 +267,12 @@ function tab(n){
  document.querySelectorAll('section').forEach(function(s){s.classList.toggle('on',s.id===n);});
  if(n==='files')loadFiles(curPath);
  if(n==='spools'){loadSpools();loadEmpties();}
+ if(n==='set')loadHistory();
 }
+function loadHistory(){fetch('/history').then(function(r){return r.json();}).then(function(list){
+ var h='';if(!list.length)h='<div class="muted">nog geen prints</div>';
+ list.forEach(function(r){h+='<div class="chiprow"><span style="color:'+(r.ok?'#2ecc71':'#e74c3c')+'">'+(r.ok?'✓':'✗')+'</span> <span><b>'+r.name+'</b> <span class="muted">'+r.when+'</span></span><span class="muted" style="margin-left:auto;white-space:nowrap">'+r.grams+' g'+(r.cost>0?' · €'+r.cost.toFixed(2):'')+'</span></div>';});
+ $('histList').innerHTML=h;}).catch(function(){});}
 document.querySelectorAll('nav button').forEach(function(b){b.onclick=function(){tab(b.dataset.tab);};});
 document.querySelectorAll('.step button').forEach(function(b){b.onclick=function(){step=b.dataset.s;
  document.querySelectorAll('.step button').forEach(function(x){x.classList.remove('sel');});b.classList.add('sel');};});
@@ -354,7 +362,7 @@ function poll(){
   if(document.activeElement!==$('speed'))$('speed').value=s.speed;
   if(!$('rollModal')||$('rollModal').style.display!=='flex'){$('amsStrip').innerHTML=amsHtml(s.ams,s.ext,false);$('amsDetail').innerHTML=amsHtml(s.ams,s.ext,true);}
   $('movenoz').textContent='Nozzle '+s.nozzle+'/'+s.nozzle_t+'°C';
-  if(s.prints!==undefined&&$('stPrints')){$('stPrints').textContent=s.prints;$('stUsed').textContent=(s.used>=1000?(s.used/1000).toFixed(2)+' kg':s.used+' g');}
+  if(s.prints!==undefined&&$('stPrints')){$('stPrints').textContent=s.prints;$('stUsed').textContent=(s.used>=1000?(s.used/1000).toFixed(2)+' kg':s.used+' g');if($('stCost'))$('stCost').textContent='€ '+(s.cost||0).toFixed(2);}
   if(s.cfg&&s.cfg.scale_ip){scaleHost=s.cfg.scale_ip;var si=$('sIp');if(si&&!si.value)si.value=s.cfg.scale_ip;}
   if(s.cfg&&s.cfg.low)lowG=s.cfg.low;
   if(!cfgFilled&&s.cfg){cfgFilled=true;
@@ -425,18 +433,18 @@ function spWeigh(i){var s=spCache[i];if(!scaleHost){alert('Geen schaal-IP bekend
   if(!confirm('Rol \''+s.name+'\' wegen?\nGewogen '+Math.round(d.g)+' g − leeg '+s.empty+' g = '+rem+' g resterend.'))return;
   fetch('/spool_save?idx='+i+'&name='+encodeURIComponent(s.name)+'&material='+encodeURIComponent(s.material)+'&color='+encodeURIComponent(s.rgb)+'&rem='+rem+'&empty='+s.empty+'&nmin='+(s.nmin||0)+'&nmax='+(s.nmax||0)+'&code='+encodeURIComponent(s.code||'')+'&note='+encodeURIComponent(s.note||'')).then(function(){setTimeout(loadSpools,300);});
  }).catch(function(){alert('Geen verbinding met de schaal.');});}
-function spCopy(i){var s=spCache[i];fetch('/spool_save?idx=&name='+encodeURIComponent(s.name+' (kopie)')+'&material='+encodeURIComponent(s.material)+'&color='+encodeURIComponent(s.rgb)+'&rem='+s.rem+'&empty='+s.empty+'&nmin='+(s.nmin||0)+'&nmax='+(s.nmax||0)+'&code='+encodeURIComponent(s.code||'')+'&note='+encodeURIComponent(s.note||'')).then(function(){setTimeout(loadSpools,300);});}
+function spCopy(i){var s=spCache[i];fetch('/spool_save?idx=&name='+encodeURIComponent(s.name+' (kopie)')+'&material='+encodeURIComponent(s.material)+'&color='+encodeURIComponent(s.rgb)+'&rem='+s.rem+'&empty='+s.empty+'&nmin='+(s.nmin||0)+'&nmax='+(s.nmax||0)+'&code='+encodeURIComponent(s.code||'')+'&note='+encodeURIComponent(s.note||'')+'&price='+(s.price||0)).then(function(){setTimeout(loadSpools,300);});}
 function spLoad(i){var sl=$('ss'+i).value;fetch('/spool_load?idx='+i+'&slot='+sl).then(function(r){return r.text();}).then(function(t){spMsg(t+' in slot');});}
 function spDel(i){if(confirm('Rol verwijderen?'))fetch('/spool_del?idx='+i).then(function(){loadSpools();});}
 function spEdit(i){var s=spCache[i];$('spTitle').textContent='Rol bewerken';$('spIdx').value=i;
  $('spName').value=s.name;$('spMat').value=s.material;$('spColor').value=s.rgb;$('spRem').value=s.rem;$('spEmpty').value=s.empty;
- $('spNmin').value=s.nmin||'';$('spNmax').value=s.nmax||'';$('spCode').value=s.code||'';$('spNote').value=s.note||'';}
-function spReset(){$('spTitle').textContent='Nieuwe rol';$('spIdx').value=-1;$('spName').value='';$('spNote').value='';$('spCode').value='';$('spNmin').value='';$('spNmax').value='';}
+ $('spNmin').value=s.nmin||'';$('spNmax').value=s.nmax||'';$('spCode').value=s.code||'';$('spNote').value=s.note||'';$('spPrice').value=s.price||'';}
+function spReset(){$('spTitle').textContent='Nieuwe rol';$('spIdx').value=-1;$('spName').value='';$('spNote').value='';$('spCode').value='';$('spNmin').value='';$('spNmax').value='';$('spPrice').value='';}
 $('spNew').onclick=spReset;
 $('spSave').onclick=function(){
  var q='idx='+$('spIdx').value+'&name='+encodeURIComponent($('spName').value)+'&material='+encodeURIComponent($('spMat').value)
   +'&color='+encodeURIComponent($('spColor').value)+'&rem='+($('spRem').value||0)+'&empty='+($('spEmpty').value||0)
-  +'&nmin='+($('spNmin').value||0)+'&nmax='+($('spNmax').value||0)+'&code='+encodeURIComponent($('spCode').value)+'&note='+encodeURIComponent($('spNote').value);
+  +'&nmin='+($('spNmin').value||0)+'&nmax='+($('spNmax').value||0)+'&code='+encodeURIComponent($('spCode').value)+'&note='+encodeURIComponent($('spNote').value)+'&price='+($('spPrice').value||0);
  fetch('/spool_save?'+q).then(function(r){return r.text();}).then(function(t){spMsg(t);spReset();setTimeout(loadSpools,300);});
 };
 function loadEmpties(){

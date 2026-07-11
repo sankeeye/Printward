@@ -41,9 +41,9 @@ void spool_db_save() {
     for (int i = 0; i < g_spool_count; i++) {
         Spool s = g_spools[i];
         sanitize(s.name); sanitize(s.material); sanitize(s.code); sanitize(s.note);
-        fprintf(f, "%s|%s|%s|%06X|%.1f|%.1f|%d|%d|%s\n",
+        fprintf(f, "%s|%s|%s|%06X|%.1f|%.1f|%d|%d|%s|%.2f\n",
                 s.name, s.material, s.code, (unsigned)(s.color & 0xFFFFFF),
-                s.remaining_g, s.empty_g, s.nmin, s.nmax, s.note);
+                s.remaining_g, s.empty_g, s.nmin, s.nmax, s.note, s.price_kg);
     }
     fclose(f);
 }
@@ -75,6 +75,7 @@ void spool_db_load() {
         s.nmin = atoi(field(&p));
         s.nmax = atoi(field(&p));
         strncpy(s.note, field(&p), sizeof(s.note) - 1);
+        s.price_kg = (float)atof(field(&p));   // absent in old files -> 0
         g_spools[g_spool_count++] = s;
     }
     fclose(f);
@@ -148,6 +149,7 @@ void spool_load_to_slot(int idx, int slot) {
 
     // 1. weight tracking: the roll's remaining grams IS the filament (empty 0)
     filament_weigh_assign(slot, s.remaining_g, 0);
+    filament_set_price(slot, s.price_kg);   // remember EUR/kg for cost tracking
 
     // 2. push to the printer's AMS (external spool 254 is set differently - skip)
     if (slot != 254) {
