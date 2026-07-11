@@ -28,10 +28,13 @@
 // HX711 wiring per the SpoolEase Scale build guide.
 #define HX_DOUT 5
 #define HX_SCK  4
+#define LED_PIN 48            // onboard RGB (WS2812) - SpoolEase "front RGB LED"
 
 HX711 scale;
 WebServer server(80);
 Preferences prefs;
+
+static uint32_t g_last_req = 0;   // millis of the last request from the tablet
 
 static float g_cal = 1.0f;      // raw units per gram
 static long  g_tare = 0;        // raw offset
@@ -57,6 +60,7 @@ static bool is_stable() {
 static void cors() { server.sendHeader("Access-Control-Allow-Origin", "*"); }
 
 static void handleWeight() {
+    g_last_req = millis();
     float g = sample_grams();
     char buf[80];
     snprintf(buf, sizeof(buf), "{\"g\":%.1f,\"stable\":%s}", g, is_stable() ? "true" : "false");
@@ -65,6 +69,7 @@ static void handleWeight() {
 }
 
 static void handleInfo() {
+    g_last_req = millis();
     bool c = WiFi.status() == WL_CONNECTED;
     String ip = c ? WiFi.localIP().toString() : WiFi.softAPIP().toString();
     char b[240];
@@ -222,6 +227,17 @@ void setup() {
 
 void loop() {
     server.handleClient();
+
+    // Status LED: green while the tablet is talking to us (a request in the last
+    // 12 s), red otherwise (tablet off / not on the network).
+    static uint32_t led_t = 0;
+    if (millis() - led_t > 250) {
+        led_t = millis();
+        bool linked = (WiFi.status() == WL_CONNECTED) && (millis() - g_last_req < 12000);
+        if (linked) neopixelWrite(LED_PIN, 0, 30, 0);   // green
+        else        neopixelWrite(LED_PIN, 40, 0, 0);   // red
+    }
+
     if (g_reboot_at && (int32_t)(millis() - g_reboot_at) >= 0) { delay(50); ESP.restart(); }
     delay(2);
 }

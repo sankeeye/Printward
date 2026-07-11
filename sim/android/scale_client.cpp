@@ -208,9 +208,9 @@ static int worker(void*) {
         SDL_LockMutex(g_mtx);
         poll = g_polling;
         SDL_UnlockMutex(g_mtx);
-        if (poll) poll_once();
+        poll_once();   // always poll: a slow heartbeat keeps the scale's LED green
 
-        SDL_Delay(poll ? 700 : 250);
+        SDL_Delay(poll ? 700 : 4000);
     }
     return 0;
 }
