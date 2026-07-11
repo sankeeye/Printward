@@ -6,7 +6,8 @@
 #include "ui_files.h"
 #include "ui_move.h"
 #ifdef __ANDROID__
-#include "ui_weigh.h"   // "Scale" screen (tablet only)
+#include "ui_weigh.h"    // "Scale" screen (tablet only)
+#include "ui_spools.h"   // "Spools" screen (tablet only)
 #endif
 #include "pt/pt_display.h"
 #include "ui_scale.h"   // tablet font scaling (Android only)
@@ -182,6 +183,9 @@ static void move_btn_cb(lv_event_t* e) {
 static void scale_btn_cb(lv_event_t* e) {
     create_weigh_ui();
 }
+static void spools_btn_cb(lv_event_t* e) {
+    create_spools_ui();
+}
 #endif
 
 static lv_obj_t* make_row(lv_obj_t* parent, int32_t height) {
@@ -262,6 +266,15 @@ void create_printer_ui() {
     lv_obj_set_style_text_font(scale_label, &lv_font_montserrat_12, 0);
     lv_obj_center(scale_label);
     lv_obj_add_event_cb(scale_btn, scale_btn_cb, LV_EVENT_CLICKED, NULL);
+
+    lv_obj_t* spools_btn = lv_btn_create(header);
+    lv_obj_set_size(spools_btn, PT_SZ(78), PT_SZ(26));
+    lv_obj_set_style_bg_color(spools_btn, lv_color_hex(0x333333), LV_PART_MAIN);
+    lv_obj_t* spools_label = lv_label_create(spools_btn);
+    lv_label_set_text(spools_label, "Spools");
+    lv_obj_set_style_text_font(spools_label, &lv_font_montserrat_12, 0);
+    lv_obj_center(spools_label);
+    lv_obj_add_event_cb(spools_btn, spools_btn_cb, LV_EVENT_CLICKED, NULL);
 #endif
 
     lv_obj_t* filament_btn = lv_btn_create(header);
