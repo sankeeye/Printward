@@ -520,8 +520,16 @@ void update_filament_ui() {
         }
         lv_obj_clear_flag(g_unit_boxes[u], LV_OBJ_FLAG_HIDDEN);
         if (g_unit_humidity_labels[u]) {
-            if (unit.humidity >= 0) {
-                lv_label_set_text_fmt(g_unit_humidity_labels[u], "Humidity %d", unit.humidity);
+            // Bambu humidity grade 1-5: 1 = dry (good), 5 = wet (bad). Show a
+            // clear label + colour instead of the bare number.
+            int hu = unit.humidity;
+            if (hu >= 1) {
+                const char* lbl; uint32_t col;
+                if (hu <= 2)      { lbl = "droog";    col = 0x2ecc71; }
+                else if (hu == 3) { lbl = "redelijk"; col = 0xf39c12; }
+                else              { lbl = "vochtig";  col = 0xe74c3c; }
+                lv_label_set_text_fmt(g_unit_humidity_labels[u], "Vocht: %s", lbl);
+                lv_obj_set_style_text_color(g_unit_humidity_labels[u], lv_color_hex(col), 0);
             } else {
                 lv_label_set_text(g_unit_humidity_labels[u], "");
             }
