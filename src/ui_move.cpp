@@ -3,6 +3,9 @@
 // plain g-code and pushed to the printer with bambu_cmd_gcode(). Moves use a
 // relative block (G91 / G1 / G90) so the chosen step size is a delta from the
 // current position; homing uses G28; hotend preheat/cooldown use M104.
+//
+// The action logic (move_blocked / move_perform) is factored out so the web
+// control page (sim/android/webctl.cpp) drives the exact same guarded path.
 #include "ui_move.h"
 #include "ui_printer.h"
 #include "bambu_mqtt.h"
@@ -15,12 +18,6 @@
 static lv_obj_t* g_move_screen = nullptr;
 static lv_obj_t* g_hint  = nullptr;   // status / error line at the bottom
 static lv_obj_t* g_noz_label = nullptr;
-
-// Which button was tapped (encoded in the event user data).
-enum {
-    JOG_XP = 1, JOG_XM, JOG_YP, JOG_YM, JOG_ZP, JOG_ZM,
-    JOG_HOME, JOG_EEXT, JOG_ERET, JOG_PREHEAT, JOG_COOL
-};
 
 // Jog step in mm, picked from the 0.1 / 1 / 10 selector.
 static const float STEPS[3] = {0.1f, 1.0f, 10.0f};
@@ -54,48 +51,60 @@ static void send_axis(char axis, float dist, int feed) {
     bambu_cmd_gcode(buf);
 }
 
-static void jog_cb(lv_event_t* e) {
-    int code = (int)(intptr_t)lv_event_get_user_data(e);
-
-    // Preheat / cooldown are safe to send any time; everything else that
-    // physically moves the machine is blocked while a job is running.
-    if (code == JOG_PREHEAT) {
-        char buf[24];
-        snprintf(buf, sizeof(buf), "M104 S%d", PREHEAT_TEMP);
-        bambu_cmd_gcode(buf);
-        set_hint("Opwarmen naar 220\xC2\xB0" "C...", 0xe67e22);
-        return;
+bool move_blocked(int code, const char** reason) {
+    if (code == MOVE_PREHEAT || code == MOVE_COOL) return false;   // always allowed
+    if (is_printing()) {
+        *reason = "Bezig met printen \xE2\x80\x93 bewegen uitgeschakeld";
+        return true;
     }
-    if (code == JOG_COOL) {
-        bambu_cmd_gcode("M104 S0");
-        set_hint("Nozzle uit", 0x2980b9);
-        return;
+    if ((code == MOVE_EEXT || code == MOVE_ERET) && g_printer_status.nozzle_temp < MIN_EXTRUDE_TEMP) {
+        *reason = "Nozzle te koud (<170\xC2\xB0" "C) \xE2\x80\x93 eerst opwarmen";
+        return true;
     }
+    return false;
+}
 
-    if (is_printing()) { set_hint("Bezig met printen \xE2\x80\x93 bewegen uitgeschakeld", 0xf39c12); return; }
+const char* move_perform(int code, float step) {
+    const char* reason = "";
+    if (move_blocked(code, &reason)) { set_hint(reason, 0xf39c12); return reason; }
 
     switch (code) {
-        case JOG_XP: send_axis('X',  g_step, 3000); break;
-        case JOG_XM: send_axis('X', -g_step, 3000); break;
-        case JOG_YP: send_axis('Y',  g_step, 3000); break;
-        case JOG_YM: send_axis('Y', -g_step, 3000); break;
-        case JOG_ZP: send_axis('Z',  g_step, 600); break;
-        case JOG_ZM: send_axis('Z', -g_step, 600); break;
-        case JOG_HOME:
+        case MOVE_XP: send_axis('X',  step, 3000); set_hint("X+", 0xFFFFFF); return "X+";
+        case MOVE_XM: send_axis('X', -step, 3000); set_hint("X-", 0xFFFFFF); return "X-";
+        case MOVE_YP: send_axis('Y',  step, 3000); set_hint("Y+", 0xFFFFFF); return "Y+";
+        case MOVE_YM: send_axis('Y', -step, 3000); set_hint("Y-", 0xFFFFFF); return "Y-";
+        case MOVE_ZP: send_axis('Z',  step, 600);  set_hint("Z+", 0xFFFFFF); return "Z+";
+        case MOVE_ZM: send_axis('Z', -step, 600);  set_hint("Z-", 0xFFFFFF); return "Z-";
+        case MOVE_HOME:
             bambu_cmd_gcode("G28");
             set_hint("Homing...", 0x2ecc71);
-            return;
-        case JOG_EEXT:
-        case JOG_ERET:
-            if (g_printer_status.nozzle_temp < MIN_EXTRUDE_TEMP) {
-                set_hint("Nozzle te koud (<170\xC2\xB0" "C) \xE2\x80\x93 eerst opwarmen", 0xf39c12);
-                return;
-            }
-            send_axis('E', code == JOG_EEXT ? EXTRUDE_MM : -EXTRUDE_MM, EXTRUDE_FEED);
-            set_hint(code == JOG_EEXT ? "Extruderen..." : "Terugtrekken...", 0x27ae60);
-            return;
+            return "Homing";
+        case MOVE_EEXT:
+            send_axis('E', EXTRUDE_MM, EXTRUDE_FEED);
+            set_hint("Extruderen...", 0x27ae60);
+            return "Extrude";
+        case MOVE_ERET:
+            send_axis('E', -EXTRUDE_MM, EXTRUDE_FEED);
+            set_hint("Terugtrekken...", 0x27ae60);
+            return "Retract";
+        case MOVE_PREHEAT: {
+            char buf[24];
+            snprintf(buf, sizeof(buf), "M104 S%d", PREHEAT_TEMP);
+            bambu_cmd_gcode(buf);
+            set_hint("Opwarmen naar 220\xC2\xB0" "C...", 0xe67e22);
+            return "Preheat";
+        }
+        case MOVE_COOL:
+            bambu_cmd_gcode("M104 S0");
+            set_hint("Nozzle uit", 0x2980b9);
+            return "Cooldown";
     }
-    set_hint("", 0xFFFFFF);
+    return "";
+}
+
+static void jog_cb(lv_event_t* e) {
+    int code = (int)(intptr_t)lv_event_get_user_data(e);
+    move_perform(code, g_step);
 }
 
 static void step_cb(lv_event_t* e) {
@@ -240,11 +249,11 @@ void create_move_ui() {
     lv_obj_set_grid_dsc_array(pad, col_dsc, row_dsc);
 
     struct { const char* t; int code; int col; int row; uint32_t c; } cells[] = {
-        {"Y+", JOG_YP, 1, 0, 0x2c3e50},
-        {"X-", JOG_XM, 0, 1, 0x2c3e50},
-        {LV_SYMBOL_HOME, JOG_HOME, 1, 1, 0xc0392b},
-        {"X+", JOG_XP, 2, 1, 0x2c3e50},
-        {"Y-", JOG_YM, 1, 2, 0x2c3e50},
+        {"Y+", MOVE_YP, 1, 0, 0x2c3e50},
+        {"X-", MOVE_XM, 0, 1, 0x2c3e50},
+        {LV_SYMBOL_HOME, MOVE_HOME, 1, 1, 0xc0392b},
+        {"X+", MOVE_XP, 2, 1, 0x2c3e50},
+        {"Y-", MOVE_YM, 1, 2, 0x2c3e50},
     };
     for (auto& cell : cells) {
         lv_obj_t* b = make_jog_btn(pad, cell.t, cell.code, cell.c);
@@ -254,9 +263,9 @@ void create_move_ui() {
     // Z column.
     lv_obj_t* zcol = make_col(main, 110);
     make_col_title(zcol, "Z");
-    lv_obj_t* zp = make_jog_btn(zcol, "Z+", JOG_ZP, 0x2c3e50);
+    lv_obj_t* zp = make_jog_btn(zcol, "Z+", MOVE_ZP, 0x2c3e50);
     lv_obj_set_size(zp, lv_pct(100), PT_SZ(84));
-    lv_obj_t* zm = make_jog_btn(zcol, "Z-", JOG_ZM, 0x2c3e50);
+    lv_obj_t* zm = make_jog_btn(zcol, "Z-", MOVE_ZM, 0x2c3e50);
     lv_obj_set_size(zm, lv_pct(100), PT_SZ(84));
 
     // Extruder column.
@@ -267,9 +276,9 @@ void create_move_ui() {
     lv_obj_set_style_text_font(g_noz_label, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(g_noz_label, lv_color_hex(0xFFFFFF), 0);
 
-    lv_obj_t* ext = make_jog_btn(ecol, "Extrude", JOG_EEXT, 0x27ae60);
+    lv_obj_t* ext = make_jog_btn(ecol, "Extrude", MOVE_EEXT, 0x27ae60);
     lv_obj_set_size(ext, lv_pct(100), PT_SZ(62));
-    lv_obj_t* ret = make_jog_btn(ecol, "Retract", JOG_ERET, 0xd35400);
+    lv_obj_t* ret = make_jog_btn(ecol, "Retract", MOVE_ERET, 0xd35400);
     lv_obj_set_size(ret, lv_pct(100), PT_SZ(62));
 
     lv_obj_t* heat_row = lv_obj_create(ecol);
@@ -280,9 +289,9 @@ void create_move_ui() {
     lv_obj_set_style_pad_gap(heat_row, PT_SZ(8), LV_PART_MAIN);
     lv_obj_set_flex_flow(heat_row, LV_FLEX_FLOW_ROW);
     lv_obj_clear_flag(heat_row, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_t* ph = make_jog_btn(heat_row, "Preheat", JOG_PREHEAT, 0xe67e22);
+    lv_obj_t* ph = make_jog_btn(heat_row, "Preheat", MOVE_PREHEAT, 0xe67e22);
     lv_obj_set_flex_grow(ph, 1); lv_obj_set_height(ph, lv_pct(100));
-    lv_obj_t* cl = make_jog_btn(heat_row, "Cooldown", JOG_COOL, 0x2980b9);
+    lv_obj_t* cl = make_jog_btn(heat_row, "Cooldown", MOVE_COOL, 0x2980b9);
     lv_obj_set_flex_grow(cl, 1); lv_obj_set_height(cl, lv_pct(100));
 
     // --- Hint / status line ---

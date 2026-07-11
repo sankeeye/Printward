@@ -19,6 +19,7 @@
 #include "ui_tablet_setup.h"   // on-screen printer config (tablet only)
 #include "ui_screensaver.h"    // idle print dashboard (tablet only)
 #include "ui_move.h"           // manual motion screen (live nozzle temp refresh)
+#include "webctl.h"            // LAN web control server (same Move actions)
 #include "bambu_ftp.h"
 #include "gcode_view.h"
 #include <cstdio>
@@ -131,6 +132,7 @@ int main(int argc, char **argv) {
     // and open a real MQTT session to the printer (see android_glue.cpp).
     load_settings();
     bambu_mqtt_setup();
+    webctl_start();                          // LAN control page (http://<ip>:8080)
     create_screensaver();                    // idle dashboard (top layer, hidden)
     pt_set_backlight(g_brightness, false);   // dim overlay sits above the screensaver
 #else
@@ -160,6 +162,7 @@ int main(int argc, char **argv) {
         tablet_setup_loop(); // apply a queued Save from the Printer setup screen
         screensaver_loop();  // show/hide the idle print dashboard
         gcode_maybe_load();  // fetch + parse the print's gcode (background thread)
+        webctl_loop();       // apply moves queued by the web control page
 #endif
         drain_pending_action();
         ui_files_loop();
