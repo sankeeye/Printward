@@ -72,7 +72,7 @@ static char* unzip_gcode(uint32_t* out_len) {
             uint32_t data = lho + 30 + lfn + lex;
             if ((uint64_t)data + comp > g_zip_len) return nullptr;
             char* out = (char*)malloc((size_t)uncomp + 1);
-            if (!out) return nullptr;
+            if (!out) { Serial.printf("GCODE: OOM allocating %u bytes for gcode\n", (unsigned)uncomp + 1); return nullptr; }
             if (method == 0) {
                 memcpy(out, g_zip + data, uncomp);
             } else if (method == 8) {
@@ -269,22 +269,26 @@ void gcode_view_load(const char* gcode_file_name) {
     String path = String("/cache/") + gcode_file_name;
     uint32_t total = 0; String err;
     Serial.printf("GCODE: downloading %s\n", path.c_str());
-    if (!bambu_ftp_download(path.c_str(), zip_dl_cb, nullptr, &total, &err)) {
+    bool ok = bambu_ftp_download(path.c_str(), zip_dl_cb, nullptr, &total, &err);
+    if (ok) {
+        Serial.printf("GCODE: got %u bytes (.3mf)\n", (unsigned)g_zip_len);
+        uint32_t glen = 0;
+        char* gc = unzip_gcode(&glen);
+        if (gc) {
+            parse_gcode(gc, glen);
+            free(gc);
+            g_ready = (g_seg_count > 0);
+        } else {
+            Serial.println("GCODE: unzip failed (missing plate_1.gcode or out of memory)");
+        }
+    } else {
         Serial.printf("GCODE: download failed: %s\n", err.c_str());
-        return;
     }
-    Serial.printf("GCODE: got %u bytes (.3mf)\n", (unsigned)g_zip_len);
 
-    uint32_t glen = 0;
-    char* gc = unzip_gcode(&glen);
-    if (!gc) { Serial.println("GCODE: unzip failed (no Metadata/plate_1.gcode?)"); return; }
-
-    parse_gcode(gc, glen);
-    free(gc);
-    // .3mf ZIP buffer no longer needed once parsed
+    // Always release the .3mf ZIP buffer - even on a failed download/unzip - so a
+    // failed (and now retried) load never leaks the multi-MB buffer and starves
+    // the next attempt. On success this is the same cleanup as before.
     free(g_zip); g_zip = nullptr; g_zip_cap = 0; g_zip_len = 0;
-
-    g_ready = (g_seg_count > 0);
 }
 
 bool gcode_view_ready() { return g_ready; }
