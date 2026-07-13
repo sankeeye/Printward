@@ -41,9 +41,9 @@ void spool_db_save() {
     for (int i = 0; i < g_spool_count; i++) {
         Spool s = g_spools[i];
         sanitize(s.name); sanitize(s.material); sanitize(s.code); sanitize(s.note);
-        fprintf(f, "%s|%s|%s|%06X|%.1f|%.1f|%d|%d|%s|%.2f\n",
+        fprintf(f, "%s|%s|%s|%06X|%.1f|%.1f|%d|%d|%s|%.2f|%d\n",
                 s.name, s.material, s.code, (unsigned)(s.color & 0xFFFFFF),
-                s.remaining_g, s.empty_g, s.nmin, s.nmax, s.note, s.price_kg);
+                s.remaining_g, s.empty_g, s.nmin, s.nmax, s.note, s.price_kg, s.slot);
     }
     fclose(f);
 }
@@ -76,6 +76,8 @@ void spool_db_load() {
         s.nmax = atoi(field(&p));
         strncpy(s.note, field(&p), sizeof(s.note) - 1);
         s.price_kg = (float)atof(field(&p));   // absent in old files -> 0
+        char* slotf = field(&p);               // 11th field, absent in old files
+        s.slot = (slotf && slotf[0]) ? atoi(slotf) : -1;
         g_spools[g_spool_count++] = s;
     }
     fclose(f);
@@ -83,13 +85,17 @@ void spool_db_load() {
 }
 
 int spool_upsert(int idx, const Spool& s) {
+    int keep = -1;   // slot is managed by load/clear, never by the editor
     if (idx < 0) {
         if (g_spool_count >= SPOOL_MAX) return -1;
         idx = g_spool_count++;
     } else if (idx >= g_spool_count) {
         return -1;
+    } else {
+        keep = g_spools[idx].slot;
     }
     g_spools[idx] = s;
+    g_spools[idx].slot = keep;
     spool_db_save();
     return idx;
 }
@@ -147,6 +153,11 @@ void spool_load_to_slot(int idx, int slot) {
     if (idx < 0 || idx >= g_spool_count) return;
     Spool& s = g_spools[idx];
 
+    // this slot now holds THIS roll: unlink it from any other roll first
+    for (int i = 0; i < g_spool_count; i++)
+        if (i != idx && g_spools[i].slot == slot) g_spools[i].slot = -1;
+    s.slot = slot;
+
     // 1. weight tracking: the roll's remaining grams IS the filament (empty 0)
     filament_weigh_assign(slot, s.remaining_g, 0);
     filament_set_price(slot, s.price_kg);   // remember EUR/kg for cost tracking
@@ -168,9 +179,30 @@ void spool_load_to_slot(int idx, int slot) {
     } else {
         Serial.printf("SPOOLS: loaded '%s' -> externe spoel (alleen tracking)\n", s.name);
     }
+    spool_db_save();   // persist the roll<->slot link
 }
 
 void spool_clear_slot(int slot) {
-    filament_clear_slot(slot);   // no roll: stop tracking/counting this slot
+    float r = filament_remaining(slot);   // save the roll's final grams before clearing
+    for (int i = 0; i < g_spool_count; i++)
+        if (g_spools[i].slot == slot) {
+            if (r >= 0) g_spools[i].remaining_g = r;
+            g_spools[i].slot = -1;
+        }
+    filament_clear_slot(slot);            // no roll: stop tracking/counting this slot
+    spool_db_save();
     Serial.printf("SPOOLS: slot %d cleared (no roll)\n", slot);
+}
+
+float spool_live_grams(const Spool& s) {
+    if (s.slot >= 0) {
+        float r = filament_remaining(s.slot);
+        if (r >= 0) return r;
+    }
+    return s.remaining_g;
+}
+void spool_slot_label(int slot, char* out, int len) {
+    if (slot < 0) { if (len) out[0] = 0; return; }
+    if (slot == 254) snprintf(out, len, "Extern");
+    else snprintf(out, len, "AMS%d T%d", slot / AMS_MAX_TRAYS + 1, slot % AMS_MAX_TRAYS + 1);
 }

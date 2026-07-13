@@ -21,6 +21,8 @@ struct Spool {
     float empty_g;       // empty-spool weight (for re-weighing)
     int nmin, nmax;      // nozzle temp range
     float price_kg;      // price per kg (for cost tracking), 0 = unknown
+    int slot;            // AMS slot this roll is loaded in: -1 none, 254 external,
+                         // else unit*AMS_MAX_TRAYS + tray. Managed by load/clear.
 };
 
 extern Spool g_spools[SPOOL_MAX];
@@ -55,8 +57,15 @@ void spool_material_defaults(const char* material, const char** code, int* nmin,
 // slots) push ams_filament_setting to the printer. Call on the MAIN thread.
 void spool_load_to_slot(int idx, int slot);
 
-// Mark `slot` empty (no roll): clears our weight tracking for it. Leaves the
+// Mark `slot` empty (no roll): clears our weight tracking for it and unlinks any
+// roll from it (saving that roll's final remaining grams first). Leaves the
 // printer's own AMS state alone (that follows the physical filament sensor).
 void spool_clear_slot(int slot);
+
+// Live remaining grams for a roll: if it's loaded in an AMS slot, the slot's
+// tracked value (which ticks down while printing); else the stored remaining_g.
+float spool_live_grams(const Spool& s);
+// Human label for a slot: "AMS1 T2" / "Extern" / "" (unassigned) into out.
+void  spool_slot_label(int slot, char* out, int len);
 
 #endif

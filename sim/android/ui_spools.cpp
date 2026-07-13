@@ -131,6 +131,32 @@ static void empties_cb(lv_event_t*) { create_empties_ui(); }
 static void edit_cb(lv_event_t* e) { create_spool_edit((int)(intptr_t)lv_event_get_user_data(e)); }
 static void del_cb(lv_event_t* e) { spool_delete((int)(intptr_t)lv_event_get_user_data(e)); create_spools_ui(); }
 
+// One row's text: name, material, slot badge, and LIVE grams (which tick down
+// while a print runs on that slot) + cost. Shared by the build and the tick.
+static lv_obj_t* g_row_lbl[SPOOL_MAX] = {0};
+static int       g_row_n = 0;
+static void format_spool_row(char* buf, int len, const Spool& s) {
+    char sl[16]; spool_slot_label(s.slot, sl, sizeof(sl));
+    char slp[24] = "";
+    if (sl[0]) snprintf(slp, sizeof(slp), "  [%s]", sl);
+    float g = spool_live_grams(s);
+    if (s.price_kg > 0)
+        snprintf(buf, len, "%s  %s%s  %.0f g  EUR %.2f", s.name, s.material, slp, g, g * s.price_kg / 1000.0f);
+    else
+        snprintf(buf, len, "%s  %s%s  %.0f g", s.name, s.material, slp, g);
+}
+// Called from the main loop (~1 Hz): refresh the visible grams without rebuilding
+// the screen, so a printing slot ticks down live in the Spools list too.
+void spools_live_loop() {
+    if (!g_screen || lv_scr_act() != g_screen) return;
+    static uint32_t last = 0;
+    uint32_t now = lv_tick_get();
+    if (now - last < 1000) return;
+    last = now;
+    for (int i = 0; i < g_row_n && i < g_spool_count; i++)
+        if (g_row_lbl[i]) { char b[96]; format_spool_row(b, sizeof(b), g_spools[i]); lv_label_set_text(g_row_lbl[i], b); }
+}
+
 void create_spools_ui() {
     if (g_screen) { lv_obj_del(g_screen); g_screen = nullptr; }
     g_kb = nullptr;
@@ -174,6 +200,7 @@ void create_spools_ui() {
         lv_label_set_text(empty, "Nog geen rollen - tik 'Nieuwe rol'.");
         lv_obj_set_style_text_color(empty, lv_color_hex(0x777777), 0);
     }
+    g_row_n = 0;
     for (int i = 0; i < g_spool_count; i++) {
         Spool& s = g_spools[i];
         lv_obj_t* row = lv_obj_create(list);
@@ -196,11 +223,8 @@ void create_spools_ui() {
         lv_obj_clear_flag(sw, LV_OBJ_FLAG_SCROLLABLE);
 
         lv_obj_t* lbl = lv_label_create(row);
-        if (s.price_kg > 0)
-            lv_label_set_text_fmt(lbl, "%s  %s  %.0f g  EUR %.2f", s.name, s.material,
-                                  s.remaining_g, s.remaining_g * s.price_kg / 1000.0f);
-        else
-            lv_label_set_text_fmt(lbl, "%s  %s  %.0f g", s.name, s.material, s.remaining_g);
+        { char buf[96]; format_spool_row(buf, sizeof(buf), s); lv_label_set_text(lbl, buf); }
+        if (g_row_n < SPOOL_MAX) g_row_lbl[g_row_n++] = lbl;   // for the live tick
         lv_obj_set_style_text_font(lbl, &lv_font_montserrat_14, 0);
         lv_obj_set_style_text_color(lbl, lv_color_hex(0xFFFFFF), 0);
         lv_obj_set_flex_grow(lbl, 1);

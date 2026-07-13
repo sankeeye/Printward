@@ -380,9 +380,9 @@ static void build_spools(char* o, int n) {
         json_escape(s.code, code, sizeof(code));
         json_escape(s.note, note, sizeof(note));
         p += snprintf(o + p, n - p,
-            "%s{\"i\":%d,\"name\":\"%s\",\"material\":\"%s\",\"rgb\":\"#%06X\",\"rem\":%.0f,\"empty\":%.0f,\"nmin\":%d,\"nmax\":%d,\"code\":\"%s\",\"note\":\"%s\",\"price\":%.2f}",
+            "%s{\"i\":%d,\"name\":\"%s\",\"material\":\"%s\",\"rgb\":\"#%06X\",\"rem\":%.0f,\"live\":%.0f,\"slot\":%d,\"empty\":%.0f,\"nmin\":%d,\"nmax\":%d,\"code\":\"%s\",\"note\":\"%s\",\"price\":%.2f}",
             i ? "," : "", i, nm, mat, (unsigned)(s.color & 0xFFFFFF),
-            s.remaining_g, s.empty_g, s.nmin, s.nmax, code, note, s.price_kg);
+            s.remaining_g, spool_live_grams(s), s.slot, s.empty_g, s.nmin, s.nmax, code, note, s.price_kg);
     }
     snprintf(o + p, n - p, "]");
 }

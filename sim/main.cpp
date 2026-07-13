@@ -37,6 +37,9 @@
 
 extern void sim_load_mock_data();
 extern void wifi_ui_loop();   // defined in ui_wifi.cpp (not exposed in a header)
+#ifdef __ANDROID__
+extern void spools_live_loop();  // ui_spools.cpp: live-refresh the Spools list grams
+#endif
 
 static uint32_t sdl_tick(void) { return SDL_GetTicks(); }
 
@@ -256,6 +259,7 @@ int main(int argc, char **argv) {
         screensaver_loop();  // show/hide the idle print dashboard
         gcode_maybe_load();  // fetch + parse the print's gcode (background thread)
         filament_track_loop(); // tick down the active spool's remaining grams
+        spools_live_loop();    // live-refresh the Spools list grams (if that tab is open)
         notify_loop();       // push ntfy on print done/failed / filament short
         stats_loop();        // count finished prints + filament used
         history_loop();      // log each finished/failed print + cost

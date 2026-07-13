@@ -393,6 +393,7 @@ $('sIpFix').onclick=function(){sGet('/setip?ip='+encodeURIComponent($('sIp').val
 $('sWifi').onclick=function(){sGet('/setwifi?ssid='+encodeURIComponent($('sSsid').value)+'&pass='+encodeURIComponent($('sPass').value));};
 $('sIpSave').onclick=function(){var v=$('sIp').value;fetch('/setcfg?scale_ip='+encodeURIComponent(v)).then(function(){scaleHost=v;sMsg('opgeslagen op tablet');});};
 setInterval(scalePoll,1200);
+setInterval(function(){if($('spList')&&$('spList').offsetParent!==null)loadSpools();},3000);
 function spMsg(t){$('spMsg').textContent=t;}
 function spSlotOpts(){var o='';for(var u=0;u<2;u++)for(var t=0;t<4;t++){o+='<option value="'+(u*4+t)+'">AMS'+(u+1)+' T'+(t+1)+'</option>';}return o+'<option value="254">Externe spoel</option>';}
 function loadSpools(){
@@ -404,12 +405,14 @@ function renderSpList(){
  var h='';
  spCache.forEach(function(s){
   if(q&&(s.name+' '+s.material).toLowerCase().indexOf(q)<0)return;
+  var g=(s.live!=null?s.live:s.rem);
+  var sl=(s.slot!=null&&s.slot>=0)?' <span class="badge" style="background:#1e4e6e;color:#bfe3ff">'+slotName(s.slot)+'</span>':'';
   h+='<div class="rollcard"><input type="checkbox" '+(spSel[s.i]?'checked':'')+' onchange="selToggle('+s.i+',this.checked)" style="width:20px;height:20px;flex:0 0 auto">'
    +'<div style="width:38px;height:38px;border-radius:8px;flex:0 0 auto;border:1px solid #3a434d;background:'+s.rgb+'"></div>'
-   +'<div style="min-width:0"><div class="name">'+s.name+'<span class="badge">'+s.material+'</span></div>'
+   +'<div style="min-width:0"><div class="name">'+s.name+'<span class="badge">'+s.material+'</span>'+sl+'</div>'
    +(s.note?'<div class="muted" style="font-size:12px">'+s.note+'</div>':'')
    +(s.price>0?'<div class="muted" style="font-size:12px">€ '+s.price.toFixed(2)+'/kg</div>':'')+'</div>'
-   +'<div class="grams">'+s.rem+' g'+(s.price>0?'<div class="muted" style="font-size:12px;font-weight:400">€ '+(s.rem*s.price/1000).toFixed(2)+'</div>':'')+'</div>'
+   +'<div class="grams">'+g+' g'+(s.price>0?'<div class="muted" style="font-size:12px;font-weight:400">€ '+(g*s.price/1000).toFixed(2)+'</div>':'')+'</div>'
    +'<button class="iconbtn" title="Weeg de rol" onclick="spWeigh('+s.i+')">⚖</button>'
    +'<button class="iconbtn" title="Kopieer" onclick="spCopy('+s.i+')">⧉</button>'
    +'<button class="iconbtn" title="Bewerk" onclick="spEdit('+s.i+')">✎</button>'
