@@ -45,6 +45,12 @@ static uint32_t sdl_tick(void) { return SDL_GetTicks(); }
 // unzip + parse would freeze the UI otherwise). Retries every RETRY_MS until the
 // model is actually loaded, so one slow or failed .3mf download doesn't disable
 // filament tracking (and the screensaver model) for the rest of the print.
+//
+// The common failure is a network transition: the tablet dozes between prints,
+// wakes when the next print starts, and the FTP handshake hits the still-settling
+// link (mbedTLS NET_CONN_RESET / "hs -80"). So besides the periodic retry we also
+// force an immediate reload the moment MQTT reconnects - that's the signal the
+// link is back - instead of waiting out the retry interval.
 static volatile bool g_gcode_loading = false;   // a load thread is in flight
 static char g_gcode_done[128] = "";             // last file that loaded OK (set by the thread)
 
@@ -64,9 +70,13 @@ static void gcode_maybe_load() {
     // finishes (the printer clears gcode_file when idle).
     static char last_seen[128] = "";
     static uint32_t last_try = 0;
-    const uint32_t RETRY_MS = 30000;
+    static bool was_connected = false;
+    const uint32_t RETRY_MS = 15000;
 
-    if (!g_printer_status.mqtt_connected) return;
+    bool conn = g_printer_status.mqtt_connected;
+    if (conn && !was_connected) last_try = 0;   // just reconnected -> retry the load now
+    was_connected = conn;
+    if (!conn) return;
     const char* rep = g_printer_status.gcode_file;
     if (rep[0]) { strncpy(last_seen, rep, sizeof(last_seen) - 1); last_seen[sizeof(last_seen) - 1] = '\0'; }
     if (!last_seen[0]) return;
