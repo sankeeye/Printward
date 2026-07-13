@@ -55,4 +55,8 @@ void spool_material_defaults(const char* material, const char** code, int* nmin,
 // slots) push ams_filament_setting to the printer. Call on the MAIN thread.
 void spool_load_to_slot(int idx, int slot);
 
+// Mark `slot` empty (no roll): clears our weight tracking for it. Leaves the
+// printer's own AMS state alone (that follows the physical filament sensor).
+void spool_clear_slot(int slot);
+
 #endif

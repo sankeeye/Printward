@@ -152,6 +152,11 @@ static void spool_choose_cb(lv_event_t* e) {
     if (g_spool_modal) lv_obj_add_flag(g_spool_modal, LV_OBJ_FLAG_HIDDEN);
     update_filament_ui();
 }
+static void spool_clear_cb(lv_event_t*) {
+    if (g_pick_slot >= 0) spool_clear_slot(g_pick_slot);   // no roll: clear tracking
+    if (g_spool_modal) lv_obj_add_flag(g_spool_modal, LV_OBJ_FLAG_HIDDEN);
+    update_filament_ui();
+}
 static void spool_modal_close_cb(lv_event_t*) {
     if (g_spool_modal) lv_obj_add_flag(g_spool_modal, LV_OBJ_FLAG_HIDDEN);
 }
@@ -164,6 +169,27 @@ static void open_spool_modal(int slot) {
                                    slot / AMS_MAX_TRAYS + 1, slot % AMS_MAX_TRAYS + 1);
     }
     lv_obj_clean(g_spool_list);
+    // "Empty" option first: this slot has no roll -> clear its weight tracking.
+    {
+        lv_obj_t* b = lv_btn_create(g_spool_list);
+        lv_obj_set_size(b, lv_pct(100), PT_SZ(48));
+        lv_obj_set_style_bg_color(b, lv_color_hex(0x3a2f2f), LV_PART_MAIN);
+        lv_obj_set_style_pad_hor(b, PT_SZ(10), LV_PART_MAIN);
+        lv_obj_set_style_pad_gap(b, PT_SZ(10), LV_PART_MAIN);
+        lv_obj_set_flex_flow(b, LV_FLEX_FLOW_ROW);
+        lv_obj_set_flex_align(b, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+        lv_obj_t* sw = lv_obj_create(b);
+        lv_obj_set_size(sw, PT_SZ(30), PT_SZ(24));
+        lv_obj_set_style_radius(sw, 4, LV_PART_MAIN);
+        lv_obj_set_style_bg_color(sw, lv_color_hex(0x555b63), LV_PART_MAIN);
+        lv_obj_set_style_border_width(sw, 1, LV_PART_MAIN);
+        lv_obj_set_style_border_color(sw, lv_color_hex(0x888888), LV_PART_MAIN);
+        lv_obj_clear_flag(sw, LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_t* l = lv_label_create(b);
+        lv_label_set_text(l, "Leeg - geen rol in dit slot");
+        lv_obj_set_style_text_font(l, &lv_font_montserrat_14, 0);
+        lv_obj_add_event_cb(b, spool_clear_cb, LV_EVENT_CLICKED, NULL);
+    }
     if (g_spool_count == 0) {
         lv_obj_t* l = lv_label_create(g_spool_list);
         lv_label_set_text(l, "Nog geen rollen - maak ze aan op de Spools-tab.");

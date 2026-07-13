@@ -42,7 +42,7 @@ extern bool g_screensaver_3d;
 
 // --- thread-safe request queue (web thread -> main thread) ---------------
 enum QKind { Q_MOVE = 1, Q_CTL, Q_CFG, Q_START, Q_SPOOL_SAVE, Q_SPOOL_DEL, Q_SPOOL_LOAD,
-             Q_EMPTY_SAVE, Q_EMPTY_DEL, Q_SPOOL_BULK };
+             Q_EMPTY_SAVE, Q_EMPTY_DEL, Q_SPOOL_BULK, Q_SPOOL_CLEAR };
 enum CtlCode { CTL_PAUSE = 1, CTL_RESUME, CTL_STOP, CTL_LIGHT, CTL_FAN, CTL_SPEED };
 
 struct QCmd {
@@ -244,6 +244,7 @@ void webctl_loop() {
             }
             case Q_SPOOL_DEL:  spool_delete(c.code); break;
             case Q_SPOOL_LOAD: spool_load_to_slot(c.code, (int)c.step); break;
+            case Q_SPOOL_CLEAR: spool_clear_slot((int)c.step); break;
             case Q_EMPTY_SAVE: {
                 EmptySpool e; memset(&e, 0, sizeof(e));
                 char v[24];
@@ -517,6 +518,13 @@ static void handle_conn(int fd) {
         parse_query(query, "slot", slots, sizeof(slots));
         q_push(Q_SPOOL_LOAD, atoi(idxs), (float)atoi(slots), nullptr);
         send_resp(fd, "200 OK", "text/plain; charset=utf-8", "geladen", 7);
+        return;
+    }
+    if (!strcmp(path, "/spool_clear")) {
+        char slots[8];
+        parse_query(query, "slot", slots, sizeof(slots));
+        q_push(Q_SPOOL_CLEAR, 0, (float)atoi(slots), nullptr);
+        send_resp(fd, "200 OK", "text/plain; charset=utf-8", "leeg", 4);
         return;
     }
     if (!strcmp(path, "/empties")) {

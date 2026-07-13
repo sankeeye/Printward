@@ -96,6 +96,20 @@ void filament_weigh_assign(int slot, float measured_g, float empty_g) {
                   slot, filament, measured_g, empty_g);
 }
 
+// No roll in this slot anymore: drop its capacity/used/price so nothing is tracked
+// or counted down for it (filament_remaining() then reports -1 = not weighed).
+void filament_clear_slot(int slot) {
+    set_cap(slot, 0);
+    set_used(slot, 0);
+    if (slot == EXT_SLOT) g_ext_price = 0;
+    else {
+        int u = slot / AMS_MAX_TRAYS, t = slot % AMS_MAX_TRAYS;
+        if (u >= 0 && u < AMS_MAX_UNITS && t >= 0 && t < AMS_MAX_TRAYS) g_tray_price[u][t] = 0;
+    }
+    filament_save();
+    Serial.printf("WEIGHTS: slot %d cleared (no roll)\n", slot);
+}
+
 // --- live consumption ----------------------------------------------------
 // Track the current print: capture the active slot's committed `used` when the
 // print (file/slot) starts, then set used = base + total*progress each tick so

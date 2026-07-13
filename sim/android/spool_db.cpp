@@ -169,3 +169,8 @@ void spool_load_to_slot(int idx, int slot) {
         Serial.printf("SPOOLS: loaded '%s' -> externe spoel (alleen tracking)\n", s.name);
     }
 }
+
+void spool_clear_slot(int slot) {
+    filament_clear_slot(slot);   // no roll: stop tracking/counting this slot
+    Serial.printf("SPOOLS: slot %d cleared (no roll)\n", slot);
+}

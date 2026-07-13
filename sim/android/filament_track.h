@@ -18,6 +18,7 @@ void  filament_track_init();     // load persisted weights + threshold
 void  filament_track_loop();     // update the active slot's consumption estimate
 void  filament_save();           // persist weights + threshold
 void  filament_weigh_assign(int slot, float measured_g, float empty_g);  // set a roll
+void  filament_clear_slot(int slot);   // no roll in this slot: capacity/used/price = 0
 
 void  filament_set_price(int slot, float price_kg);  // remember a slot's EUR/kg
 float filament_price(int slot);       // EUR/kg for the slot, 0 if unknown
