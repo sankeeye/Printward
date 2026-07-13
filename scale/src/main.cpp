@@ -62,6 +62,20 @@ static void cors() { server.sendHeader("Access-Control-Allow-Origin", "*"); }
 static void handleWeight() {
     g_last_req = millis();
     float g = sample_grams();
+    // Auto-zero tracking: when the platform sits stable within a few grams of
+    // zero for a few reads, nudge the tare so slow HX711 drift (warm-up/temp)
+    // creeps back to 0 like a bench scale. A real roll (hundreds of g) is far
+    // outside the window, so it is never tracked away.
+    static int zero_hits = 0;
+    if (is_stable() && fabsf(g) < 5.0f) {
+        if (++zero_hits >= 3) {
+            scale.set_offset(scale.get_offset() + (long)(g * g_cal));
+            zero_hits = 0;
+            g = 0.0f;
+        }
+    } else {
+        zero_hits = 0;
+    }
     char buf[80];
     snprintf(buf, sizeof(buf), "{\"g\":%.1f,\"stable\":%s}", g, is_stable() ? "true" : "false");
     cors();
