@@ -380,10 +380,11 @@ static void build_status(char* o, int n) {
         s.nozzle_temp, s.nozzle_target, s.bed_temp, s.bed_target, s.chamber_temp);
     float lg = 0, lc = 0;
     bool live = filament_live_cost(&lg, &lc);
-    p += snprintf(o + p, n - p, "\"light\":%s,\"fan\":%d,\"speed\":%d,\"active_tray\":%d,\"short\":%.0f,\"prints\":%d,\"used\":%.0f,\"cost\":%.2f,\"printg\":%.0f,\"printcost\":%.2f,",
+    char gf[160]; json_escape(s.gcode_file, gf, sizeof(gf));
+    p += snprintf(o + p, n - p, "\"light\":%s,\"fan\":%d,\"speed\":%d,\"active_tray\":%d,\"short\":%.0f,\"prints\":%d,\"used\":%.0f,\"cost\":%.2f,\"printg\":%.0f,\"printcost\":%.2f,\"file\":\"%s\",",
         s.light_on ? "true" : "false", s.fan_speed_pct, s.speed_level, s.active_tray_now,
         filament_shortfall(), g_stat_prints, g_stat_grams, g_hist_total_cost,
-        live ? lg : -1.0f, live ? lc : 0.0f);
+        live ? lg : -1.0f, live ? lc : 0.0f, gf);
     p += snprintf(o + p, n - p,
         "\"cfg\":{\"ip\":\"%s\",\"serial\":\"%s\",\"view3d\":%s,\"bri\":%d,\"code_set\":%s,\"scale_ip\":\"%s\",\"low\":%d,\"ntfy\":\"%s\"},",
         g_printer_ip, g_printer_serial, g_screensaver_3d ? "true" : "false",

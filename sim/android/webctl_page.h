@@ -109,7 +109,8 @@ section#spools{max-width:1040px}
  <div id="warn" style="display:none;background:#5a2020;color:#ffd0d0;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-weight:600"></div>
  <div class="card"><div id="state">–</div><div id="task" class="muted"></div>
   <div class="bar"><div id="fill"></div></div><div id="prog" class="muted"></div>
-  <div id="pcost" class="muted" style="margin-top:4px"></div></div>
+  <div id="pcost" class="muted" style="margin-top:4px"></div>
+  <img id="pthumb" alt="" style="display:none;max-width:100%;max-height:240px;border-radius:8px;margin-top:10px"></div>
  <div class="card temps"><div>Nozzle <b id="noz">–</b></div><div>Bed <b id="bed">–</b></div><div>Kamer <b id="cham">–</b></div></div>
  <div class="card"><h3>Bediening</h3><div class="ctrls">
    <button id="bPause" class="b-blue">Pause</button>
@@ -295,7 +296,7 @@ section#spools{max-width:1040px}
  <div id="prevBody" class="muted">…</div>
 </div></div>
 <script>
-var step="1",curState="",curLight=false,curFan=0,cfgFilled=false,curPath="/",scaleHost="",lowG=100,spCache=[],emCache=[],pickSlot=-1,spSel={},lastS=null;
+var step="1",curState="",curLight=false,curFan=0,cfgFilled=false,curPath="/",scaleHost="",lowG=100,spCache=[],emCache=[],pickSlot=-1,spSel={},lastS=null,pthumbFile="";
 function $(id){return document.getElementById(id);}
 function tab(n){
  document.querySelectorAll('nav button').forEach(function(b){b.classList.toggle('on',b.dataset.tab===n);});
@@ -492,6 +493,7 @@ function poll(){
   var eta='';if(s.remain>0){var f=new Date(Date.now()+s.remain*60000);eta='  klaar '+('0'+f.getHours()).slice(-2)+':'+('0'+f.getMinutes()).slice(-2);}
   $('prog').textContent=(s.pct||0)+'%'+(s.total?('  laag '+s.layer+'/'+s.total):'')+(s.remain?('  ~'+s.remain+' min'+eta):'');
   if($('pcost'))$('pcost').innerHTML=(s.printg>=0)?('deze print: <b>'+s.printg+' g</b>'+(s.printcost>0?(' &middot; <b>&euro; '+s.printcost.toFixed(2)+'</b>'):'')):'';
+  if($('pthumb')){var pf=((s.state==='RUNNING'||s.state==='PAUSE')&&s.file)?s.file:'';if(pf!==pthumbFile){pthumbFile=pf;if(pf){var pth=pf.charAt(0)==='/'?pf:'/cache/'+pf;var im=$('pthumb');im.onload=function(){im.style.display='block';};im.onerror=function(){im.style.display='none';};im.src='/thumb?path='+encodeURIComponent(pth);}else{$('pthumb').style.display='none';}}}
   var w=$('warn');if(w){if(s.short>0){w.style.display='block';w.textContent='⚠ Filament tekort — komt ~'+s.short+' g te kort voor deze print op het actieve slot. Overweeg een vollere spoel.';}else{w.style.display='none';}}
   $('noz').textContent=s.nozzle+'/'+s.nozzle_t+'°';$('bed').textContent=s.bed+'/'+s.bed_t+'°';$('cham').textContent=s.chamber+'°';
   $('bPause').textContent=(s.state==='PAUSE')?'Resume':'Pause';
