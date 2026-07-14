@@ -102,6 +102,7 @@ section#spools{max-width:1040px}
  <button data-tab="move">Move</button>
  <button data-tab="scale">Scale</button>
  <button data-tab="spools">Spools</button>
+ <button data-tab="hist">Historie</button>
  <button data-tab="set">Settings</button>
 </nav>
 
@@ -250,8 +251,11 @@ section#spools{max-width:1040px}
   <div class="muted" style="font-size:16px;margin-top:4px">Totaal filament gebruikt: <b id="stUsed">–</b></div>
   <div class="muted" style="font-size:16px;margin-top:4px">Totale filament-uitgave: <b id="stCost">–</b></div>
  </div>
- <div class="card"><h3>Print-geschiedenis</h3><div id="histList" class="muted">…</div></div>
 </section>
+
+<section id="hist"><div class="card"><h3>Historie / kosten</h3>
+ <div id="histTotal" class="muted" style="font-size:16px;margin-bottom:8px"></div>
+ <div id="histList"></div></div></section>
 
 <div id="rollModal" class="modal"><div class="modalbox">
  <div class="modalhead"><b id="rollTitle">Kies rol</b><button onclick="closeRoll()">Sluit</button></div>
@@ -265,9 +269,11 @@ function tab(n){
  document.querySelectorAll('section').forEach(function(s){s.classList.toggle('on',s.id===n);});
  if(n==='files')loadFiles(curPath);
  if(n==='spools'){loadSpools();loadEmpties();}
- if(n==='set')loadHistory();
+ if(n==='hist')loadHistory();
 }
 function loadHistory(){fetch('/history').then(function(r){return r.json();}).then(function(list){
+ var tot=0;list.forEach(function(r){tot+=r.cost||0;});
+ if($('histTotal'))$('histTotal').innerHTML=list.length+' prints in het logboek &middot; totaal <b>&euro; '+tot.toFixed(2)+'</b>';
  var h='';if(!list.length)h='<div class="muted">nog geen prints</div>';
  list.forEach(function(r){h+='<div class="chiprow"><span style="color:'+(r.ok?'#2ecc71':'#e74c3c')+'">'+(r.ok?'✓':'✗')+'</span> <span><b>'+r.name+'</b> <span class="muted">'+r.when+'</span></span><span class="muted" style="margin-left:auto;white-space:nowrap">'+r.grams+' g'+(r.cost>0?' · €'+r.cost.toFixed(2):'')+'</span></div>';});
  $('histList').innerHTML=h;}).catch(function(){});}
