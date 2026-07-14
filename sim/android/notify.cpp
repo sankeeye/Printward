@@ -152,4 +152,24 @@ void notify_loop() {
         warned_short = true;
     }
     if (sh <= 0) warned_short = false;
+
+    // Low filament: notify once when a weighed slot first drops below the low
+    // threshold (default 100 g). The first pass only records the baseline, so a
+    // roll that is already low at startup doesn't fire a push on every launch.
+    static bool low_seen[AMS_MAX_UNITS * AMS_MAX_TRAYS + 1] = {false};
+    static bool low_init = false;
+    for (int k = 0; k <= AMS_MAX_UNITS * AMS_MAX_TRAYS; k++) {
+        int slot = (k == AMS_MAX_UNITS * AMS_MAX_TRAYS) ? 254 : k;   // last index = external spool
+        bool low = filament_slot_low(slot);   // capacity set AND remaining < threshold
+        if (low_init && low && !low_seen[k]) {
+            char label[24];
+            if (slot == 254) strcpy(label, "Externe spoel");
+            else snprintf(label, sizeof(label), "AMS%d slot %d", slot / AMS_MAX_TRAYS + 1, slot % AMS_MAX_TRAYS + 1);
+            char b[128];
+            snprintf(b, sizeof(b), "%s: nog %.0f g over (onder %d g).", label, filament_remaining(slot), g_low_threshold_g);
+            notify_send("Filament bijna op", b);
+        }
+        low_seen[k] = low;
+    }
+    low_init = true;
 }
