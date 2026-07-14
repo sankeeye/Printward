@@ -22,7 +22,13 @@ void  filament_clear_slot(int slot);   // no roll in this slot: capacity/used/pr
 
 void  filament_set_price(int slot, float price_kg);  // remember a slot's EUR/kg
 float filament_price(int slot);       // EUR/kg for the slot, 0 if unknown
+float filament_capacity(int slot);    // full-roll grams last weighed, 0 if none
 float filament_remaining(int slot);   // grams left, or -1 if no capacity set
+
+// Live figures for the running print: grams laid down so far (gcode total x
+// progress) and their cost from the active slot's EUR/kg. Returns false when
+// not printing or the gcode filament total isn't known yet.
+bool  filament_live_cost(float* grams_out, float* eur_out);
 bool  filament_slot_low(int slot);    // capacity set AND remaining < threshold
 bool  filament_any_low();             // any slot low
 

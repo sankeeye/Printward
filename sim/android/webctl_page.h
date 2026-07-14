@@ -108,7 +108,8 @@ section#spools{max-width:1040px}
 <section id="dash" class="on">
  <div id="warn" style="display:none;background:#5a2020;color:#ffd0d0;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-weight:600"></div>
  <div class="card"><div id="state">–</div><div id="task" class="muted"></div>
-  <div class="bar"><div id="fill"></div></div><div id="prog" class="muted"></div></div>
+  <div class="bar"><div id="fill"></div></div><div id="prog" class="muted"></div>
+  <div id="pcost" class="muted" style="margin-top:4px"></div></div>
  <div class="card temps"><div>Nozzle <b id="noz">–</b></div><div>Bed <b id="bed">–</b></div><div>Kamer <b id="cham">–</b></div></div>
  <div class="card"><h3>Bediening</h3><div class="ctrls">
    <button id="bPause" class="b-blue">Pause</button>
@@ -226,11 +227,12 @@ section#spools{max-width:1040px}
   </div>
   <div id="spList" class="muted">…</div>
  </div>
- <div class="card"><h3>Back-up</h3>
+ <div class="card"><h3>Back-up &amp; herstel</h3>
+  <div class="muted" style="font-size:12px;margin-bottom:8px">Alles op de tablet in één bestand: rollen, lege spoelen, gewichten, historie en statistieken. (Printer-IP/serial/toegangscode zitten er <b>niet</b> in.)</div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
    <button class="formbtn sec" onclick="downloadBackup()">⬇ Download back-up</button>
-   <label class="formbtn sec" style="cursor:pointer">⬆ Importeer<input type="file" accept=".json,application/json" style="display:none" onchange="importBackup(this.files)"></label>
-   <span class="muted" style="font-size:12px">rollen + lege spoelen als bestand (import voegt toe)</span>
+   <label class="formbtn sec" style="cursor:pointer">⬆ Herstel<input type="file" accept=".ptb,.conf,.txt" style="display:none" onchange="importBackup(this.files)"></label>
+   <span class="muted" style="font-size:12px">herstel overschrijft de huidige data</span>
   </div>
   <div id="bkMsg" class="muted" style="margin-top:8px"></div>
  </div>
@@ -262,6 +264,7 @@ section#spools{max-width:1040px}
   <div class="muted" style="font-size:16px">Voltooide prints: <b id="stPrints">–</b></div>
   <div class="muted" style="font-size:16px;margin-top:4px">Totaal filament gebruikt: <b id="stUsed">–</b></div>
   <div class="muted" style="font-size:16px;margin-top:4px">Totale filament-uitgave: <b id="stCost">–</b></div>
+  <div id="matStats" style="margin-top:10px"></div>
  </div>
  <div class="card"><h3>Historie / kosten</h3>
  <div id="histTotal" class="muted" style="font-size:16px;margin-bottom:8px"></div>
@@ -297,6 +300,10 @@ function renderHist(){
  var list=histCache.filter(function(r){return showArch?r.arch:!r.arch;});
  var tot=0;list.forEach(function(r){tot+=r.cost||0;});
  if($('histTotal'))$('histTotal').innerHTML=list.length+(showArch?' gearchiveerd':' prints')+' &middot; totaal <b>&euro; '+tot.toFixed(2)+'</b>';
+ var mm={};list.forEach(function(r){var k=r.mat||'?';if(!mm[k])mm[k]={g:0,c:0,n:0};mm[k].g+=r.grams||0;mm[k].c+=r.cost||0;mm[k].n++;});
+ var mk=Object.keys(mm).sort(function(a,b){return mm[b].g-mm[a].g;});
+ var mh='';mk.forEach(function(k){mh+='<div class="muted" style="font-size:14px">'+k+': <b>'+Math.round(mm[k].g)+' g</b>'+(mm[k].c>0?' &middot; &euro; '+mm[k].c.toFixed(2):'')+' <span style="opacity:.6">('+mm[k].n+'x)</span></div>';});
+ if($('matStats'))$('matStats').innerHTML=mh?('<div class="muted" style="font-size:13px;margin-bottom:4px">Per materiaal:</div>'+mh):'';
  if(!list.length){$('histList').style.display='block';$('histList').innerHTML='<div class="muted">'+(showArch?'niets gearchiveerd':'nog geen prints')+'</div>';hSelUpd();return;}
  var h='';
  list.forEach(function(r){
@@ -414,6 +421,7 @@ function poll(){
   $('state').textContent=s.state||'–';$('task').textContent=s.name||'';
   $('fill').style.width=(s.pct||0)+'%';
   $('prog').textContent=(s.pct||0)+'%'+(s.total?('  laag '+s.layer+'/'+s.total):'')+(s.remain?('  ~'+s.remain+' min'):'');
+  if($('pcost'))$('pcost').innerHTML=(s.printg>=0)?('deze print: <b>'+s.printg+' g</b>'+(s.printcost>0?(' &middot; <b>&euro; '+s.printcost.toFixed(2)+'</b>'):'')):'';
   var w=$('warn');if(w){if(s.short>0){w.style.display='block';w.textContent='⚠ Filament tekort — komt ~'+s.short+' g te kort voor deze print op het actieve slot. Overweeg een vollere spoel.';}else{w.style.display='none';}}
   $('noz').textContent=s.nozzle+'/'+s.nozzle_t+'°';$('bed').textContent=s.bed+'/'+s.bed_t+'°';$('cham').textContent=s.chamber+'°';
   $('bPause').textContent=(s.state==='PAUSE')?'Resume':'Pause';
@@ -532,18 +540,19 @@ function emDel(i){if(confirm('Verwijderen?'))fetch('/empty_del?idx='+i).then(fun
 function emWeigh(){if(!scaleHost){alert('Geen schaal-IP bekend — stel het in op de Scale-tab.');return;}
  fetch('http://'+scaleHost+'/weight?t='+Date.now()).then(function(r){return r.json();}).then(function(d){$('emWeight').value=Math.round(d.g);}).catch(function(){alert('Geen verbinding met de schaal.');});}
 function downloadBackup(){
- Promise.all([fetch('/spools').then(function(r){return r.json();}),fetch('/empties').then(function(r){return r.json();})]).then(function(a){
-  var blob=new Blob([JSON.stringify({spools:a[0],empties:a[1]},null,1)],{type:'application/json'});
-  var url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='pandatouch_spools_backup.json';link.click();URL.revokeObjectURL(url);
- }).catch(function(){$('bkMsg').textContent='geen verbinding';});
+ var a=document.createElement('a');a.href='/backup';a.download='pandatouch-backup.ptb';
+ document.body.appendChild(a);a.click();a.remove();
+ if($('bkMsg'))$('bkMsg').textContent='back-up gedownload';
 }
 function importBackup(files){
- if(!files||!files.length)return;var rd=new FileReader();
- rd.onload=function(){try{var d=JSON.parse(rd.result),chain=Promise.resolve();
-  (d.empties||[]).forEach(function(e){chain=chain.then(function(){return fetch('/empty_save?idx=&name='+encodeURIComponent(e.name)+'&weight='+e.weight);});});
-  (d.spools||[]).forEach(function(s){chain=chain.then(function(){return fetch('/spool_save?idx=&name='+encodeURIComponent(s.name)+'&material='+encodeURIComponent(s.material)+'&color='+encodeURIComponent(s.rgb)+'&rem='+s.rem+'&empty='+s.empty+'&nmin='+(s.nmin||0)+'&nmax='+(s.nmax||0)+'&code='+encodeURIComponent(s.code||'')+'&note='+encodeURIComponent(s.note||''));});});
-  chain.then(function(){$('bkMsg').textContent='Geïmporteerd.';loadSpools();loadEmpties();});
- }catch(e){$('bkMsg').textContent='Ongeldig back-up-bestand.';}};
+ if(!files||!files.length)return;
+ if(!confirm('Back-up terugzetten? Dit overschrijft de huidige rollen, gewichten, historie en statistieken op de tablet.'))return;
+ var rd=new FileReader();
+ rd.onload=function(){
+  fetch('/restore',{method:'POST',body:rd.result}).then(function(r){return r.text();}).then(function(t){
+   $('bkMsg').textContent=t;setTimeout(function(){loadSpools();loadEmpties();loadHistory();},900);
+  }).catch(function(){$('bkMsg').textContent='herstel mislukt';});
+ };
  rd.readAsText(files[0]);
 }
 function setSpColor(c){$('spColor').value=c;}

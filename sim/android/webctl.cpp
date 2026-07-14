@@ -18,6 +18,8 @@
 #include "stats.h"            // g_stat_prints, g_stat_grams
 #include "history.h"          // recent-print log + total cost
 #include "ui_screensaver.h"   // g_screensaver_3d, screensaver_view_changed()
+#include "thumb.h"            // .3mf model-preview extraction (Files/Historie)
+#include "backup.h"           // download / restore all tablet data
 #include "bambu_mqtt.h"
 #include "bambu_ftp.h"
 #include "storage.h"
@@ -43,7 +45,7 @@ extern bool g_screensaver_3d;
 
 // --- thread-safe request queue (web thread -> main thread) ---------------
 enum QKind { Q_MOVE = 1, Q_CTL, Q_CFG, Q_START, Q_SPOOL_SAVE, Q_SPOOL_DEL, Q_SPOOL_LOAD,
-             Q_EMPTY_SAVE, Q_EMPTY_DEL, Q_SPOOL_BULK, Q_SPOOL_CLEAR, Q_HIST_BULK };
+             Q_EMPTY_SAVE, Q_EMPTY_DEL, Q_SPOOL_BULK, Q_SPOOL_CLEAR, Q_HIST_BULK, Q_RESTORE };
 enum CtlCode { CTL_PAUSE = 1, CTL_RESUME, CTL_STOP, CTL_LIGHT, CTL_FAN, CTL_SPEED };
 
 struct QCmd {
@@ -167,69 +169,6 @@ static void send_resp(int fd, const char* status, const char* ctype, const char*
         status, ctype, blen);
     send(fd, hdr, n, 0);
     if (body && blen > 0) send(fd, body, blen, 0);
-}
-
-// --- .3mf thumbnail extraction (Files previews) --------------------------
-static uint32_t z_rd32(const uint8_t* p) { return p[0] | (p[1] << 8) | (p[2] << 16) | ((uint32_t)p[3] << 24); }
-static uint16_t z_rd16(const uint8_t* p) { return (uint16_t)(p[0] | (p[1] << 8)); }
-struct ThumbDl { uint8_t* p; uint32_t len, cap; };
-static bool thumb_dl_cb(const uint8_t* d, unsigned int n, void* ctx) {
-    ThumbDl* b = (ThumbDl*)ctx;
-    if (b->len + n > b->cap) {
-        uint32_t c = b->cap ? b->cap : 65536;
-        while (c < b->len + n) c *= 2;
-        uint8_t* nb = (uint8_t*)realloc(b->p, c);
-        if (!nb) return false;
-        b->p = nb; b->cap = c;
-    }
-    memcpy(b->p + b->len, d, n); b->len += n; return true;
-}
-// Download a .3mf and return its embedded model thumbnail (Metadata/plate_1.png),
-// malloc'd + length in *out_len. Caller frees. nullptr on any failure.
-static uint8_t* threemf_thumb(const char* path, uint32_t* out_len) {
-    *out_len = 0;
-    ThumbDl zip = {nullptr, 0, 0};
-    uint32_t total = 0; String err;
-    if (!bambu_ftp_download(path, thumb_dl_cb, &zip, &total, &err) || !zip.p || zip.len < 22) { free(zip.p); return nullptr; }
-    int32_t eocd = -1, lim = (int32_t)zip.len - 22;
-    for (int32_t i = lim; i >= 0 && i > lim - 65536; i--) if (z_rd32(zip.p + i) == 0x06054b50) { eocd = i; break; }
-    if (eocd < 0) { free(zip.p); return nullptr; }
-    uint32_t cd = z_rd32(zip.p + eocd + 16);
-    const char* target = "Metadata/plate_1.png";
-    size_t tlen = strlen(target);
-    uint8_t* out = nullptr;
-    uint32_t p = cd;
-    while (p + 46 <= zip.len && z_rd32(zip.p + p) == 0x02014b50) {
-        uint16_t method = z_rd16(zip.p + p + 10);
-        uint32_t comp = z_rd32(zip.p + p + 20), uncomp = z_rd32(zip.p + p + 24);
-        uint16_t fnlen = z_rd16(zip.p + p + 28), exlen = z_rd16(zip.p + p + 30), cmlen = z_rd16(zip.p + p + 32);
-        uint32_t lho = z_rd32(zip.p + p + 42);
-        const char* fn = (const char*)(zip.p + p + 46);
-        if (fnlen == tlen && memcmp(fn, target, tlen) == 0 && lho + 30 <= zip.len) {
-            uint16_t lfn = z_rd16(zip.p + lho + 26), lex = z_rd16(zip.p + lho + 28);
-            uint32_t data = lho + 30 + lfn + lex;
-            if ((uint64_t)data + comp <= zip.len) {
-                if (method == 0) {
-                    out = (uint8_t*)malloc(comp); if (out) { memcpy(out, zip.p + data, comp); *out_len = comp; }
-                } else if (method == 8 && uncomp > 0) {
-                    out = (uint8_t*)malloc(uncomp);
-                    if (out) {
-                        z_stream zs; memset(&zs, 0, sizeof(zs));
-                        if (inflateInit2(&zs, -15) == Z_OK) {
-                            zs.next_in = (Bytef*)(zip.p + data); zs.avail_in = comp;
-                            zs.next_out = (Bytef*)out; zs.avail_out = uncomp;
-                            int r = inflate(&zs, Z_FINISH); *out_len = (uint32_t)zs.total_out; inflateEnd(&zs);
-                            if (r != Z_STREAM_END && r != Z_OK) { free(out); out = nullptr; *out_len = 0; }
-                        } else { free(out); out = nullptr; }
-                    }
-                }
-            }
-            break;
-        }
-        p += 46 + fnlen + exlen + cmlen;
-    }
-    free(zip.p);
-    return out;
 }
 
 // --- main-thread queue drain ---------------------------------------------
@@ -394,6 +333,29 @@ void webctl_loop() {
                 }
                 break;
             }
+            case Q_RESTORE: {
+                // The web thread wrote the uploaded backup to a temp file; apply it
+                // here (main thread) and reload every module from the fresh files.
+                FILE* f = fopen("/sdcard/ptrestore.tmp", "rb");
+                if (f) {
+                    fseek(f, 0, SEEK_END); long n = ftell(f); fseek(f, 0, SEEK_SET);
+                    if (n < 0) n = 0;
+                    char* d = (char*)malloc(n + 1);
+                    if (d) {
+                        long got = (long)fread(d, 1, n, f);
+                        if (got < 0) got = 0;
+                        d[got] = 0;
+                        int nrest = backup_apply(d);
+                        free(d);
+                        spool_db_load(); empty_db_load();
+                        filament_track_init(); history_init(); stats_init();
+                        Serial.printf("RESTORE: %d files restored\n", nrest);
+                    }
+                    fclose(f);
+                }
+                remove("/sdcard/ptrestore.tmp");
+                break;
+            }
         }
     }
 }
@@ -411,9 +373,12 @@ static void build_status(char* o, int n) {
     p += snprintf(o + p, n - p,
         "\"nozzle\":%.0f,\"nozzle_t\":%.0f,\"bed\":%.0f,\"bed_t\":%.0f,\"chamber\":%.0f,",
         s.nozzle_temp, s.nozzle_target, s.bed_temp, s.bed_target, s.chamber_temp);
-    p += snprintf(o + p, n - p, "\"light\":%s,\"fan\":%d,\"speed\":%d,\"active_tray\":%d,\"short\":%.0f,\"prints\":%d,\"used\":%.0f,\"cost\":%.2f,",
+    float lg = 0, lc = 0;
+    bool live = filament_live_cost(&lg, &lc);
+    p += snprintf(o + p, n - p, "\"light\":%s,\"fan\":%d,\"speed\":%d,\"active_tray\":%d,\"short\":%.0f,\"prints\":%d,\"used\":%.0f,\"cost\":%.2f,\"printg\":%.0f,\"printcost\":%.2f,",
         s.light_on ? "true" : "false", s.fan_speed_pct, s.speed_level, s.active_tray_now,
-        filament_shortfall(), g_stat_prints, g_stat_grams, g_hist_total_cost);
+        filament_shortfall(), g_stat_prints, g_stat_grams, g_hist_total_cost,
+        live ? lg : -1.0f, live ? lc : 0.0f);
     p += snprintf(o + p, n - p,
         "\"cfg\":{\"ip\":\"%s\",\"serial\":\"%s\",\"view3d\":%s,\"bri\":%d,\"code_set\":%s,\"scale_ip\":\"%s\",\"low\":%d,\"ntfy\":\"%s\"},",
         g_printer_ip, g_printer_serial, g_screensaver_3d ? "true" : "false",
@@ -506,11 +471,12 @@ static void build_history(char* o, int n) {
     p += snprintf(o + p, n - p, "[");
     for (int i = 0; i < g_hist_count; i++) {
         PrintRec& r = g_history[i];
-        char nm[96], fl[96];
+        char nm[96], fl[96], mt[24];
         json_escape(r.name, nm, sizeof(nm));
         json_escape(r.file, fl, sizeof(fl));
-        p += snprintf(o + p, n - p, "%s{\"i\":%d,\"when\":\"%s\",\"name\":\"%s\",\"grams\":%.0f,\"cost\":%.2f,\"ok\":%d,\"file\":\"%s\",\"arch\":%d}",
-            i ? "," : "", i, r.when, nm, r.grams, r.cost, r.ok, fl, r.arch);
+        json_escape(r.mat, mt, sizeof(mt));
+        p += snprintf(o + p, n - p, "%s{\"i\":%d,\"when\":\"%s\",\"name\":\"%s\",\"grams\":%.0f,\"cost\":%.2f,\"ok\":%d,\"file\":\"%s\",\"arch\":%d,\"mat\":\"%s\"}",
+            i ? "," : "", i, r.when, nm, r.grams, r.cost, r.ok, fl, r.arch, mt);
     }
     snprintf(o + p, n - p, "]");
 }
@@ -527,15 +493,67 @@ static void handle_conn(int fd) {
     if (r <= 0) return;
     buf[r] = 0;
 
-    if (strncmp(buf, "GET ", 4) != 0) { send_resp(fd, "405 Method Not Allowed", "text/plain", "", 0); return; }
-    char* path = buf + 4;
+    bool is_post = (strncmp(buf, "POST ", 5) == 0);
+    if (!is_post && strncmp(buf, "GET ", 4) != 0) { send_resp(fd, "405 Method Not Allowed", "text/plain", "", 0); return; }
+    char* path = buf + (is_post ? 5 : 4);
     char* sp = strchr(path, ' ');
     if (sp) *sp = 0;
     char* query = strchr(path, '?');
     if (query) { *query = 0; query++; }
 
+    // Restore: the browser POSTs the raw backup blob. Read the full body (it can
+    // exceed the initial recv), stash it in a temp file and let the main thread
+    // apply + reload (touching storage/UI globals off the web thread is unsafe).
+    if (is_post && !strcmp(path, "/restore")) {
+        char* bodystart = strstr(buf, "\r\n\r\n");
+        char* cl = strstr(buf, "Content-Length:");
+        if (!cl) cl = strstr(buf, "content-length:");
+        int clen = cl ? atoi(cl + 15) : 0;
+        if (!bodystart || clen <= 0 || clen > 1024 * 1024) { send_resp(fd, "400 Bad Request", "text/plain; charset=utf-8", "ongeldig", 8); return; }
+        bodystart += 4;
+        int have = r - (int)(bodystart - buf);
+        if (have > clen) have = clen;
+        char* body = (char*)malloc(clen + 1);
+        if (!body) { send_resp(fd, "500 Error", "text/plain", "", 0); return; }
+        memcpy(body, bodystart, have);
+        while (have < clen) {
+            int k = (int)recv(fd, body + have, clen - have, 0);
+            if (k <= 0) break;
+            have += k;
+        }
+        body[have] = 0;
+        FILE* tf = fopen("/sdcard/ptrestore.tmp", "wb");
+        if (tf) {
+            fwrite(body, 1, have, tf);
+            fclose(tf);
+            q_push(Q_RESTORE, 0, 0, nullptr);
+            send_resp(fd, "200 OK", "text/plain; charset=utf-8", "hersteld - herstart de app om alles te laden", 44);
+        } else {
+            send_resp(fd, "500 Error", "text/plain; charset=utf-8", "schrijven mislukt", 17);
+        }
+        free(body);
+        return;
+    }
+
     if (!strcmp(path, "/")) {
         send_resp(fd, "200 OK", "text/html; charset=utf-8", PAGE_HTML, (int)strlen(PAGE_HTML));
+        return;
+    }
+    if (!strcmp(path, "/backup")) {          // download all tablet data as one file
+        int len = 0;
+        char* blob = backup_build(&len);
+        if (blob && len > 0) {
+            char hdr[256];
+            int hn = snprintf(hdr, sizeof(hdr),
+                "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\n"
+                "Content-Disposition: attachment; filename=\"pandatouch-backup.ptb\"\r\n"
+                "Content-Length: %d\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n", len);
+            send(fd, hdr, hn, 0);
+            send(fd, blob, len, 0);
+        } else {
+            send_resp(fd, "500 Error", "text/plain", "", 0);
+        }
+        free(blob);
         return;
     }
     if (!strcmp(path, "/status")) {

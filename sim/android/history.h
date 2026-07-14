@@ -16,6 +16,7 @@ struct PrintRec {
     int   ok;         // 1 = finished, 0 = failed
     char  file[64];   // printed .3mf (in /cache) for an on-demand model preview
     int   arch;       // 1 = archived (hidden from the active list)
+    char  mat[12];    // material used (PLA/PETG/...), for the per-material totals
 };
 
 extern PrintRec g_history[HIST_MAX];

@@ -46,6 +46,8 @@ LOCAL_SRC_FILES := \
     ourui/src/notify.cpp \
     ourui/src/stats.cpp \
     ourui/src/history.cpp \
+    ourui/src/thumb.cpp \
+    ourui/src/backup.cpp \
     ourui/src/webctl.cpp
 
 LOCAL_CFLAGS := -DLV_CONF_INCLUDE_SIMPLE -DARDUINOJSON_ENABLE_ARDUINO_STRING=1 -w

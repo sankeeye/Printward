@@ -193,6 +193,32 @@ void create_history_ui() {
     lv_obj_set_style_text_font(sum, &lv_font_montserrat_18, 0);
     lv_obj_set_style_text_color(sum, lv_color_hex(0x2ecc71), 0);
 
+    // Per-material breakdown (grams + cost + count), heaviest first.
+    {
+        struct MA { char m[12]; float g; float c; int n; } agg[12];
+        int na = 0;
+        for (int i = 0; i < g_hist_count; i++) {
+            const char* m = g_history[i].mat[0] ? g_history[i].mat : "?";
+            int j;
+            for (j = 0; j < na; j++) if (!strcmp(agg[j].m, m)) break;
+            if (j == na && na < 12) {
+                strncpy(agg[na].m, m, sizeof(agg[na].m) - 1); agg[na].m[sizeof(agg[na].m) - 1] = 0;
+                agg[na].g = 0; agg[na].c = 0; agg[na].n = 0; na++;
+            }
+            if (j < 12) { agg[j].g += g_history[i].grams; agg[j].c += g_history[i].cost; agg[j].n++; }
+        }
+        if (na > 0) {
+            char buf[420]; int p = 0; buf[0] = 0;
+            for (int j = 0; j < na; j++)
+                p += snprintf(buf + p, sizeof(buf) - p, "%s%s: %.0f g   EUR %.2f (%dx)",
+                              j ? "\n" : "", agg[j].m, agg[j].g, agg[j].c, agg[j].n);
+            lv_obj_t* ml = lv_label_create(root);
+            lv_label_set_text(ml, buf);
+            lv_obj_set_style_text_font(ml, &lv_font_montserrat_14, 0);
+            lv_obj_set_style_text_color(ml, lv_color_hex(0xBBBBBB), 0);
+        }
+    }
+
     // Scrollable list, newest first
     lv_obj_t* list = lv_obj_create(root);
     lv_obj_set_width(list, lv_pct(100));

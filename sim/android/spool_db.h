@@ -68,6 +68,10 @@ float spool_live_grams(const Spool& s);
 // Human label for a slot: "AMS1 T2" / "Extern" / "" (unassigned) into out.
 void  spool_slot_label(int slot, char* out, int len);
 
+// Material of the roll currently loaded into `slot` (from our library), or ""
+// if no roll is linked to that slot. Used to tag print-history entries.
+void  spool_material_for_slot(int slot, char* out, int len);
+
 // Call from the main loop: when a tracked roll is physically pulled from the AMS
 // (tray reports empty for a while), auto-clear that slot like pressing "Leeg".
 void  spool_autoclear_loop();

@@ -3,6 +3,7 @@
 #include "bambu_mqtt.h"
 #include "gcode_view.h"
 #include "filament_track.h"
+#include "spool_db.h"
 #include <Arduino.h>
 #include <ctime>
 #include <cstdio>
@@ -22,8 +23,8 @@ static void history_save() {
     if (!f) return;
     for (int i = 0; i < g_hist_count; i++) {
         PrintRec r = g_history[i];
-        sani(r.when); sani(r.name); sani(r.file);
-        fprintf(f, "%s|%s|%.1f|%.2f|%d|%s|%d\n", r.when, r.name, r.grams, r.cost, r.ok, r.file, r.arch);
+        sani(r.when); sani(r.name); sani(r.file); sani(r.mat);
+        fprintf(f, "%s|%s|%.1f|%.2f|%d|%s|%d|%s\n", r.when, r.name, r.grams, r.cost, r.ok, r.file, r.arch, r.mat);
     }
     fclose(f);
 }
@@ -39,7 +40,7 @@ void history_init() {
     g_hist_count = 0; g_hist_total_cost = 0;
     FILE* f = fopen(HIST_PATH, "r");
     if (!f) return;
-    char line[160];
+    char line[256];
     while (fgets(line, sizeof(line), f) && g_hist_count < HIST_MAX) {
         char* nl = strpbrk(line, "\r\n"); if (nl) *nl = 0;
         if (!line[0]) continue;
@@ -52,6 +53,7 @@ void history_init() {
         r.ok = atoi(fld(&p));
         strncpy(r.file, fld(&p), sizeof(r.file) - 1);   // absent in old files -> ""
         r.arch = atoi(fld(&p));                          // absent -> 0
+        strncpy(r.mat, fld(&p), sizeof(r.mat) - 1);      // absent in old files -> ""
         g_history[g_hist_count++] = r;
         g_hist_total_cost += r.cost;
     }
@@ -82,6 +84,19 @@ void history_loop() {
             r.ok = fin ? 1 : 0;
             r.cost = r.grams * filament_price(last_active) / 1000.0f;
             strncpy(r.file, last_file, sizeof(r.file) - 1);   // for the on-demand preview
+            // Material of the active slot: our spool library first, else the
+            // printer's reported AMS/external tray type.
+            spool_material_for_slot(last_active, r.mat, sizeof(r.mat));
+            if (!r.mat[0]) {
+                const char* tp = "";
+                if (last_active == 254) tp = s.external_spool.type;
+                else if (last_active >= 0) {
+                    int u = last_active / AMS_MAX_TRAYS, t = last_active % AMS_MAX_TRAYS;
+                    if (u < AMS_MAX_UNITS && t < AMS_MAX_TRAYS) tp = s.ams[u].trays[t].type;
+                }
+                strncpy(r.mat, tp, sizeof(r.mat) - 1);
+                r.mat[sizeof(r.mat) - 1] = 0;
+            }
             for (int i = (g_hist_count < HIST_MAX ? g_hist_count : HIST_MAX - 1); i > 0; i--)
                 g_history[i] = g_history[i - 1];
             g_history[0] = r;              // newest first

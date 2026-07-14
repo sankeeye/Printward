@@ -1,4 +1,6 @@
 #include "ui_printer.h"
+#include <cstdio>
+#include <cstring>
 #include "storage.h"
 #include "bambu_mqtt.h"
 #include "ui_settings.h"
@@ -25,6 +27,7 @@ static lv_obj_t* g_update_label = nullptr;
 static lv_obj_t* g_update_pct_label = nullptr;
 
 static lv_obj_t* g_wifi_label = nullptr;
+static lv_obj_t* g_conn_dot = nullptr;
 static lv_obj_t* g_conn_label = nullptr;
 static lv_obj_t* g_state_label = nullptr;
 static lv_obj_t* g_task_label = nullptr;
@@ -39,6 +42,7 @@ static lv_obj_t* g_ams_boxes[AMS_MAX_UNITS] = {nullptr};
 static lv_obj_t* g_ams_tray_dots[AMS_MAX_UNITS][AMS_MAX_TRAYS] = {{nullptr}};
 static lv_obj_t* g_ams_tray_labels[AMS_MAX_UNITS][AMS_MAX_TRAYS] = {{nullptr}};
 static lv_obj_t* g_ams_tray_grams[AMS_MAX_UNITS][AMS_MAX_TRAYS] = {{nullptr}};
+static lv_obj_t* g_ams_tray_bars[AMS_MAX_UNITS][AMS_MAX_TRAYS] = {{nullptr}};
 static lv_obj_t* g_ams_humidity_labels[AMS_MAX_UNITS] = {nullptr};
 static lv_obj_t* g_ext_row = nullptr;
 static lv_obj_t* g_ext_swatch = nullptr;
@@ -244,7 +248,26 @@ void create_printer_ui() {
     lv_obj_set_style_text_color(g_wifi_label, lv_color_hex(0xAAAAAA), 0);
 #endif
 
-    g_conn_label = lv_label_create(header);
+    // Connection status: a colored dot + text, kept together in a sub-box so the
+    // header's SPACE_BETWEEN doesn't split them.
+    lv_obj_t* conn_box = lv_obj_create(header);
+    lv_obj_set_size(conn_box, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    lv_obj_set_style_bg_opa(conn_box, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_border_width(conn_box, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(conn_box, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_gap(conn_box, PT_SZ(7), LV_PART_MAIN);
+    lv_obj_set_flex_flow(conn_box, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(conn_box, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_clear_flag(conn_box, LV_OBJ_FLAG_SCROLLABLE);
+
+    g_conn_dot = lv_obj_create(conn_box);
+    lv_obj_set_size(g_conn_dot, PT_SZ(14), PT_SZ(14));
+    lv_obj_set_style_radius(g_conn_dot, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    lv_obj_set_style_border_width(g_conn_dot, 0, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(g_conn_dot, lv_color_hex(0xe74c3c), LV_PART_MAIN);
+    lv_obj_clear_flag(g_conn_dot, LV_OBJ_FLAG_SCROLLABLE);
+
+    g_conn_label = lv_label_create(conn_box);
     lv_obj_set_style_text_font(g_conn_label, &lv_font_montserrat_14, 0);
 
     lv_obj_t* move_btn = lv_btn_create(header);
@@ -411,7 +434,7 @@ void create_printer_ui() {
                                 (void*)(uintptr_t)(u * AMS_MAX_TRAYS + t));
 #endif
             lv_obj_t* dot = lv_obj_create(cell);
-            lv_obj_set_size(dot, PT_SZ(50), PT_SZ(30));
+            lv_obj_set_size(dot, PT_SZ(50), PT_SZ(26));
             lv_obj_set_style_radius(dot, 6, LV_PART_MAIN);
             lv_obj_set_style_border_width(dot, 1, LV_PART_MAIN);
             lv_obj_set_style_border_color(dot, lv_color_hex(0x555555), LV_PART_MAIN);
@@ -419,6 +442,20 @@ void create_printer_ui() {
             lv_obj_clear_flag(dot, LV_OBJ_FLAG_CLICKABLE);
             lv_obj_clear_flag(dot, LV_OBJ_FLAG_SCROLLABLE);
             g_ams_tray_dots[u][t] = dot;
+
+#ifdef __ANDROID__
+            // Thin fullness bar (weighed roll only): green normally, red when low.
+            lv_obj_t* fbar = lv_bar_create(cell);
+            lv_obj_set_size(fbar, PT_SZ(50), PT_SZ(4));
+            lv_bar_set_range(fbar, 0, 100);
+            lv_bar_set_value(fbar, 0, LV_ANIM_OFF);
+            lv_obj_set_style_radius(fbar, 2, LV_PART_MAIN);
+            lv_obj_set_style_radius(fbar, 2, LV_PART_INDICATOR);
+            lv_obj_set_style_bg_color(fbar, lv_color_hex(0x333333), LV_PART_MAIN);
+            lv_obj_set_style_bg_color(fbar, lv_color_hex(0x2ecc71), LV_PART_INDICATOR);
+            lv_obj_add_flag(fbar, LV_OBJ_FLAG_HIDDEN);
+            g_ams_tray_bars[u][t] = fbar;
+#endif
 
             lv_obj_t* type_label = lv_label_create(cell);
             lv_label_set_text(type_label, "-");
@@ -523,8 +560,11 @@ void update_status_label() {
         String wtxt = "WiFi: " + g_ip_addr;
         lv_label_set_text(g_wifi_label, wtxt.c_str());
     }
+    bool connected = bambu_is_connected();
+    if (g_conn_dot)
+        lv_obj_set_style_bg_color(g_conn_dot, lv_color_hex(connected ? 0x2ecc71 : 0xe74c3c), 0);
     if (g_conn_label) {
-        if (bambu_is_connected()) {
+        if (connected) {
             lv_label_set_text(g_conn_label, "Printer: connected");
             lv_obj_set_style_text_color(g_conn_label, lv_color_hex(0x2ecc71), 0);
         } else {
@@ -578,10 +618,21 @@ void update_printer_ui() {
 
     lv_bar_set_value(g_bar, s.progress_pct, LV_ANIM_ON);
     lv_label_set_text_fmt(g_pct_label, "%d%%", s.progress_pct);
-    if (s.remaining_min > 0) {
-        lv_label_set_text_fmt(g_remain_label, "%dh%02dm left", s.remaining_min / 60, s.remaining_min % 60);
-    } else {
-        lv_label_set_text(g_remain_label, "");
+    {
+        char rt[64] = "";
+        if (s.remaining_min > 0)
+            snprintf(rt, sizeof(rt), "%dh%02dm left", s.remaining_min / 60, s.remaining_min % 60);
+#ifdef __ANDROID__
+        // Append the running print's live filament use + cost when known.
+        float lg = 0, lc = 0;
+        if (filament_live_cost(&lg, &lc)) {
+            char extra[32];
+            if (lc > 0) snprintf(extra, sizeof(extra), "%s%.0fg EUR%.2f", rt[0] ? "   " : "", lg, lc);
+            else        snprintf(extra, sizeof(extra), "%s%.0fg", rt[0] ? "   " : "", lg);
+            strncat(rt, extra, sizeof(rt) - strlen(rt) - 1);
+        }
+#endif
+        lv_label_set_text(g_remain_label, rt);
     }
 
     lv_label_set_text_fmt(g_nozzle_label, "Nozzle %.0f/%.0f\xC2\xB0" "C", s.nozzle_temp, s.nozzle_target);
@@ -629,10 +680,26 @@ void update_printer_ui() {
                 }
             }
 #ifdef __ANDROID__
-            if (g_ams_tray_grams[u][t]) {
-                float rem = filament_remaining(u * AMS_MAX_TRAYS + t);
-                if (rem >= 0) lv_label_set_text_fmt(g_ams_tray_grams[u][t], "%.0f g", rem);
-                else          lv_label_set_text(g_ams_tray_grams[u][t], "");
+            {
+                int sl = u * AMS_MAX_TRAYS + t;
+                float rem = filament_remaining(sl);
+                float cap = filament_capacity(sl);
+                if (g_ams_tray_grams[u][t]) {
+                    if (rem >= 0) lv_label_set_text_fmt(g_ams_tray_grams[u][t], "%.0f g", rem);
+                    else          lv_label_set_text(g_ams_tray_grams[u][t], "");
+                }
+                if (g_ams_tray_bars[u][t]) {
+                    if (cap > 0 && rem >= 0) {
+                        int pctv = (int)(rem / cap * 100.0f + 0.5f);
+                        if (pctv < 0) pctv = 0; if (pctv > 100) pctv = 100;
+                        lv_bar_set_value(g_ams_tray_bars[u][t], pctv, LV_ANIM_OFF);
+                        lv_obj_set_style_bg_color(g_ams_tray_bars[u][t],
+                            lv_color_hex(filament_slot_low(sl) ? 0xe74c3c : 0x2ecc71), LV_PART_INDICATOR);
+                        lv_obj_clear_flag(g_ams_tray_bars[u][t], LV_OBJ_FLAG_HIDDEN);
+                    } else {
+                        lv_obj_add_flag(g_ams_tray_bars[u][t], LV_OBJ_FLAG_HIDDEN);
+                    }
+                }
             }
 #endif
         }

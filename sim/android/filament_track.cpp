@@ -196,3 +196,20 @@ float filament_price(int slot) {
     if (u >= 0 && u < AMS_MAX_UNITS && t >= 0 && t < AMS_MAX_TRAYS) return g_tray_price[u][t];
     return 0;
 }
+
+float filament_capacity(int slot) { return cap_of(slot); }
+
+bool filament_live_cost(float* grams_out, float* eur_out) {
+    PrinterStatus& s = g_printer_status;
+    bool printing = (strcmp(s.gcode_state, "RUNNING") == 0 || strcmp(s.gcode_state, "PAUSE") == 0);
+    if (!printing) return false;
+    float total = gcode_view_ready() ? gcode_view_filament_g() : 0.0f;
+    if (total <= 0) return false;
+    float pct = (float)s.progress_pct; if (pct < 0) pct = 0; if (pct > 100) pct = 100;
+    float g = total * pct / 100.0f;
+    int slot = s.active_tray_now;
+    float price = (slot >= 0 && slot != 255) ? filament_price(slot) : 0.0f;
+    if (grams_out) *grams_out = g;
+    if (eur_out)   *eur_out = g * price / 1000.0f;
+    return true;
+}

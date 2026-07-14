@@ -54,17 +54,92 @@ void notify_send(const char* title, const char* msg) {
     if (th) SDL_DetachThread(th); else free(m);
 }
 
+#ifdef __ANDROID__
+// Like notify_send(), but attaches the printed model's thumbnail (extracted
+// from its .3mf over FTP) so the "print done" push shows a picture. Falls back
+// to a plain text push when there's no thumbnail. Runs on its own thread since
+// the .3mf download can take a while.
+#include "thumb.h"
+struct NThumb { char title[48]; char body[176]; char path[160]; };
+
+static int nthumb_thread(void* data) {
+    NThumb* m = (NThumb*)data;
+    uint32_t plen = 0;
+    uint8_t* png = m->path[0] ? threemf_thumb(m->path, &plen) : nullptr;
+    if (g_ntfy_topic[0]) {
+        WiFiClientSecure c;
+        c.setInsecure();
+        if (c.connect("ntfy.sh", 443)) {
+            char hdr[512];
+            if (png && plen) {
+                int n = snprintf(hdr, sizeof(hdr),
+                    "POST /%s HTTP/1.1\r\nHost: ntfy.sh\r\nTitle: %s\r\nMessage: %s\r\n"
+                    "Filename: print.png\r\nContent-Type: image/png\r\nContent-Length: %u\r\n"
+                    "Connection: close\r\n\r\n",
+                    g_ntfy_topic, m->title, m->body, (unsigned)plen);
+                c.write((const uint8_t*)hdr, (size_t)n);
+                c.write(png, plen);
+            } else {
+                size_t blen = strlen(m->body);
+                int n = snprintf(hdr, sizeof(hdr),
+                    "POST /%s HTTP/1.1\r\nHost: ntfy.sh\r\nTitle: %s\r\n"
+                    "Content-Type: text/plain\r\nContent-Length: %u\r\nConnection: close\r\n\r\n",
+                    g_ntfy_topic, m->title, (unsigned)blen);
+                c.write((const uint8_t*)hdr, (size_t)n);
+                c.write((const uint8_t*)m->body, blen);
+            }
+            uint32_t t0 = SDL_GetTicks();
+            while (SDL_GetTicks() - t0 < 3000) {
+                if (c.available() > 0) c.read();
+                else SDL_Delay(20);
+                if (!c.connected()) break;
+            }
+            c.stop();
+            Serial.printf("NTFY: sent '%s'%s\n", m->title, (png && plen) ? " +image" : "");
+        } else {
+            Serial.println("NTFY: connect failed");
+        }
+    }
+    if (png) free(png);
+    free(m);
+    return 0;
+}
+
+static void notify_send_thumb(const char* title, const char* msg, const char* path) {
+    if (!g_ntfy_topic[0]) return;
+    NThumb* m = (NThumb*)malloc(sizeof(NThumb));
+    if (!m) return;
+    strncpy(m->title, title, sizeof(m->title) - 1); m->title[sizeof(m->title) - 1] = 0;
+    strncpy(m->body, msg, sizeof(m->body) - 1);     m->body[sizeof(m->body) - 1] = 0;
+    strncpy(m->path, path ? path : "", sizeof(m->path) - 1); m->path[sizeof(m->path) - 1] = 0;
+    SDL_Thread* th = SDL_CreateThread(nthumb_thread, "ntfyimg", m);
+    if (th) SDL_DetachThread(th); else free(m);
+}
+#endif
+
 void notify_loop() {
     static char last_state[16] = "";
     static bool warned_short = false;
+    static char last_file[64] = "";
     PrinterStatus& s = g_printer_status;
+
+    bool printing = (strcmp(s.gcode_state, "RUNNING") == 0 || strcmp(s.gcode_state, "PAUSE") == 0);
+    if (printing && s.gcode_file[0]) { strncpy(last_file, s.gcode_file, sizeof(last_file) - 1); last_file[sizeof(last_file) - 1] = 0; }
 
     if (strcmp(last_state, s.gcode_state) != 0) {
         bool wasPrinting = (strcmp(last_state, "RUNNING") == 0 || strcmp(last_state, "PAUSE") == 0);
-        if (wasPrinting && strcmp(s.gcode_state, "FINISH") == 0)
-            notify_send("Print klaar", s.task_name[0] ? s.task_name : "De print is klaar.");
-        else if (wasPrinting && strcmp(s.gcode_state, "FAILED") == 0)
+        if (wasPrinting && strcmp(s.gcode_state, "FINISH") == 0) {
+            const char* msg = s.task_name[0] ? s.task_name : "De print is klaar.";
+#ifdef __ANDROID__
+            char pth[160];
+            snprintf(pth, sizeof(pth), "/cache/%s", last_file);
+            notify_send_thumb("Print klaar", msg, last_file[0] ? pth : "");
+#else
+            notify_send("Print klaar", msg);
+#endif
+        } else if (wasPrinting && strcmp(s.gcode_state, "FAILED") == 0) {
             notify_send("Print mislukt", s.task_name[0] ? s.task_name : "De print is mislukt.");
+        }
         strncpy(last_state, s.gcode_state, sizeof(last_state) - 1);
         last_state[sizeof(last_state) - 1] = 0;
     }

@@ -27,6 +27,7 @@
 #include "notify.h"            // ntfy.sh push notifications
 #include "stats.h"             // lifetime print statistics
 #include "history.h"           // recent print log + cost
+#include "backup.h"            // rolling on-device snapshot of all data files
 #include "webctl.h"            // LAN web control server (same Move actions)
 #include "bambu_ftp.h"
 #include "gcode_view.h"
@@ -265,6 +266,7 @@ int main(int argc, char **argv) {
         notify_loop();       // push ntfy on print done/failed / filament short
         stats_loop();        // count finished prints + filament used
         history_loop();      // log each finished/failed print + cost
+        backup_auto_loop();  // snapshot all data files to /sdcard/ptbackup on change
         webctl_loop();       // apply moves queued by the web control page
 #endif
         drain_pending_action();

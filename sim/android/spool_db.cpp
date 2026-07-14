@@ -214,6 +214,17 @@ void spool_slot_label(int slot, char* out, int len) {
     else snprintf(out, len, "AMS%d T%d", slot / AMS_MAX_TRAYS + 1, slot % AMS_MAX_TRAYS + 1);
 }
 
+void spool_material_for_slot(int slot, char* out, int len) {
+    if (out && len > 0) out[0] = 0;
+    if (slot < 0 || !out || len <= 0) return;
+    for (int i = 0; i < g_spool_count; i++)
+        if (g_spools[i].slot == slot) {
+            strncpy(out, g_spools[i].material, len - 1);
+            out[len - 1] = 0;
+            return;
+        }
+}
+
 // Auto-empty a slot when its roll is physically pulled from the AMS: if the unit
 // is reporting but a tracked tray stays empty for HOLD ms, clear it (writes the
 // roll's final grams back + unlinks, like pressing "Leeg"). Guarded by an MQTT
