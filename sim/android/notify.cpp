@@ -117,6 +117,35 @@ static void notify_send_thumb(const char* title, const char* msg, const char* pa
 }
 #endif
 
+// Persisted "already warned this slot is low" state, so a low roll pings once
+// and then stays quiet across app restarts (re-arms when refilled/cleared).
+#define LOWNOTIFY_PATH "/sdcard/pandatouch_lownotify.conf"
+static bool g_low_notified[AMS_MAX_UNITS * AMS_MAX_TRAYS + 1] = {false};
+static bool g_low_loaded = false;
+
+static void lownotify_load() {
+    FILE* f = fopen(LOWNOTIFY_PATH, "r");
+    if (!f) return;
+    char line[160];
+    if (fgets(line, sizeof(line), f)) {
+        for (char* p = line; *p >= '0' && *p <= '9'; ) {
+            int k = atoi(p);
+            if (k >= 0 && k <= AMS_MAX_UNITS * AMS_MAX_TRAYS) g_low_notified[k] = true;
+            char* c = strchr(p, ','); if (!c) break; p = c + 1;
+        }
+    }
+    fclose(f);
+}
+static void lownotify_save() {
+    FILE* f = fopen(LOWNOTIFY_PATH, "w");
+    if (!f) return;
+    bool first = true;
+    for (int k = 0; k <= AMS_MAX_UNITS * AMS_MAX_TRAYS; k++)
+        if (g_low_notified[k]) { fprintf(f, "%s%d", first ? "" : ",", k); first = false; }
+    fprintf(f, "\n");
+    fclose(f);
+}
+
 void notify_loop() {
     static char last_state[16] = "";
     static bool warned_short = false;
@@ -153,23 +182,26 @@ void notify_loop() {
     }
     if (sh <= 0) warned_short = false;
 
-    // Low filament: notify once when a weighed slot first drops below the low
-    // threshold (default 100 g). The first pass only records the baseline, so a
-    // roll that is already low at startup doesn't fire a push on every launch.
-    static bool low_seen[AMS_MAX_UNITS * AMS_MAX_TRAYS + 1] = {false};
-    static bool low_init = false;
+    // Low filament: warn once when a weighed slot is below the low threshold.
+    // Persisted so it pings a single time (incl. rolls already low right now) and
+    // stays quiet across restarts; it re-arms once the slot rises back above the
+    // threshold or is cleared.
+    if (!g_low_loaded) { lownotify_load(); g_low_loaded = true; }
+    bool low_changed = false;
     for (int k = 0; k <= AMS_MAX_UNITS * AMS_MAX_TRAYS; k++) {
         int slot = (k == AMS_MAX_UNITS * AMS_MAX_TRAYS) ? 254 : k;   // last index = external spool
         bool low = filament_slot_low(slot);   // capacity set AND remaining < threshold
-        if (low_init && low && !low_seen[k]) {
+        if (low && !g_low_notified[k]) {
             char label[24];
             if (slot == 254) strcpy(label, "Externe spoel");
             else snprintf(label, sizeof(label), "AMS%d slot %d", slot / AMS_MAX_TRAYS + 1, slot % AMS_MAX_TRAYS + 1);
             char b[128];
             snprintf(b, sizeof(b), "%s: nog %.0f g over (onder %d g).", label, filament_remaining(slot), g_low_threshold_g);
             notify_send("Filament bijna op", b);
+            g_low_notified[k] = true; low_changed = true;
+        } else if (!low && g_low_notified[k]) {
+            g_low_notified[k] = false; low_changed = true;   // re-arm (refilled/cleared)
         }
-        low_seen[k] = low;
     }
-    low_init = true;
+    if (low_changed) lownotify_save();
 }

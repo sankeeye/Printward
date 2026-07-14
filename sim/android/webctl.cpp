@@ -229,6 +229,10 @@ void webctl_loop() {
                     g_brightness = (uint8_t)b;
                     pt_set_backlight(g_brightness, false);
                 }
+                if (parse_query(c.arg, "low", v, sizeof(v)) && v[0]) {
+                    int lw = atoi(v); if (lw < 0) lw = 0; if (lw > 5000) lw = 5000;
+                    if (lw != g_low_threshold_g) { g_low_threshold_g = lw; filament_save(); }
+                }
                 save_settings();
                 if (viewchg) screensaver_view_changed();
                 if (reconnect) bambu_mqtt_settings_changed();

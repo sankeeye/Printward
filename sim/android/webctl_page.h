@@ -255,7 +255,9 @@ section#spools{max-width:1040px}
  <div class="card"><h3>Meldingen (ntfy)</h3>
   <div class="frow"><label class="muted">ntfy topic (leeg = uit)</label><input type="text" id="cNtfy" placeholder="bv. pandatouch-geheim-x9k2"></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button id="cNtfySave" class="formbtn pri">Opslaan</button><button id="cNtfyTest" class="formbtn sec">Test</button></div>
-  <div class="muted" style="font-size:12px;margin-top:8px">Installeer de gratis <b>ntfy</b>-app (of ntfy.sh in de browser) en abonneer op dit topic. Je krijgt een melding bij print klaar/mislukt en filament tekort.</div>
+  <div class="frow" style="margin-top:14px"><label class="muted">Waarschuwen als een rol onder dit aantal gram komt</label>
+   <div style="display:flex;gap:8px;align-items:center"><input type="number" id="cLow" min="0" step="10" placeholder="100" style="width:120px"><span class="muted">g</span><button id="cLowSave" class="formbtn sec">Opslaan</button></div></div>
+  <div class="muted" style="font-size:12px;margin-top:8px">Installeer de gratis <b>ntfy</b>-app (of ntfy.sh in de browser) en abonneer op dit topic. Je krijgt een melding bij print klaar/mislukt, filament tekort en als een gewogen rol onder de drempel komt.</div>
   <div id="cNtfyMsg" class="muted" style="margin-top:6px"></div>
  </div>
 </section>
@@ -345,6 +347,7 @@ $('cSave').onclick=function(){
 };
 $('cNtfySave').onclick=function(){fetch('/setcfg?ntfy='+encodeURIComponent($('cNtfy').value)).then(function(r){return r.text();}).then(function(t){$('cNtfyMsg').textContent=t;});};
 $('cNtfyTest').onclick=function(){$('cNtfyMsg').textContent='versturen…';fetch('/setcfg?ntfy='+encodeURIComponent($('cNtfy').value)).then(function(){setTimeout(function(){fetch('/notify_test').then(function(r){return r.text();}).then(function(t){$('cNtfyMsg').textContent=t;});},500);});};
+$('cLowSave').onclick=function(){var g=parseInt($('cLow').value,10);if(isNaN(g)||g<0){$('cNtfyMsg').textContent='ongeldig getal';return;}fetch('/setcfg?low='+g).then(function(r){return r.text();}).then(function(t){lowG=g;$('cNtfyMsg').textContent='drempel opgeslagen: '+g+' g';});};
 function joinPath(b,n){return (b==='/'?'':b)+'/'+n;}
 function fmtSize(b){return b>1048576?(b/1048576).toFixed(1)+' MB':b>1024?(b/1024).toFixed(0)+' KB':b+' B';}
 function loadFiles(path){curPath=path;$('fpath').textContent=path;$('flist').innerHTML='<div class=muted>laden…</div>';
@@ -438,6 +441,7 @@ function poll(){
    var b=$('cView');b.dataset.v=s.cfg.view3d?'1':'0';b.textContent='Screensaver: '+(s.cfg.view3d?'3D':'2D');
    if(s.cfg.code_set)$('cCode').placeholder='•••••••• (ingesteld, laat leeg = ongewijzigd)';
    if(s.cfg.ntfy!==undefined)$('cNtfy').value=s.cfg.ntfy;
+   if(s.cfg.low!==undefined&&$('cLow'))$('cLow').value=s.cfg.low;
   }
  }).catch(function(){$('conn').textContent='○ geen tablet';$('conn').style.color='#e74c3c';});
 }
