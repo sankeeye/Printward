@@ -273,8 +273,17 @@ static void update_gcode_page() {
     }
 }
 
+extern lv_obj_t* g_main_screen;   // the main dashboard (ui_printer.cpp)
+
 void screensaver_loop() {
     if (!g_ss) return;
+    // Only run the idle screensaver over the main dashboard. On sub-screens
+    // (Settings, Spools, the keyboard forms, ...) it sits on the top layer and
+    // eats the first tap - which reads as "back doesn't work" / "can't type".
+    if (lv_scr_act() != g_main_screen) {
+        if (g_shown) { g_shown = false; lv_obj_add_flag(g_ss, LV_OBJ_FLAG_HIDDEN); }
+        return;
+    }
     static uint32_t page_at = 0, refresh_at = 0;
 
     uint32_t inactive = lv_display_get_inactive_time(NULL);
