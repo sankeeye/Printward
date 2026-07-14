@@ -100,7 +100,6 @@ section#spools{max-width:1040px}
  <button data-tab="dash" class="on">Dashboard</button>
  <button data-tab="files">Files</button>
  <button data-tab="move">Move</button>
- <button data-tab="scale">Scale</button>
  <button data-tab="spools">Spools</button>
  <button data-tab="hist">Historie</button>
  <button data-tab="set">Settings</button>
@@ -146,6 +145,7 @@ section#spools{max-width:1040px}
 </section>
 
 <section id="scale">
+ <div style="margin-bottom:10px"><button onclick="tab('set')">&#8592; Instellingen</button></div>
  <div class="card" style="text-align:center"><div id="swt" style="font-size:52px;font-weight:700">– g</div><div id="sst" class="muted">…</div></div>
  <div class="card"><h3>Kalibratie</h3>
   <button id="sTare">Tarra (nulstellen)</button>
@@ -231,6 +231,10 @@ section#spools{max-width:1040px}
 </section>
 
 <section id="set">
+ <div class="card"><h3>PandaScale (weegschaal)</h3>
+  <div class="muted" style="margin-bottom:8px">Gewicht, tarra, kalibreren en WiFi/IP van de schaal.</div>
+  <button onclick="tab('scale')" class="formbtn pri">Schaal beheren</button>
+ </div>
  <div class="card"><h3>Printer</h3>
   <div class="frow"><label class="muted">Printer IP</label><input type="text" id="cIp"></div>
   <div class="frow"><label class="muted">Serial</label><input type="text" id="cSerial"></div>
