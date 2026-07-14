@@ -98,7 +98,6 @@ section#spools{max-width:1040px}
 <header><div class="t">PandaTouch</div><div id="conn" class="muted">verbinden…</div></header>
 <nav>
  <button data-tab="dash" class="on">Dashboard</button>
- <button data-tab="fil">Filament</button>
  <button data-tab="files">Files</button>
  <button data-tab="move">Move</button>
  <button data-tab="scale">Scale</button>
@@ -118,10 +117,8 @@ section#spools{max-width:1040px}
    <button id="bFan">Fan</button>
    <select id="speed"><option value="1">Silent</option><option value="2">Standard</option><option value="3">Sport</option><option value="4">Ludicrous</option></select>
  </div></div>
- <div class="card"><h3>AMS</h3><div id="amsStrip" class="ams"></div></div>
+ <div class="card"><h3>Filament / AMS</h3><div id="amsStrip" class="ams"></div></div>
 </section>
-
-<section id="fil"><div class="card"><h3>Filament / AMS</h3><div id="amsDetail" class="ams"></div></div></section>
 
 <section id="files">
  <div class="fbar"><button id="fUp">⬆ Up</button><span id="fpath">/</span><button id="fRef">↻</button></div>
@@ -362,7 +359,7 @@ function poll(){
   $('bLight').textContent='Licht: '+(s.light?'aan':'uit');
   $('bFan').textContent='Fan '+s.fan+'%';
   if(document.activeElement!==$('speed'))$('speed').value=s.speed;
-  if(!$('rollModal')||$('rollModal').style.display!=='flex'){$('amsStrip').innerHTML=amsHtml(s.ams,s.ext,false);$('amsDetail').innerHTML=amsHtml(s.ams,s.ext,true);}
+  if(!$('rollModal')||$('rollModal').style.display!=='flex'){$('amsStrip').innerHTML=amsHtml(s.ams,s.ext,true);}
   $('movenoz').textContent='Nozzle '+s.nozzle+'/'+s.nozzle_t+'°C';
   if(s.prints!==undefined&&$('stPrints')){$('stPrints').textContent=s.prints;$('stUsed').textContent=(s.used>=1000?(s.used/1000).toFixed(2)+' kg':s.used+' g');if($('stCost'))$('stCost').textContent='€ '+(s.cost||0).toFixed(2);}
   if(s.cfg&&s.cfg.scale_ip){scaleHost=s.cfg.scale_ip;var si=$('sIp');if(si&&!si.value)si.value=s.cfg.scale_ip;}
