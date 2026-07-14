@@ -22,9 +22,6 @@ static lv_obj_t* g_ta_known = nullptr;
 static lv_obj_t* g_ta_ssid = nullptr;
 static lv_obj_t* g_ta_pass = nullptr;
 static lv_obj_t* g_ta_ip = nullptr;
-static lv_obj_t* g_ta_empty = nullptr;
-static lv_obj_t* g_slot_dd = nullptr;
-static lv_obj_t* g_empty_dd = nullptr;
 static lv_obj_t* g_kb = nullptr;
 
 // percent-encode a query value into out (bounded).
@@ -51,7 +48,7 @@ static void kb_hide() {
 
 static void ta_focus_cb(lv_event_t* e) {
     lv_obj_t* ta = (lv_obj_t*)lv_event_get_target(e);
-    bool num = (ta == g_ta_known || ta == g_ta_empty);
+    bool num = (ta == g_ta_known);
     lv_keyboard_set_mode(g_kb, num ? LV_KEYBOARD_MODE_NUMBER : LV_KEYBOARD_MODE_TEXT_LOWER);
     lv_keyboard_set_textarea(g_kb, ta);
     lv_obj_clear_flag(g_kb, LV_OBJ_FLAG_HIDDEN);
@@ -64,28 +61,6 @@ static void kb_event_cb(lv_event_t* e) {
 }
 
 static void tare_cb(lv_event_t*) { scale_cmd("/tare"); }
-
-// Picking a known empty-spool fills the empty-weight field.
-static void empty_dd_cb(lv_event_t*) {
-    int sel = (int)lv_dropdown_get_selected(g_empty_dd);
-    if (sel >= 1 && sel - 1 < g_empty_count) {
-        char b[16];
-        snprintf(b, sizeof(b), "%.0f", g_empties[sel - 1].weight_g);
-        lv_textarea_set_text(g_ta_empty, b);
-    }
-}
-
-// Weigh the spool now on the scale and assign the filament grams to a slot.
-static void assign_cb(lv_event_t*) {
-    int idx = (int)lv_dropdown_get_selected(g_slot_dd);
-    int slot = (idx >= 8) ? 254 : idx;          // 0..7 = AMS1/2 trays, 8 = external
-    float empty = (float)atof(lv_textarea_get_text(g_ta_empty));
-    float g = scale_grams();
-    filament_weigh_assign(slot, g, empty);
-    float fil = g - empty; if (fil < 0) fil = 0;
-    if (g_msg) lv_label_set_text_fmt(g_msg, "toegewezen: %.0f g filament", fil);
-    kb_hide();
-}
 
 static void cal_cb(lv_event_t*) {
     const char* k = lv_textarea_get_text(g_ta_known);
@@ -217,26 +192,9 @@ void create_weigh_ui() {
     g_ta_known = make_ta(r1, "gram", "500", false, 110);
     make_btn(r1, "Kalibreer", 0x27ae60, cal_cb, 130);
 
-    // Weigh the current spool and assign the filament grams to an AMS slot
-    lv_obj_t* rw = make_row(root);
-    g_slot_dd = lv_dropdown_create(rw);
-    lv_dropdown_set_options_static(g_slot_dd,
-        "AMS1 T1\nAMS1 T2\nAMS1 T3\nAMS1 T4\nAMS2 T1\nAMS2 T2\nAMS2 T3\nAMS2 T4\nExterne spoel");
-    lv_obj_set_width(g_slot_dd, PT_SZ(150));
-    lv_obj_set_height(g_slot_dd, PT_SZ(46));
-    lv_obj_set_style_text_font(g_slot_dd, &lv_font_montserrat_14, 0);
-    // empty-spool picker (fills the leeg-g field from the library)
-    g_empty_dd = lv_dropdown_create(rw);
-    char eopts[512];
-    int en = snprintf(eopts, sizeof(eopts), "handmatig");
-    for (int i = 0; i < g_empty_count && en < (int)sizeof(eopts) - 48; i++)
-        en += snprintf(eopts + en, sizeof(eopts) - en, "\n%s (%.0fg)", g_empties[i].name, g_empties[i].weight_g);
-    lv_dropdown_set_options(g_empty_dd, eopts);
-    lv_obj_set_width(g_empty_dd, PT_SZ(150));
-    lv_obj_set_style_text_font(g_empty_dd, &lv_font_montserrat_14, 0);
-    lv_obj_add_event_cb(g_empty_dd, empty_dd_cb, LV_EVENT_VALUE_CHANGED, nullptr);
-    g_ta_empty = make_ta(rw, "leeg g", "250", false, 80);
-    make_btn(rw, "Weeg naar slot", 0x8e44ad, assign_cb, 140);
+    // (Weigh-to-slot moved to the Spools tab: weigh a named roll there and
+    // assign it with "Rol" - that links the roll, price and printer AMS. This
+    // screen is just for managing the scale itself.)
 
     // Network info
     g_infolbl = lv_label_create(root);
