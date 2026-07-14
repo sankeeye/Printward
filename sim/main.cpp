@@ -261,6 +261,7 @@ int main(int argc, char **argv) {
         gcode_maybe_load();  // fetch + parse the print's gcode (background thread)
         filament_track_loop(); // tick down the active spool's remaining grams
         spools_live_loop();    // live-refresh the Spools list grams (if that tab is open)
+        spool_autoclear_loop();// auto-empty a slot when its roll is pulled from the AMS
         notify_loop();       // push ntfy on print done/failed / filament short
         stats_loop();        // count finished prints + filament used
         history_loop();      // log each finished/failed print + cost

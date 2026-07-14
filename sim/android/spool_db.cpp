@@ -213,3 +213,45 @@ void spool_slot_label(int slot, char* out, int len) {
     if (slot == 254) snprintf(out, len, "Extern");
     else snprintf(out, len, "AMS%d T%d", slot / AMS_MAX_TRAYS + 1, slot % AMS_MAX_TRAYS + 1);
 }
+
+// Auto-empty a slot when its roll is physically pulled from the AMS: if the unit
+// is reporting but a tracked tray stays empty for HOLD ms, clear it (writes the
+// roll's final grams back + unlinks, like pressing "Leeg"). Guarded by an MQTT
+// check + the debounce so a reconnect/transient never wipes a slot. Call from the
+// main loop.
+void spool_autoclear_loop() {
+    static uint32_t gone[AMS_MAX_UNITS * AMS_MAX_TRAYS] = {0};
+    static uint32_t gone_ext = 0;
+    const uint32_t HOLD = 30000;
+    PrinterStatus& st = g_printer_status;
+    uint32_t now = millis();
+
+    if (!st.mqtt_connected) {   // AMS data not trustworthy while disconnected
+        for (int i = 0; i < AMS_MAX_UNITS * AMS_MAX_TRAYS; i++) gone[i] = 0;
+        gone_ext = 0;
+        return;
+    }
+    for (int u = 0; u < AMS_MAX_UNITS; u++) {
+        AmsUnit& unit = st.ams[u];
+        bool unit_ok = (u < st.ams_count && unit.present);
+        for (int t = 0; t < AMS_MAX_TRAYS; t++) {
+            int slot = u * AMS_MAX_TRAYS + t;
+            // only slots we still track, whose unit reports, but the tray is empty
+            if (filament_remaining(slot) < 0 || !unit_ok || unit.trays[t].present) { gone[slot] = 0; continue; }
+            if (!gone[slot]) gone[slot] = now ? now : 1;
+            else if (now - gone[slot] >= HOLD) {
+                Serial.printf("SPOOLS: slot %d auto-emptied (roll removed from AMS)\n", slot);
+                spool_clear_slot(slot);
+                gone[slot] = 0;
+            }
+        }
+    }
+    // external spool (254)
+    if (filament_remaining(254) < 0 || st.external_spool.present) gone_ext = 0;
+    else if (!gone_ext) gone_ext = now ? now : 1;
+    else if (now - gone_ext >= HOLD) {
+        Serial.println("SPOOLS: external spool auto-emptied (roll removed)");
+        spool_clear_slot(254);
+        gone_ext = 0;
+    }
+}
