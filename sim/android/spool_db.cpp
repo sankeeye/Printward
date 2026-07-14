@@ -158,8 +158,15 @@ void spool_load_to_slot(int idx, int slot) {
         if (i != idx && g_spools[i].slot == slot) g_spools[i].slot = -1;
     s.slot = slot;
 
-    // 1. weight tracking: the roll's remaining grams IS the filament (empty 0)
-    filament_weigh_assign(slot, s.remaining_g, 0);
+    // 1. weight tracking. If the slot is already tracking (it has been printing,
+    // or was assigned before the roll<->slot link existed), adopt its current
+    // remaining as this roll's weight instead of resetting - so linking a roll
+    // never inflates back to the entered weight or loses the already-counted
+    // grams. A fresh/empty slot takes the roll's own weight. (Press "Leeg" first
+    // when you physically swap in a different roll.)
+    float tracked = filament_remaining(slot);
+    if (tracked >= 0) s.remaining_g = tracked;                        // adopt live tracked weight
+    else              filament_weigh_assign(slot, s.remaining_g, 0);  // fresh slot -> roll weight
     filament_set_price(slot, s.price_kg);   // remember EUR/kg for cost tracking
 
     // 2. push to the printer's AMS (external spool 254 is set differently - skip)
