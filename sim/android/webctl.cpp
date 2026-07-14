@@ -258,6 +258,7 @@ void webctl_loop() {
                 if (parse_query(c.arg, "nmin", v, sizeof(v))) s.nmin = atoi(v);
                 if (parse_query(c.arg, "nmax", v, sizeof(v))) s.nmax = atoi(v);
                 if (parse_query(c.arg, "price", v, sizeof(v))) s.price_kg = (float)atof(v);
+                else if (c.code >= 0 && c.code < g_spool_count) s.price_kg = g_spools[c.code].price_kg;  // don't drop the price when a save (e.g. weigh) omits it
                 spool_upsert(c.code, s);          // c.code = idx (-1 = add)
                 break;
             }

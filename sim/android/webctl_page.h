@@ -504,7 +504,7 @@ function spWeigh(i){var s=spCache[i];if(!scaleHost){alert('Geen schaal-IP bekend
  fetch('http://'+scaleHost+'/weight?t='+Date.now()).then(function(r){return r.json();}).then(function(d){
   var rem=Math.max(0,Math.round(d.g-s.empty));
   if(!confirm('Rol \''+s.name+'\' wegen?\nGewogen '+Math.round(d.g)+' g − leeg '+s.empty+' g = '+rem+' g resterend.'))return;
-  fetch('/spool_save?idx='+i+'&name='+encodeURIComponent(s.name)+'&material='+encodeURIComponent(s.material)+'&color='+encodeURIComponent(s.rgb)+'&rem='+rem+'&empty='+s.empty+'&nmin='+(s.nmin||0)+'&nmax='+(s.nmax||0)+'&code='+encodeURIComponent(s.code||'')+'&note='+encodeURIComponent(s.note||'')).then(function(){setTimeout(loadSpools,300);});
+  fetch('/spool_save?idx='+i+'&name='+encodeURIComponent(s.name)+'&material='+encodeURIComponent(s.material)+'&color='+encodeURIComponent(s.rgb)+'&rem='+rem+'&empty='+s.empty+'&nmin='+(s.nmin||0)+'&nmax='+(s.nmax||0)+'&code='+encodeURIComponent(s.code||'')+'&note='+encodeURIComponent(s.note||'')+'&price='+(s.price||0)).then(function(){setTimeout(loadSpools,300);});
  }).catch(function(){alert('Geen verbinding met de schaal.');});}
 function spCopy(i){var s=spCache[i];fetch('/spool_save?idx=&name='+encodeURIComponent(s.name+' (kopie)')+'&material='+encodeURIComponent(s.material)+'&color='+encodeURIComponent(s.rgb)+'&rem='+s.rem+'&empty='+s.empty+'&nmin='+(s.nmin||0)+'&nmax='+(s.nmax||0)+'&code='+encodeURIComponent(s.code||'')+'&note='+encodeURIComponent(s.note||'')+'&price='+(s.price||0)).then(function(){setTimeout(loadSpools,300);});}
 function spLoad(i){var sl=$('ss'+i).value;fetch('/spool_load?idx='+i+'&slot='+sl).then(function(r){return r.text();}).then(function(t){spMsg(t+' in slot');});}
