@@ -154,6 +154,10 @@ static void jog_cb(lv_event_t* e) {
     int code = (int)(intptr_t)lv_event_get_user_data(e);
     move_perform(code, g_step);
 }
+static void extrude_cb(lv_event_t* e) {   // fixed 10 mm, not tied to the jog step
+    int code = (int)(intptr_t)lv_event_get_user_data(e);
+    move_perform(code, EXTRUDE_MM);
+}
 
 static void step_cb(lv_event_t* e) {
     int idx = (int)(intptr_t)lv_event_get_user_data(e);
@@ -424,10 +428,18 @@ void create_move_ui() {
     lv_obj_set_style_text_font(g_noz_label, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(g_noz_label, lv_color_hex(0xFFFFFF), 0);
 
-    lv_obj_t* ext = make_jog_btn(ecol, "Extrude", MOVE_EEXT, 0x27ae60);
+    lv_obj_t* ext = lv_btn_create(ecol);
     lv_obj_set_size(ext, lv_pct(100), PT_SZ(62));
-    lv_obj_t* ret = make_jog_btn(ecol, "Retract", MOVE_ERET, 0xd35400);
+    lv_obj_set_style_bg_color(ext, lv_color_hex(0x27ae60), LV_PART_MAIN);
+    { lv_obj_t* l = lv_label_create(ext); lv_label_set_text(l, "Extrude 10mm");
+      lv_obj_set_style_text_font(l, &lv_font_montserrat_18, 0); lv_obj_center(l); }
+    lv_obj_add_event_cb(ext, extrude_cb, LV_EVENT_CLICKED, (void*)(intptr_t)MOVE_EEXT);
+    lv_obj_t* ret = lv_btn_create(ecol);
     lv_obj_set_size(ret, lv_pct(100), PT_SZ(62));
+    lv_obj_set_style_bg_color(ret, lv_color_hex(0xd35400), LV_PART_MAIN);
+    { lv_obj_t* l = lv_label_create(ret); lv_label_set_text(l, "Retract 10mm");
+      lv_obj_set_style_text_font(l, &lv_font_montserrat_18, 0); lv_obj_center(l); }
+    lv_obj_add_event_cb(ret, extrude_cb, LV_EVENT_CLICKED, (void*)(intptr_t)MOVE_ERET);
 
     lv_obj_t* heat_row = lv_obj_create(ecol);
     lv_obj_set_size(heat_row, lv_pct(100), PT_SZ(48));
