@@ -1,6 +1,7 @@
 #include "ui_printer.h"
 #include <cstdio>
 #include <cstring>
+#include <ctime>
 #include "storage.h"
 #include "bambu_mqtt.h"
 #include "ui_settings.h"
@@ -29,6 +30,9 @@ static lv_obj_t* g_update_pct_label = nullptr;
 static lv_obj_t* g_wifi_label = nullptr;
 static lv_obj_t* g_conn_dot = nullptr;
 static lv_obj_t* g_conn_label = nullptr;
+static lv_obj_t* g_clock_label = nullptr;
+static lv_obj_t* g_warn_banner = nullptr;
+static lv_obj_t* g_warn_label = nullptr;
 static lv_obj_t* g_state_label = nullptr;
 static lv_obj_t* g_task_label = nullptr;
 static lv_obj_t* g_bar = nullptr;
@@ -239,6 +243,13 @@ void create_printer_ui() {
 
     // --- Header: wifi/ip (left) + printer connection (right) ---
     lv_obj_t* header = make_row(root, 30);
+#ifdef __ANDROID__
+    // The tablet OS owns the WiFi, so instead of an IP we show a clock here.
+    g_clock_label = lv_label_create(header);
+    lv_obj_set_style_text_font(g_clock_label, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(g_clock_label, lv_color_hex(0xAAAAAA), 0);
+    lv_label_set_text(g_clock_label, "");
+#endif
 #ifndef __ANDROID__
     // On the ESP32 this shows the device's own WiFi IP. On the Android tablet the
     // OS owns the WiFi, so the label is dropped (g_wifi_label stays null and
@@ -551,6 +562,26 @@ void create_printer_ui() {
     lv_slider_set_value(g_slider, g_brightness, LV_ANIM_OFF);
     lv_obj_add_event_cb(g_slider, slider_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
 
+#ifdef __ANDROID__
+    // Filament warning banner: a floating pill over the top of the dashboard,
+    // shown only when a shortfall/low condition is active (see update_printer_ui).
+    // Lives on the screen (not root) so it overlays without shifting the layout.
+    g_warn_banner = lv_obj_create(g_main_screen);
+    lv_obj_set_size(g_warn_banner, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    lv_obj_align(g_warn_banner, LV_ALIGN_TOP_MID, 0, PT_SZ(4));
+    lv_obj_set_style_bg_color(g_warn_banner, lv_color_hex(0x7a2020), 0);
+    lv_obj_set_style_border_width(g_warn_banner, 0, 0);
+    lv_obj_set_style_radius(g_warn_banner, 8, 0);
+    lv_obj_set_style_pad_hor(g_warn_banner, PT_SZ(16), 0);
+    lv_obj_set_style_pad_ver(g_warn_banner, PT_SZ(6), 0);
+    lv_obj_clear_flag(g_warn_banner, LV_OBJ_FLAG_SCROLLABLE);
+    g_warn_label = lv_label_create(g_warn_banner);
+    lv_obj_set_style_text_font(g_warn_label, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(g_warn_label, lv_color_hex(0xffe0e0), 0);
+    lv_label_set_text(g_warn_label, "");
+    lv_obj_add_flag(g_warn_banner, LV_OBJ_FLAG_HIDDEN);
+#endif
+
     update_status_label();
     update_printer_ui();
 }
@@ -598,6 +629,14 @@ void update_printer_ui() {
 
     update_status_label();
 
+#ifdef __ANDROID__
+    if (g_clock_label) {
+        time_t now = time(nullptr);
+        struct tm* lt = localtime(&now);
+        if (lt) { char ct[8]; strftime(ct, sizeof(ct), "%H:%M", lt); lv_label_set_text(g_clock_label, ct); }
+    }
+#endif
+
     PrinterStatus& s = g_printer_status;
 
     if (!s.have_data) {
@@ -619,17 +658,21 @@ void update_printer_ui() {
     lv_bar_set_value(g_bar, s.progress_pct, LV_ANIM_ON);
     lv_label_set_text_fmt(g_pct_label, "%d%%", s.progress_pct);
     {
-        char rt[64] = "";
-        if (s.remaining_min > 0)
-            snprintf(rt, sizeof(rt), "%dh%02dm left", s.remaining_min / 60, s.remaining_min % 60);
+        char rt[128] = ""; int rp = 0;
+        if (s.remaining_min > 0) {
+            rp += snprintf(rt + rp, sizeof(rt) - rp, "%dh%02dm left", s.remaining_min / 60, s.remaining_min % 60);
+            time_t fin = time(nullptr) + (time_t)s.remaining_min * 60;
+            struct tm* ft = localtime(&fin);
+            if (ft) { char eta[8]; strftime(eta, sizeof(eta), "%H:%M", ft); rp += snprintf(rt + rp, sizeof(rt) - rp, "   klaar %s", eta); }
+        }
+        if (s.total_layers > 0)
+            rp += snprintf(rt + rp, sizeof(rt) - rp, "%slaag %d/%d", rp ? "   " : "", s.layer_num, s.total_layers);
 #ifdef __ANDROID__
         // Append the running print's live filament use + cost when known.
         float lg = 0, lc = 0;
         if (filament_live_cost(&lg, &lc)) {
-            char extra[32];
-            if (lc > 0) snprintf(extra, sizeof(extra), "%s%.0fg EUR%.2f", rt[0] ? "   " : "", lg, lc);
-            else        snprintf(extra, sizeof(extra), "%s%.0fg", rt[0] ? "   " : "", lg);
-            strncat(rt, extra, sizeof(rt) - strlen(rt) - 1);
+            if (lc > 0) rp += snprintf(rt + rp, sizeof(rt) - rp, "%s%.0fg EUR%.2f", rp ? "   " : "", lg, lc);
+            else        rp += snprintf(rt + rp, sizeof(rt) - rp, "%s%.0fg", rp ? "   " : "", lg);
         }
 #endif
         lv_label_set_text(g_remain_label, rt);
@@ -679,6 +722,10 @@ void update_printer_ui() {
                     lv_obj_set_style_text_color(label, lv_color_hex(0x555555), 0);
                 }
             }
+            // Highlight the slot that is currently feeding the nozzle.
+            bool act = (u * AMS_MAX_TRAYS + t) == s.active_tray_now;
+            lv_obj_set_style_border_width(dot, act ? 3 : 1, LV_PART_MAIN);
+            lv_obj_set_style_border_color(dot, lv_color_hex(act ? 0x2ecc71 : 0x555555), LV_PART_MAIN);
 #ifdef __ANDROID__
             {
                 int sl = u * AMS_MAX_TRAYS + t;
@@ -710,6 +757,9 @@ void update_printer_ui() {
         lv_obj_set_style_bg_color(g_ext_swatch, lv_color_hex(s.external_spool.color), LV_PART_MAIN);
         lv_obj_set_style_bg_opa(g_ext_swatch, LV_OPA_COVER, LV_PART_MAIN);
         lv_label_set_text(g_ext_type_label, s.external_spool.type);
+        bool eact = (s.active_tray_now == 254);
+        lv_obj_set_style_border_width(g_ext_swatch, eact ? 3 : 1, LV_PART_MAIN);
+        lv_obj_set_style_border_color(g_ext_swatch, lv_color_hex(eact ? 0x2ecc71 : 0x555555), LV_PART_MAIN);
     } else {
         lv_obj_add_flag(g_ext_row, LV_OBJ_FLAG_HIDDEN);
     }
@@ -740,6 +790,25 @@ void update_printer_ui() {
         if (sel > 3) sel = 3;
         if ((int)lv_dropdown_get_selected(g_speed_dd) != sel) lv_dropdown_set_selected(g_speed_dd, sel);
     }
+
+#ifdef __ANDROID__
+    if (g_warn_banner && g_warn_label) {
+        float sh = filament_shortfall();
+        if (sh > 0) {
+            lv_label_set_text_fmt(g_warn_label, "Filament tekort: ~%.0f g te kort voor deze print", sh);
+            lv_obj_clear_flag(g_warn_banner, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_move_foreground(g_warn_banner);
+            lv_obj_align(g_warn_banner, LV_ALIGN_TOP_MID, 0, PT_SZ(4));
+        } else if (filament_any_low()) {
+            lv_label_set_text(g_warn_label, "Filament bijna op - controleer je rollen");
+            lv_obj_clear_flag(g_warn_banner, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_move_foreground(g_warn_banner);
+            lv_obj_align(g_warn_banner, LV_ALIGN_TOP_MID, 0, PT_SZ(4));
+        } else {
+            lv_obj_add_flag(g_warn_banner, LV_OBJ_FLAG_HIDDEN);
+        }
+    }
+#endif
 }
 
 void update_ota_progress(int pct, const char* msg) {

@@ -95,7 +95,7 @@ h3{margin:0 0 10px;font-size:15px;color:var(--muted);font-weight:600}
 .sprow .card{margin-bottom:0}
 section#spools{max-width:1040px}
 </style></head><body>
-<header><div class="t">PandaTouch</div><div id="conn" class="muted">verbinden…</div></header>
+<header><div class="t">PandaTouch</div><div style="display:flex;gap:14px;align-items:center"><span id="clock" class="muted"></span><span id="conn" class="muted">verbinden…</span></div></header>
 <nav>
  <button data-tab="dash" class="on">Dashboard</button>
  <button data-tab="files">Files</button>
@@ -455,7 +455,8 @@ function trayCell(t,slot,assign){
  if(t&&t.present)inner='<div class="sw" style="background:'+t.rgb+'"></div><div>'+t.type+'</div>'+amt(t);
  else inner='<div class="sw empty"></div><div class="muted">leeg</div><div></div>';
  if(assign)inner+='<button class="rolbtn" onclick="pickRoll('+slot+')">Rol</button>';
- return '<div class="tray">'+inner+'</div>';
+ var act=(lastS&&lastS.active_tray===slot)?' style="outline:2px solid #2ecc71;outline-offset:3px;border-radius:6px" title="Wordt nu gebruikt"':'';
+ return '<div class="tray"'+act+'>'+inner+'</div>';
 }
 function amsHtml(ams,ext,assign){
  var h='';
@@ -488,7 +489,8 @@ function poll(){
   curState=s.state;curLight=s.light;curFan=s.fan;lastS=s;
   $('state').textContent=s.state||'–';$('task').textContent=s.name||'';
   $('fill').style.width=(s.pct||0)+'%';
-  $('prog').textContent=(s.pct||0)+'%'+(s.total?('  laag '+s.layer+'/'+s.total):'')+(s.remain?('  ~'+s.remain+' min'):'');
+  var eta='';if(s.remain>0){var f=new Date(Date.now()+s.remain*60000);eta='  klaar '+('0'+f.getHours()).slice(-2)+':'+('0'+f.getMinutes()).slice(-2);}
+  $('prog').textContent=(s.pct||0)+'%'+(s.total?('  laag '+s.layer+'/'+s.total):'')+(s.remain?('  ~'+s.remain+' min'+eta):'');
   if($('pcost'))$('pcost').innerHTML=(s.printg>=0)?('deze print: <b>'+s.printg+' g</b>'+(s.printcost>0?(' &middot; <b>&euro; '+s.printcost.toFixed(2)+'</b>'):'')):'';
   var w=$('warn');if(w){if(s.short>0){w.style.display='block';w.textContent='⚠ Filament tekort — komt ~'+s.short+' g te kort voor deze print op het actieve slot. Overweeg een vollere spoel.';}else{w.style.display='none';}}
   $('noz').textContent=s.nozzle+'/'+s.nozzle_t+'°';$('bed').textContent=s.bed+'/'+s.bed_t+'°';$('cham').textContent=s.chamber+'°';
@@ -511,6 +513,8 @@ function poll(){
  }).catch(function(){$('conn').textContent='○ geen tablet';$('conn').style.color='#e74c3c';});
 }
 setInterval(poll,1500);poll();
+function tickClock(){var d=new Date();if($('clock'))$('clock').textContent=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
+setInterval(tickClock,10000);tickClock();
 function sMsg(t){$('sMsg').textContent=t;}
 function scalePoll(){
  if(!$('scale').classList.contains('on')||!scaleHost)return;
