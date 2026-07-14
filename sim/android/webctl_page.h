@@ -261,6 +261,10 @@ section#spools{max-width:1040px}
  <div class="modalhead"><b id="rollTitle">Kies rol</b><button onclick="closeRoll()">Sluit</button></div>
  <div id="rollList"></div>
 </div></div>
+<div id="prevModal" class="modal" onclick="this.style.display='none'"><div class="modalbox" style="text-align:center">
+ <div class="modalhead"><b>Voorbeeld</b><button onclick="event.stopPropagation();document.getElementById('prevModal').style.display='none'">Sluit</button></div>
+ <div id="prevBody" class="muted">…</div>
+</div></div>
 <script>
 var step="1",curState="",curLight=false,curFan=0,cfgFilled=false,curPath="/",scaleHost="",lowG=100,spCache=[],emCache=[],pickSlot=-1,spSel={},lastS=null;
 function $(id){return document.getElementById(id);}
@@ -304,12 +308,13 @@ function loadFiles(path){curPath=path;$('fpath').textContent=path;$('flist').inn
   d.items.forEach(function(it){
    if(it.dir)h+='<div class="fitem" data-dir="'+it.name+'"><b>📁 '+it.name+'</b><span></span></div>';
    else {var fp=joinPath(path,it.name);
-    var th=/\.3mf$/i.test(it.name)?'<img loading="lazy" src="/thumb?path='+encodeURIComponent(fp)+'" style="width:46px;height:46px;object-fit:cover;border-radius:6px;background:#0d1117;flex:0 0 auto" onerror="this.style.display=\'none\'">':'';
-    h+='<div class="fitem"><input type="checkbox" class="fsel" data-p="'+fp+'" style="width:20px;height:20px;flex:0 0 auto">'+th+'<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">📄 '+it.name+'</span><span class=muted>'+fmtSize(it.size)+'</span></div>';}
+    var pv=/\.3mf$/i.test(it.name)?'<button class="fprev" data-p="'+fp+'" title="Toon voorbeeld" style="background:#2c3e50;color:#fff;border:0;border-radius:6px;padding:6px 10px;cursor:pointer">Preview</button>':'';
+    h+='<div class="fitem"><input type="checkbox" class="fsel" data-p="'+fp+'" style="width:20px;height:20px;flex:0 0 auto"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">📄 '+it.name+'</span><span class=muted>'+fmtSize(it.size)+'</span>'+pv+'</div>';}
   });
   $('flist').innerHTML=h||'<div class=muted>leeg</div>';
   document.querySelectorAll('.fitem[data-dir]').forEach(function(el){el.onclick=function(){loadFiles(joinPath(path,el.dataset.dir));};});
   document.querySelectorAll('.fsel').forEach(function(el){el.onchange=fSelUpd;});fSelUpd();
+  document.querySelectorAll('.fprev').forEach(function(el){el.onclick=function(e){e.stopPropagation();showPreview(el.dataset.p);};});
  }).catch(function(){$('flist').innerHTML='<div class=muted>geen verbinding</div>';});
 }
 $('fUp').onclick=function(){var p=curPath.replace(/\/[^\/]*\/?$/,'');loadFiles(p||'/');};
@@ -320,6 +325,11 @@ $('fDel').onclick=function(){var ps=fSelPaths();if(!ps.length)return;
  if(!confirm(ps.length+' bestand(en) definitief van de printer verwijderen?'))return;
  var i=0;(function nxt(){if(i>=ps.length){loadFiles(curPath);return;}
   fetch('/delete?path='+encodeURIComponent(ps[i])).then(function(){i++;nxt();}).catch(function(){i++;nxt();});})();};
+function showPreview(p){var m=$('prevModal');if(!m)return;$('prevBody').innerHTML='<div class="muted">voorbeeld laden…</div>';m.style.display='flex';
+ var img=new Image();img.style.maxWidth='80vw';img.style.maxHeight='70vh';img.style.borderRadius='8px';
+ img.onload=function(){$('prevBody').innerHTML='';$('prevBody').appendChild(img);};
+ img.onerror=function(){$('prevBody').innerHTML='<div class="muted">geen voorbeeld beschikbaar</div>';};
+ img.src='/thumb?path='+encodeURIComponent(p);}
 function amt(t){
  if(t.gram>=0){return '<div class="muted"'+(t.gram<lowG?' style="color:#e74c3c;font-weight:600"':'')+'>'+t.gram+' g</div>';}
  return '<div class="muted">'+(t.remain>=0?t.remain+'%':'–')+'</div>';
