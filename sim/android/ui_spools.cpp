@@ -195,7 +195,33 @@ void create_history_ui() {
     lv_obj_set_style_text_font(sum, &lv_font_montserrat_18, 0);
     lv_obj_set_style_text_color(sum, lv_color_hex(0x2ecc71), 0);
 
-    // Per-material breakdown (grams + cost + count), heaviest first.
+    // Smart numbers: success rate, failed waste, averages, total print time.
+    {
+        int okn = 0, faln = 0; float okg = 0, okc = 0, falg = 0, falc = 0; long tott = 0;
+        for (int i = 0; i < g_hist_count; i++) {
+            PrintRec& r = g_history[i];
+            if (r.ok) { okn++; okg += r.grams; okc += r.cost; }
+            else      { faln++; falg += r.grams; falc += r.cost; }
+            if (r.mins > 0) tott += r.mins;
+        }
+        int tot = okn + faln;
+        int rate = tot > 0 ? (okn * 100 / tot) : 0;
+        char dur[24];
+        if (tott >= 60) snprintf(dur, sizeof(dur), "%ldu%02ld", tott / 60, tott % 60);
+        else            snprintf(dur, sizeof(dur), "%ld min", tott);
+        char l1[200];
+        snprintf(l1, sizeof(l1),
+                 "Geslaagd: %d%% (%d/%d)   Mislukt: %d (%.0f g, EUR %.2f verspild)\n"
+                 "Gem./print: %.0f g  EUR %.2f   -   Printtijd totaal: %s",
+                 rate, okn, tot, faln, falg, falc,
+                 okn ? okg / okn : 0.0f, okn ? okc / okn : 0.0f, tott > 0 ? dur : "onbekend");
+        lv_obj_t* s1 = lv_label_create(root);
+        lv_label_set_text(s1, l1);
+        lv_obj_set_style_text_font(s1, &lv_font_montserrat_14, 0);
+        lv_obj_set_style_text_color(s1, lv_color_hex(0xCCCCCC), 0);
+    }
+
+    // Per-material breakdown (grams + cost + count + share), heaviest first.
     {
         struct MA { char m[12]; float g; float c; int n; } agg[12];
         int na = 0;
@@ -210,10 +236,13 @@ void create_history_ui() {
             if (j < 12) { agg[j].g += g_history[i].grams; agg[j].c += g_history[i].cost; agg[j].n++; }
         }
         if (na > 0) {
-            char buf[420]; int p = 0; buf[0] = 0;
-            for (int j = 0; j < na; j++)
-                p += snprintf(buf + p, sizeof(buf) - p, "%s%s: %.0f g   EUR %.2f (%dx)",
-                              j ? "\n" : "", agg[j].m, agg[j].g, agg[j].c, agg[j].n);
+            float totg = 0; for (int j = 0; j < na; j++) totg += agg[j].g;
+            char buf[480]; int p = 0; buf[0] = 0;
+            for (int j = 0; j < na; j++) {
+                int pc = totg > 0 ? (int)(agg[j].g / totg * 100.0f + 0.5f) : 0;
+                p += snprintf(buf + p, sizeof(buf) - p, "%s%s: %.0f g   EUR %.2f (%dx, %d%%)",
+                              j ? "\n" : "", agg[j].m, agg[j].g, agg[j].c, agg[j].n, pc);
+            }
             lv_obj_t* ml = lv_label_create(root);
             lv_label_set_text(ml, buf);
             lv_obj_set_style_text_font(ml, &lv_font_montserrat_14, 0);

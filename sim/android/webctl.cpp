@@ -480,8 +480,8 @@ static void build_history(char* o, int n) {
         json_escape(r.name, nm, sizeof(nm));
         json_escape(r.file, fl, sizeof(fl));
         json_escape(r.mat, mt, sizeof(mt));
-        p += snprintf(o + p, n - p, "%s{\"i\":%d,\"when\":\"%s\",\"name\":\"%s\",\"grams\":%.0f,\"cost\":%.2f,\"ok\":%d,\"file\":\"%s\",\"arch\":%d,\"mat\":\"%s\"}",
-            i ? "," : "", i, r.when, nm, r.grams, r.cost, r.ok, fl, r.arch, mt);
+        p += snprintf(o + p, n - p, "%s{\"i\":%d,\"when\":\"%s\",\"name\":\"%s\",\"grams\":%.0f,\"cost\":%.2f,\"ok\":%d,\"file\":\"%s\",\"arch\":%d,\"mat\":\"%s\",\"ts\":%ld,\"mins\":%d}",
+            i ? "," : "", i, r.when, nm, r.grams, r.cost, r.ok, fl, r.arch, mt, r.ts, r.mins);
     }
     snprintf(o + p, n - p, "]");
 }
@@ -707,8 +707,8 @@ static void handle_conn(int fd) {
         return;
     }
     if (!strcmp(path, "/history")) {
-        char* js = (char*)malloc(8192);
-        if (js) { build_history(js, 8192); send_resp(fd, "200 OK", "application/json", js, (int)strlen(js)); free(js); }
+        char* js = (char*)malloc(24576);
+        if (js) { build_history(js, 24576); send_resp(fd, "200 OK", "application/json", js, (int)strlen(js)); free(js); }
         else send_resp(fd, "500 Error", "text/plain", "", 0);
         return;
     }

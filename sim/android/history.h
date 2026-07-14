@@ -6,10 +6,10 @@
 // grams, cost, result), newest first. Persisted to
 // /sdcard/pandatouch_history.conf. Cost uses the active slot's EUR/kg.
 
-#define HIST_MAX 40
+#define HIST_MAX 100
 
 struct PrintRec {
-    char  when[20];   // "dd-mm HH:MM"
+    char  when[20];   // "dd-mm HH:MM" (display)
     char  name[64];
     float grams;
     float cost;       // EUR
@@ -17,6 +17,8 @@ struct PrintRec {
     char  file[64];   // printed .3mf (in /cache) for an on-demand model preview
     int   arch;       // 1 = archived (hidden from the active list)
     char  mat[12];    // material used (PLA/PETG/...), for the per-material totals
+    long  ts;         // unix epoch of the finish (0 = unknown/old entry) - timeline
+    int   mins;       // wall-clock print duration in minutes (0 = unknown)
 };
 
 extern PrintRec g_history[HIST_MAX];

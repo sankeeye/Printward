@@ -24,7 +24,7 @@ static void history_save() {
     for (int i = 0; i < g_hist_count; i++) {
         PrintRec r = g_history[i];
         sani(r.when); sani(r.name); sani(r.file); sani(r.mat);
-        fprintf(f, "%s|%s|%.1f|%.2f|%d|%s|%d|%s\n", r.when, r.name, r.grams, r.cost, r.ok, r.file, r.arch, r.mat);
+        fprintf(f, "%s|%s|%.1f|%.2f|%d|%s|%d|%s|%ld|%d\n", r.when, r.name, r.grams, r.cost, r.ok, r.file, r.arch, r.mat, r.ts, r.mins);
     }
     fclose(f);
 }
@@ -54,6 +54,8 @@ void history_init() {
         strncpy(r.file, fld(&p), sizeof(r.file) - 1);   // absent in old files -> ""
         r.arch = atoi(fld(&p));                          // absent -> 0
         strncpy(r.mat, fld(&p), sizeof(r.mat) - 1);      // absent in old files -> ""
+        r.ts = atol(fld(&p));                            // absent -> 0 (unknown date)
+        r.mins = atoi(fld(&p));                          // absent -> 0 (unknown duration)
         g_history[g_hist_count++] = r;
         g_hist_total_cost += r.cost;
     }
@@ -64,6 +66,7 @@ void history_loop() {
     static char last[16] = "";
     static int last_active = 0;
     static char last_file[64] = "";
+    static time_t start_ts = 0;   // when the current print entered RUNNING
     PrinterStatus& s = g_printer_status;
 
     bool printing = (strcmp(s.gcode_state, "RUNNING") == 0 || strcmp(s.gcode_state, "PAUSE") == 0);
@@ -72,13 +75,18 @@ void history_loop() {
 
     if (strcmp(last, s.gcode_state) != 0) {
         bool wasPrinting = (strcmp(last, "RUNNING") == 0 || strcmp(last, "PAUSE") == 0);
+        bool nowPrinting = (strcmp(s.gcode_state, "RUNNING") == 0 || strcmp(s.gcode_state, "PAUSE") == 0);
         bool fin = (strcmp(s.gcode_state, "FINISH") == 0);
         bool fail = (strcmp(s.gcode_state, "FAILED") == 0);
+        if (!wasPrinting && nowPrinting && start_ts == 0) start_ts = time(nullptr);   // print started
         if (wasPrinting && (fin || fail)) {
             PrintRec r; memset(&r, 0, sizeof(r));
             time_t now = time(nullptr);
             struct tm* lt = localtime(&now);
             if (lt) strftime(r.when, sizeof(r.when), "%d-%m %H:%M", lt); else strcpy(r.when, "?");
+            r.ts = (long)now;
+            r.mins = (start_ts > 0 && now > start_ts) ? (int)((now - start_ts) / 60) : 0;
+            start_ts = 0;
             strncpy(r.name, s.task_name[0] ? s.task_name : "print", sizeof(r.name) - 1);
             r.grams = gcode_view_ready() ? gcode_view_filament_g() : 0.0f;
             r.ok = fin ? 1 : 0;

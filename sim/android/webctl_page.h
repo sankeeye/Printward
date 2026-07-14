@@ -263,12 +263,17 @@ section#spools{max-width:1040px}
 </section>
 
 <section id="hist"><div class="card"><h3>Statistieken</h3>
-  <div class="muted" style="font-size:16px">Voltooide prints: <b id="stPrints">–</b></div>
-  <div class="muted" style="font-size:16px;margin-top:4px">Totaal filament gebruikt: <b id="stUsed">–</b></div>
-  <div class="muted" style="font-size:16px;margin-top:4px">Totale filament-uitgave: <b id="stCost">–</b></div>
-  <div id="matStats" style="margin-top:10px"></div>
+  <div class="muted">Aller tijden: <b id="stPrints">–</b> prints voltooid &middot; <b id="stUsed">–</b> filament &middot; uitgave <b id="stCost">–</b></div>
+  <div id="statRich" style="margin-top:6px"></div>
  </div>
  <div class="card"><h3>Historie / kosten</h3>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+  <input id="hSearch" oninput="renderHist()" placeholder="Zoek op naam…" style="flex:1;min-width:130px;padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff;font-size:15px">
+  <select id="hMat" onchange="renderHist()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="">alle materialen</option></select>
+  <select id="hOk" onchange="renderHist()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="">gelukt + mislukt</option><option value="1">alleen gelukt</option><option value="0">alleen mislukt</option></select>
+  <select id="hSort" onchange="renderHist()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="date">nieuwste eerst</option><option value="cost">duurste eerst</option><option value="grams">meeste filament</option></select>
+  <button onclick="exportCsv()" class="formbtn sec" style="padding:9px 14px">CSV</button>
+ </div>
  <div id="histTotal" class="muted" style="font-size:16px;margin-bottom:8px"></div>
  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
   <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="hArch" onchange="renderHist()" style="width:18px;height:18px">Gearchiveerd tonen</label>
@@ -296,23 +301,73 @@ function tab(n){
  if(n==='hist')loadHistory();
 }
 var histCache=[];
-function loadHistory(){fetch('/history').then(function(r){return r.json();}).then(function(list){histCache=list;renderHist();}).catch(function(){});}
+function loadHistory(){fetch('/history').then(function(r){return r.json();}).then(function(list){histCache=list;
+ var mats={};list.forEach(function(r){if(r.mat)mats[r.mat]=1;});
+ var sel=$('hMat');if(sel){var cur=sel.value,o='<option value="">alle materialen</option>';Object.keys(mats).sort().forEach(function(m){o+='<option>'+m+'</option>';});sel.innerHTML=o;sel.value=cur;}
+ renderStats();renderHist();
+}).catch(function(){});}
+function fmtDur(m){if(!m||m<=0)return'';if(m<60)return m+' min';var h=Math.floor(m/60),mm=m%60;return h+'u'+(mm<10?'0':'')+mm;}
+function statCell(t,big,sub){return '<div style="background:var(--panel2);border-radius:10px;padding:10px 12px"><div class="muted" style="font-size:12px">'+t+'</div><div style="font-size:20px;font-weight:600">'+big+'</div><div class="muted" style="font-size:12px">'+sub+'</div></div>';}
+function bar(label,val,max,extra){var pct=max>0?Math.round(val/max*100):0;return '<div style="margin:4px 0"><div style="display:flex;justify-content:space-between;font-size:13px;gap:8px"><span>'+label+'</span><span class="muted" style="white-space:nowrap">'+extra+'</span></div><div style="height:9px;background:#232a31;border-radius:5px;overflow:hidden;margin-top:2px"><div style="height:100%;width:'+pct+'%;background:#3465a4"></div></div></div>';}
+function grid(){return 'display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px';}
+function renderStats(){
+ var box=$('statRich');if(!box)return;
+ var list=histCache.filter(function(r){return !r.arch;});
+ if(!list.length){box.innerHTML='<div class="muted" style="margin-top:8px">Nog geen prints in het logboek.</div>';return;}
+ var ok=list.filter(function(r){return r.ok;}),fail=list.filter(function(r){return !r.ok;});
+ var okG=0,okC=0,okT=0,failG=0,failC=0,totT=0;
+ ok.forEach(function(r){okG+=r.grams||0;okC+=r.cost||0;okT+=r.mins||0;});
+ fail.forEach(function(r){failG+=r.grams||0;failC+=r.cost||0;});
+ list.forEach(function(r){totT+=r.mins||0;});
+ var rate=Math.round(ok.length/list.length*100);
+ var h='<div class="muted" style="font-size:13px;margin:6px 0 4px">Op basis van je logboek ('+list.length+' prints)</div>';
+ h+='<div style="'+grid()+'">';
+ h+=statCell('Geslaagd',rate+'%',ok.length+' van '+list.length);
+ h+=statCell('Mislukt',fail.length+'x',failG>0?(Math.round(failG)+' g · € '+failC.toFixed(2)+' verspild'):'geen verspilling');
+ h+=statCell('Gem./print',(ok.length?Math.round(okG/ok.length):0)+' g',(ok.length&&okC>0?'€ '+(okC/ok.length).toFixed(2):'')+(okT>0?' · '+fmtDur(Math.round(okT/ok.length)):''));
+ h+=statCell('Printtijd',fmtDur(totT)||'–',totT>0?'totaal':'onbekend');
+ h+='</div>';
+ var now=Date.now()/1000,DAY=86400;
+ function since(d){var s={n:0,g:0,c:0};list.forEach(function(r){if(r.ts&&now-r.ts<=d*DAY){s.n++;s.g+=r.grams||0;s.c+=r.cost||0;}});return s;}
+ var wk=since(7),mo=since(30),yr=since(365);
+ h+='<div class="muted" style="font-size:13px;margin:12px 0 4px">Tijdlijn</div><div style="'+grid()+'">';
+ h+=statCell('Deze week',wk.n+' prints',Math.round(wk.g)+' g · € '+wk.c.toFixed(2));
+ h+=statCell('Deze maand',mo.n+' prints',Math.round(mo.g)+' g · € '+mo.c.toFixed(2));
+ h+=statCell('Dit jaar',yr.n+' prints',Math.round(yr.g)+' g · € '+yr.c.toFixed(2));
+ h+='</div>';
+ var mm={};list.forEach(function(r){var k=r.mat||'?';if(!mm[k])mm[k]={g:0,c:0,n:0};mm[k].g+=r.grams||0;mm[k].c+=r.cost||0;mm[k].n++;});
+ var mk=Object.keys(mm).sort(function(a,b){return mm[b].g-mm[a].g;}),maxG=0,totG=0;
+ mk.forEach(function(k){if(mm[k].g>maxG)maxG=mm[k].g;totG+=mm[k].g;});
+ h+='<div class="muted" style="font-size:13px;margin:12px 0 4px">Per materiaal</div>';
+ mk.forEach(function(k){var pc=totG>0?Math.round(mm[k].g/totG*100):0;h+=bar(k+' <span class="muted">('+mm[k].n+'x)</span>',mm[k].g,maxG,Math.round(mm[k].g)+' g · € '+mm[k].c.toFixed(2)+' · '+pc+'%');});
+ var mon={};list.forEach(function(r){if(!r.ts)return;var d=new Date(r.ts*1000),key=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2);if(!mon[key])mon[key]={n:0,g:0};mon[key].n++;mon[key].g+=r.grams||0;});
+ var mkeys=Object.keys(mon).sort();
+ if(mkeys.length){mkeys=mkeys.slice(-6);var maxN=0;mkeys.forEach(function(k){if(mon[k].n>maxN)maxN=mon[k].n;});
+  h+='<div class="muted" style="font-size:13px;margin:12px 0 4px">Prints per maand</div>';
+  mkeys.forEach(function(k){h+=bar(k,mon[k].n,maxN,mon[k].n+' prints · '+Math.round(mon[k].g)+' g');});}
+ box.innerHTML=h;
+}
 function renderHist(){
  var showArch=$('hArch')&&$('hArch').checked;
+ var q=(($('hSearch')&&$('hSearch').value)||'').toLowerCase();
+ var fmat=($('hMat')&&$('hMat').value)||'',fok=($('hOk')&&$('hOk').value)||'',sort=($('hSort')&&$('hSort').value)||'date';
  var list=histCache.filter(function(r){return showArch?r.arch:!r.arch;});
- var tot=0;list.forEach(function(r){tot+=r.cost||0;});
- if($('histTotal'))$('histTotal').innerHTML=list.length+(showArch?' gearchiveerd':' prints')+' &middot; totaal <b>&euro; '+tot.toFixed(2)+'</b>';
- var mm={};list.forEach(function(r){var k=r.mat||'?';if(!mm[k])mm[k]={g:0,c:0,n:0};mm[k].g+=r.grams||0;mm[k].c+=r.cost||0;mm[k].n++;});
- var mk=Object.keys(mm).sort(function(a,b){return mm[b].g-mm[a].g;});
- var mh='';mk.forEach(function(k){mh+='<div class="muted" style="font-size:14px">'+k+': <b>'+Math.round(mm[k].g)+' g</b>'+(mm[k].c>0?' &middot; &euro; '+mm[k].c.toFixed(2):'')+' <span style="opacity:.6">('+mm[k].n+'x)</span></div>';});
- if($('matStats'))$('matStats').innerHTML=mh?('<div class="muted" style="font-size:13px;margin-bottom:4px">Per materiaal:</div>'+mh):'';
- if(!list.length){$('histList').style.display='block';$('histList').innerHTML='<div class="muted">'+(showArch?'niets gearchiveerd':'nog geen prints')+'</div>';hSelUpd();return;}
+ if(q)list=list.filter(function(r){return (r.name||'').toLowerCase().indexOf(q)>=0;});
+ if(fmat)list=list.filter(function(r){return r.mat===fmat;});
+ if(fok!=='')list=list.filter(function(r){return String(r.ok)===fok;});
+ if(sort==='cost')list.sort(function(a,b){return (b.cost||0)-(a.cost||0);});
+ else if(sort==='grams')list.sort(function(a,b){return (b.grams||0)-(a.grams||0);});
+ else list.sort(function(a,b){return (b.ts||0)-(a.ts||0);});
+ var tot=0,totg=0;list.forEach(function(r){tot+=r.cost||0;totg+=r.grams||0;});
+ if($('histTotal'))$('histTotal').innerHTML=list.length+(showArch?' gearchiveerd':' prints')+' &middot; '+Math.round(totg)+' g &middot; totaal <b>&euro; '+tot.toFixed(2)+'</b>';
+ if(!list.length){$('histList').style.display='block';$('histList').innerHTML='<div class="muted">geen resultaten</div>';hSelUpd();return;}
  var h='';
  list.forEach(function(r){
   var pv=r.file?'<button class="hprev" data-p="/cache/'+r.file+'" style="background:#2c3e50;color:#fff;border:0;border-radius:6px;padding:6px 10px;margin-top:8px;cursor:pointer;width:100%">Preview</button>':'';
+  var dur=fmtDur(r.mins);
   h+='<div class="rollcard" style="flex-direction:column;align-items:stretch">'
     +'<div style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="hsel" data-i="'+r.i+'" style="width:18px;height:18px;flex:0 0 auto"><span style="color:'+(r.ok?'#2ecc71':'#e74c3c')+'">'+(r.ok?'✓':'✗')+'</span><b style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+r.name+'</b></div>'
-    +'<div class="muted" style="font-size:12px">'+r.when+'</div>'
+    +'<div class="muted" style="font-size:12px">'+r.when+(r.mat?' · '+r.mat:'')+(dur?' · '+dur:'')+'</div>'
     +'<div style="margin-top:4px">'+r.grams+' g'+(r.cost>0?' &middot; <b>&euro; '+r.cost.toFixed(2)+'</b>':'')+'</div>'+pv+'</div>';
  });
  $('histList').style.display='grid';$('histList').style.gridTemplateColumns='repeat(auto-fill,minmax(220px,1fr))';$('histList').style.gap='10px';
@@ -320,6 +375,12 @@ function renderHist(){
  document.querySelectorAll('.hprev').forEach(function(el){el.onclick=function(){showPreview(el.dataset.p);};});
  document.querySelectorAll('.hsel').forEach(function(el){el.onchange=hSelUpd;});
  hSelUpd();
+}
+function exportCsv(){
+ var rows=[['datum','naam','materiaal','grammen','kosten_eur','duur_min','resultaat']];
+ histCache.forEach(function(r){rows.push([r.when,'"'+(r.name||'').replace(/"/g,'""')+'"',r.mat||'',r.grams||0,(r.cost||0).toFixed(2),r.mins||0,r.ok?'gelukt':'mislukt']);});
+ var csv=rows.map(function(x){return x.join(',');}).join('\r\n');
+ var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='pandatouch-historie.csv';a.click();URL.revokeObjectURL(a.href);
 }
 function hSelIds(){var a=[];document.querySelectorAll('.hsel:checked').forEach(function(el){a.push(el.dataset.i);});return a;}
 function hSelUpd(){var n=hSelIds().length;var showArch=$('hArch')&&$('hArch').checked;
@@ -464,6 +525,7 @@ $('sWifi').onclick=function(){sGet('/setwifi?ssid='+encodeURIComponent($('sSsid'
 $('sIpSave').onclick=function(){var v=$('sIp').value;fetch('/setcfg?scale_ip='+encodeURIComponent(v)).then(function(){scaleHost=v;sMsg('opgeslagen op tablet');});};
 setInterval(scalePoll,1200);
 setInterval(function(){if($('spList')&&$('spList').offsetParent!==null)loadSpools();},3000);
+setInterval(function(){if($('histList')&&$('histList').offsetParent!==null)loadHistory();},8000);
 function spMsg(t){$('spMsg').textContent=t;}
 function spSlotOpts(){var o='';for(var u=0;u<2;u++)for(var t=0;t<4;t++){o+='<option value="'+(u*4+t)+'">AMS'+(u+1)+' T'+(t+1)+'</option>';}return o+'<option value="254">Externe spoel</option>';}
 function loadSpools(){
