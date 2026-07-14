@@ -266,15 +266,6 @@ static void create_move_extra_ui() {
     lv_obj_set_style_text_font(bl, &lv_font_montserrat_14, 0); lv_obj_center(bl);
     lv_obj_add_event_cb(bb, extra_back_cb, LV_EVENT_CLICKED, NULL);
 
-    make_col_title(root, "Materiaal (nozzle + bed)");
-    lv_obj_t* r1 = mk_wrap_row(root);
-    mk_extra_btn(r1, "PLA",  MOVE_PLA,  0, 0x8e44ad, 110);
-    mk_extra_btn(r1, "PETG", MOVE_PETG, 0, 0x8e44ad, 110);
-    mk_extra_btn(r1, "ABS",  MOVE_ABS,  0, 0x8e44ad, 110);
-    mk_extra_btn(r1, "TPU",  MOVE_TPU,  0, 0x8e44ad, 110);
-    mk_extra_btn(r1, "Nozzle uit", MOVE_COOL, 0, 0x2980b9, 140);
-    mk_extra_btn(r1, "Bed uit", MOVE_BED_COOL, 0, 0x2980b9, 120);
-
     make_col_title(root, "Ventilator");
     lv_obj_t* r2 = mk_wrap_row(root);
     mk_extra_btn(r2, "Fan uit", MOVE_FAN, 0, 0x2c3e50, 120);
@@ -441,18 +432,8 @@ void create_move_ui() {
       lv_obj_set_style_text_font(l, &lv_font_montserrat_18, 0); lv_obj_center(l); }
     lv_obj_add_event_cb(ret, extrude_cb, LV_EVENT_CLICKED, (void*)(intptr_t)MOVE_ERET);
 
-    lv_obj_t* heat_row = lv_obj_create(ecol);
-    lv_obj_set_size(heat_row, lv_pct(100), PT_SZ(48));
-    lv_obj_set_style_bg_opa(heat_row, LV_OPA_TRANSP, LV_PART_MAIN);
-    lv_obj_set_style_border_width(heat_row, 0, LV_PART_MAIN);
-    lv_obj_set_style_pad_all(heat_row, 0, LV_PART_MAIN);
-    lv_obj_set_style_pad_gap(heat_row, PT_SZ(8), LV_PART_MAIN);
-    lv_obj_set_flex_flow(heat_row, LV_FLEX_FLOW_ROW);
-    lv_obj_clear_flag(heat_row, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_t* ph = make_jog_btn(heat_row, "Preheat", MOVE_PREHEAT, 0xe67e22);
-    lv_obj_set_flex_grow(ph, 1); lv_obj_set_height(ph, lv_pct(100));
-    lv_obj_t* cl = make_jog_btn(heat_row, "Cooldown", MOVE_COOL, 0x2980b9);
-    lv_obj_set_flex_grow(cl, 1); lv_obj_set_height(cl, lv_pct(100));
+    // (Preheat/Cooldown removed: Bambu firmware 1.08 blocks temperature gcode
+    // from third-party tools - set temps via Studio/Handy/the printer screen.)
 
     // --- Hint / status line ---
     g_hint = lv_label_create(root);

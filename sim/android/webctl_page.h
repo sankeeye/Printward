@@ -141,13 +141,6 @@ section#spools{max-width:1040px}
    <button class="ret big" onclick="mcmd('ret',$('mExt').value)">Retract</button>
   </div></div>
  </div>
- <div class="card"><h3>Temperatuur</h3>
-  <div id="movetemps" class="muted" style="margin-bottom:8px">nozzle - / bed -</div>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
-   <button onclick="mcmd('pla')">PLA</button><button onclick="mcmd('petg')">PETG</button><button onclick="mcmd('abs')">ABS</button><button onclick="mcmd('tpu')">TPU</button></div>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px"><span class="muted" style="width:54px">Nozzle</span><input type="number" id="mNoz" value="220" style="width:70px;padding:8px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><button onclick="mcmd('setnoz',$('mNoz').value)">Set</button><button onclick="mcmd('cool')">Uit</button></div>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="muted" style="width:54px">Bed</span><input type="number" id="mBed" value="60" style="width:70px;padding:8px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><button onclick="mcmd('setbed',$('mBed').value)">Set</button><button onclick="mcmd('bedcool')">Uit</button></div>
- </div>
  <div class="card"><h3>Ventilator</h3>
   <div style="display:flex;gap:6px;flex-wrap:wrap"><button onclick="mcmd('fan',0)">Uit</button><button onclick="mcmd('fan',25)">25%</button><button onclick="mcmd('fan',50)">50%</button><button onclick="mcmd('fan',100)">100%</button></div>
  </div>
