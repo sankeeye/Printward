@@ -201,11 +201,102 @@ static lv_obj_t* make_col_title(lv_obj_t* parent, const char* text) {
     return l;
 }
 
+// --- "Regelen" screen: temperature presets, fan, motors & positions -------
+// A second screen (the Move screen is full). Buttons only (no keyboard); the
+// step value is reused per action - see move_perform. g_move_screen stays alive
+// so its g_hint pointer remains valid while this screen is shown.
+static lv_obj_t* g_extra_screen = nullptr;
+
+static void extra_cb(lv_event_t* e) {
+    int ud = (int)(intptr_t)lv_event_get_user_data(e);
+    move_perform(ud / 1000, (float)(ud % 1000));   // packed: code*1000 + value
+}
+static void extra_back_cb(lv_event_t*) {
+    if (g_move_screen) lv_scr_load(g_move_screen);
+}
+static void mk_extra_btn(lv_obj_t* parent, const char* label, int code, int val, uint32_t color, int w) {
+    lv_obj_t* b = lv_btn_create(parent);
+    lv_obj_set_size(b, PT_SZ(w), PT_SZ(46));
+    lv_obj_set_style_bg_color(b, lv_color_hex(color), LV_PART_MAIN);
+    lv_obj_t* l = lv_label_create(b);
+    lv_label_set_text(l, label);
+    lv_obj_set_style_text_font(l, &lv_font_montserrat_14, 0);
+    lv_obj_center(l);
+    lv_obj_add_event_cb(b, extra_cb, LV_EVENT_CLICKED, (void*)(intptr_t)(code * 1000 + val));
+}
+static lv_obj_t* mk_wrap_row(lv_obj_t* parent) {
+    lv_obj_t* r = lv_obj_create(parent);
+    lv_obj_set_width(r, lv_pct(100));
+    lv_obj_set_height(r, LV_SIZE_CONTENT);
+    lv_obj_set_style_bg_opa(r, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(r, 0, 0);
+    lv_obj_set_style_pad_all(r, 0, 0);
+    lv_obj_set_style_pad_gap(r, PT_SZ(8), 0);
+    lv_obj_set_flex_flow(r, LV_FLEX_FLOW_ROW_WRAP);
+    lv_obj_clear_flag(r, LV_OBJ_FLAG_SCROLLABLE);
+    return r;
+}
+static void create_move_extra_ui() {
+    if (g_extra_screen) { lv_obj_del(g_extra_screen); g_extra_screen = nullptr; }
+    g_extra_screen = lv_obj_create(NULL);
+    lv_obj_set_style_bg_color(g_extra_screen, lv_color_hex(0x101418), LV_PART_MAIN);
+    lv_obj_t* root = lv_obj_create(g_extra_screen);
+    lv_obj_set_size(root, lv_pct(100), lv_pct(100));
+    lv_obj_set_style_bg_opa(root, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(root, 0, 0);
+    lv_obj_set_style_pad_all(root, PT_SZ(12), 0);
+    lv_obj_set_style_pad_gap(root, PT_SZ(6), 0);
+    lv_obj_set_flex_flow(root, LV_FLEX_FLOW_COLUMN);
+    lv_obj_clear_flag(root, LV_OBJ_FLAG_SCROLLABLE);
+
+    lv_obj_t* header = mk_wrap_row(root);
+    lv_obj_t* title = lv_label_create(header);
+    lv_label_set_text(title, "Regelen");
+    lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
+    lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
+    lv_obj_set_flex_grow(title, 1);
+    lv_obj_t* bb = lv_btn_create(header);
+    lv_obj_set_size(bb, PT_SZ(90), PT_SZ(40));
+    lv_obj_set_style_bg_color(bb, lv_color_hex(0x333333), LV_PART_MAIN);
+    lv_obj_t* bl = lv_label_create(bb); lv_label_set_text(bl, "Terug");
+    lv_obj_set_style_text_font(bl, &lv_font_montserrat_14, 0); lv_obj_center(bl);
+    lv_obj_add_event_cb(bb, extra_back_cb, LV_EVENT_CLICKED, NULL);
+
+    make_col_title(root, "Materiaal (nozzle + bed)");
+    lv_obj_t* r1 = mk_wrap_row(root);
+    mk_extra_btn(r1, "PLA",  MOVE_PLA,  0, 0x8e44ad, 110);
+    mk_extra_btn(r1, "PETG", MOVE_PETG, 0, 0x8e44ad, 110);
+    mk_extra_btn(r1, "ABS",  MOVE_ABS,  0, 0x8e44ad, 110);
+    mk_extra_btn(r1, "TPU",  MOVE_TPU,  0, 0x8e44ad, 110);
+    mk_extra_btn(r1, "Nozzle uit", MOVE_COOL, 0, 0x2980b9, 140);
+    mk_extra_btn(r1, "Bed uit", MOVE_BED_COOL, 0, 0x2980b9, 120);
+
+    make_col_title(root, "Ventilator");
+    lv_obj_t* r2 = mk_wrap_row(root);
+    mk_extra_btn(r2, "Fan uit", MOVE_FAN, 0, 0x2c3e50, 120);
+    mk_extra_btn(r2, "Fan 50%", MOVE_FAN, 50, 0x2c3e50, 120);
+    mk_extra_btn(r2, "Fan 100%", MOVE_FAN, 100, 0x2c3e50, 130);
+
+    make_col_title(root, "Motoren & posities");
+    lv_obj_t* r3 = mk_wrap_row(root);
+    mk_extra_btn(r3, "Motoren uit", MOVE_MOTORS_OFF, 0, 0xc0392b, 150);
+    mk_extra_btn(r3, "Naar midden", MOVE_CENTER, 0, 0x2c3e50, 150);
+    mk_extra_btn(r3, "Bed naar voren", MOVE_FRONT, 0, 0x2c3e50, 170);
+    mk_extra_btn(r3, "Z omhoog", MOVE_ZUP, 0, 0x2c3e50, 130);
+    mk_extra_btn(r3, "Home X", MOVE_HOME_X, 0, 0x2c3e50, 100);
+    mk_extra_btn(r3, "Home Y", MOVE_HOME_Y, 0, 0x2c3e50, 100);
+    mk_extra_btn(r3, "Home Z", MOVE_HOME_Z, 0, 0x2c3e50, 100);
+
+    lv_scr_load(g_extra_screen);
+}
+static void regelen_cb(lv_event_t*) { create_move_extra_ui(); }
+
 void create_move_ui() {
     if (g_move_screen) {
         lv_obj_del(g_move_screen);
         g_move_screen = nullptr;
     }
+    if (g_extra_screen) { lv_obj_del(g_extra_screen); g_extra_screen = nullptr; }
     g_step_btns[0] = g_step_btns[1] = g_step_btns[2] = nullptr;
 
     g_move_screen = lv_obj_create(NULL);
@@ -259,6 +350,15 @@ void create_move_ui() {
     lv_label_set_text(mm_lbl, "mm");
     lv_obj_set_style_text_font(mm_lbl, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(mm_lbl, lv_color_hex(0x999999), 0);
+
+    lv_obj_t* reg_btn = lv_btn_create(header);
+    lv_obj_set_size(reg_btn, PT_SZ(110), PT_SZ(34));
+    lv_obj_set_style_bg_color(reg_btn, lv_color_hex(0x8e44ad), LV_PART_MAIN);
+    lv_obj_t* reg_lbl = lv_label_create(reg_btn);
+    lv_label_set_text(reg_lbl, "Regelen");
+    lv_obj_set_style_text_font(reg_lbl, &lv_font_montserrat_14, 0);
+    lv_obj_center(reg_lbl);
+    lv_obj_add_event_cb(reg_btn, regelen_cb, LV_EVENT_CLICKED, NULL);
 
     lv_obj_t* back_btn = lv_btn_create(header);
     lv_obj_set_size(back_btn, PT_SZ(80), PT_SZ(34));
