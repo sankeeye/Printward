@@ -140,6 +140,22 @@ static int code_from_name(const char* a) {
     if (!strcmp(a, "ret")) return MOVE_ERET;
     if (!strcmp(a, "preheat")) return MOVE_PREHEAT;
     if (!strcmp(a, "cool")) return MOVE_COOL;
+    if (!strcmp(a, "bedheat")) return MOVE_BED_HEAT;
+    if (!strcmp(a, "bedcool")) return MOVE_BED_COOL;
+    if (!strcmp(a, "setnoz")) return MOVE_SET_NOZZLE;
+    if (!strcmp(a, "setbed")) return MOVE_SET_BED;
+    if (!strcmp(a, "pla")) return MOVE_PLA;
+    if (!strcmp(a, "petg")) return MOVE_PETG;
+    if (!strcmp(a, "abs")) return MOVE_ABS;
+    if (!strcmp(a, "tpu")) return MOVE_TPU;
+    if (!strcmp(a, "fan")) return MOVE_FAN;
+    if (!strcmp(a, "motoff")) return MOVE_MOTORS_OFF;
+    if (!strcmp(a, "homex")) return MOVE_HOME_X;
+    if (!strcmp(a, "homey")) return MOVE_HOME_Y;
+    if (!strcmp(a, "homez")) return MOVE_HOME_Z;
+    if (!strcmp(a, "center")) return MOVE_CENTER;
+    if (!strcmp(a, "front")) return MOVE_FRONT;
+    if (!strcmp(a, "zup")) return MOVE_ZUP;
     return 0;
 }
 

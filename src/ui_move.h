@@ -14,7 +14,15 @@ void update_move_ui();
 // Motion actions, shared by the on-screen buttons and the web control page.
 enum MoveAction {
     MOVE_XP = 1, MOVE_XM, MOVE_YP, MOVE_YM, MOVE_ZP, MOVE_ZM,
-    MOVE_HOME, MOVE_EEXT, MOVE_ERET, MOVE_PREHEAT, MOVE_COOL
+    MOVE_HOME, MOVE_EEXT, MOVE_ERET, MOVE_PREHEAT, MOVE_COOL,
+    // --- extensions (step is reused per action, see move_perform) ---
+    MOVE_BED_HEAT, MOVE_BED_COOL,             // bed temp (BED_HEAT: step = target C)
+    MOVE_SET_NOZZLE, MOVE_SET_BED,            // set a specific target (step = C)
+    MOVE_PLA, MOVE_PETG, MOVE_ABS, MOVE_TPU,  // material presets (nozzle + bed)
+    MOVE_FAN,                                 // part-cooling fan (step = 0..100 %)
+    MOVE_MOTORS_OFF,                          // M18 - disable steppers
+    MOVE_HOME_X, MOVE_HOME_Y, MOVE_HOME_Z,    // home a single axis
+    MOVE_CENTER, MOVE_FRONT, MOVE_ZUP         // convenience positions
 };
 
 // Read-only guard check: is this action currently blocked? Sets *reason to a

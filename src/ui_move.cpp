@@ -52,8 +52,16 @@ static void send_axis(char axis, float dist, int feed) {
 }
 
 bool move_blocked(int code, const char** reason) {
-    if (code == MOVE_PREHEAT || code == MOVE_COOL) return false;   // always allowed
-    if (is_printing()) {
+    // Temperature + fan controls are always allowed (like preheat/cooldown).
+    switch (code) {
+        case MOVE_PREHEAT: case MOVE_COOL:
+        case MOVE_BED_HEAT: case MOVE_BED_COOL:
+        case MOVE_SET_NOZZLE: case MOVE_SET_BED:
+        case MOVE_PLA: case MOVE_PETG: case MOVE_ABS: case MOVE_TPU:
+        case MOVE_FAN:
+            return false;
+    }
+    if (is_printing()) {   // jog / home / extrude / motors-off / goto: not while printing
         *reason = "Bezig met printen - bewegen uitgeschakeld";
         return true;
     }
@@ -79,14 +87,18 @@ const char* move_perform(int code, float step) {
             bambu_cmd_gcode("G28");
             set_hint("Homing...", 0x2ecc71);
             return "Homing";
-        case MOVE_EEXT:
-            send_axis('E', EXTRUDE_MM, EXTRUDE_FEED);
+        case MOVE_EEXT: {
+            float len = step > 0 ? step : EXTRUDE_MM;
+            send_axis('E', len, EXTRUDE_FEED);
             set_hint("Extruderen...", 0x27ae60);
             return "Extrude";
-        case MOVE_ERET:
-            send_axis('E', -EXTRUDE_MM, EXTRUDE_FEED);
+        }
+        case MOVE_ERET: {
+            float len = step > 0 ? step : EXTRUDE_MM;
+            send_axis('E', -len, EXTRUDE_FEED);
             set_hint("Terugtrekken...", 0x27ae60);
             return "Retract";
+        }
         case MOVE_PREHEAT: {
             char buf[24];
             snprintf(buf, sizeof(buf), "M104 S%d", PREHEAT_TEMP);
@@ -98,6 +110,42 @@ const char* move_perform(int code, float step) {
             bambu_cmd_gcode("M104 S0");
             set_hint("Nozzle uit", 0x2980b9);
             return "Cooldown";
+        case MOVE_BED_HEAT: {
+            int t = (int)step; if (t <= 0) t = 60;
+            char buf[24]; snprintf(buf, sizeof(buf), "M140 S%d", t);
+            bambu_cmd_gcode(buf); set_hint("Bed opwarmen...", 0xe67e22); return "Bed heat";
+        }
+        case MOVE_BED_COOL:
+            bambu_cmd_gcode("M140 S0"); set_hint("Bed uit", 0x2980b9); return "Bed cool";
+        case MOVE_SET_NOZZLE: {
+            int t = (int)step; if (t < 0) t = 0;
+            char buf[24]; snprintf(buf, sizeof(buf), "M104 S%d", t);
+            bambu_cmd_gcode(buf); set_hint("Nozzle ingesteld", 0xe67e22); return "Nozzle set";
+        }
+        case MOVE_SET_BED: {
+            int t = (int)step; if (t < 0) t = 0;
+            char buf[24]; snprintf(buf, sizeof(buf), "M140 S%d", t);
+            bambu_cmd_gcode(buf); set_hint("Bed ingesteld", 0xe67e22); return "Bed set";
+        }
+        case MOVE_PLA:  bambu_cmd_gcode("M104 S220\nM140 S60"); set_hint("PLA voorverwarmen", 0xe67e22); return "PLA";
+        case MOVE_PETG: bambu_cmd_gcode("M104 S245\nM140 S70"); set_hint("PETG voorverwarmen", 0xe67e22); return "PETG";
+        case MOVE_ABS:  bambu_cmd_gcode("M104 S260\nM140 S90"); set_hint("ABS voorverwarmen", 0xe67e22); return "ABS";
+        case MOVE_TPU:  bambu_cmd_gcode("M104 S230\nM140 S35"); set_hint("TPU voorverwarmen", 0xe67e22); return "TPU";
+        case MOVE_FAN: {
+            int pct = (int)step; if (pct < 0) pct = 0; if (pct > 100) pct = 100;
+            char buf[24];
+            if (pct <= 0) snprintf(buf, sizeof(buf), "M107");
+            else          snprintf(buf, sizeof(buf), "M106 S%d", (pct * 255) / 100);
+            bambu_cmd_gcode(buf); set_hint("Fan ingesteld", 0x2980b9); return "Fan";
+        }
+        case MOVE_MOTORS_OFF:
+            bambu_cmd_gcode("M18"); set_hint("Motoren uit", 0x2980b9); return "Motors off";
+        case MOVE_HOME_X: bambu_cmd_gcode("G28 X"); set_hint("Home X...", 0x2ecc71); return "Home X";
+        case MOVE_HOME_Y: bambu_cmd_gcode("G28 Y"); set_hint("Home Y...", 0x2ecc71); return "Home Y";
+        case MOVE_HOME_Z: bambu_cmd_gcode("G28 Z"); set_hint("Home Z...", 0x2ecc71); return "Home Z";
+        case MOVE_CENTER: bambu_cmd_gcode("G90\nG1 X128 Y128 F6000"); set_hint("Naar midden", 0xFFFFFF); return "Center";
+        case MOVE_FRONT:  bambu_cmd_gcode("G90\nG1 Y250 F6000"); set_hint("Bed naar voren", 0xFFFFFF); return "Front";
+        case MOVE_ZUP:    bambu_cmd_gcode("G91\nG1 Z30 F600\nG90"); set_hint("Z omhoog", 0xFFFFFF); return "Z up";
     }
     return "";
 }

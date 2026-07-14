@@ -135,11 +135,24 @@ section#spools{max-width:1040px}
    <span></span><button data-a="ym">Y-</button><span></span>
   </div></div>
   <div class="card"><h3>Z</h3><div class="zcol"><button data-a="zp">Z+</button><button data-a="zm">Z-</button></div></div>
-  <div class="card"><h3 id="movenoz">Extruder</h3><div class="ecol">
-   <button class="ext big" data-a="ext">Extrude</button>
-   <button class="ret big" data-a="ret">Retract</button>
-   <div class="heat"><button class="ph" data-a="preheat">Preheat</button><button class="cl" data-a="cool">Cooldown</button></div>
+  <div class="card"><h3>Extruder</h3><div class="ecol">
+   <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px" class="muted">Lengte <input type="number" id="mExt" value="10" style="width:64px;padding:8px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"> mm</div>
+   <button class="ext big" onclick="mcmd('ext',$('mExt').value)">Extrude</button>
+   <button class="ret big" onclick="mcmd('ret',$('mExt').value)">Retract</button>
   </div></div>
+ </div>
+ <div class="card"><h3>Temperatuur</h3>
+  <div id="movetemps" class="muted" style="margin-bottom:8px">nozzle - / bed -</div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+   <button onclick="mcmd('pla')">PLA</button><button onclick="mcmd('petg')">PETG</button><button onclick="mcmd('abs')">ABS</button><button onclick="mcmd('tpu')">TPU</button></div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px"><span class="muted" style="width:54px">Nozzle</span><input type="number" id="mNoz" value="220" style="width:70px;padding:8px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><button onclick="mcmd('setnoz',$('mNoz').value)">Set</button><button onclick="mcmd('cool')">Uit</button></div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="muted" style="width:54px">Bed</span><input type="number" id="mBed" value="60" style="width:70px;padding:8px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><button onclick="mcmd('setbed',$('mBed').value)">Set</button><button onclick="mcmd('bedcool')">Uit</button></div>
+ </div>
+ <div class="card"><h3>Ventilator</h3>
+  <div style="display:flex;gap:6px;flex-wrap:wrap"><button onclick="mcmd('fan',0)">Uit</button><button onclick="mcmd('fan',25)">25%</button><button onclick="mcmd('fan',50)">50%</button><button onclick="mcmd('fan',100)">100%</button></div>
+ </div>
+ <div class="card"><h3>Motoren &amp; posities</h3>
+  <div style="display:flex;gap:6px;flex-wrap:wrap"><button onclick="mcmd('motoff')">Motoren uit</button><button onclick="mcmd('center')">Naar midden</button><button onclick="mcmd('front')">Bed naar voren</button><button onclick="mcmd('zup')">Z omhoog</button><button onclick="mcmd('homex')">Home X</button><button onclick="mcmd('homey')">Home Y</button><button onclick="mcmd('homez')">Home Z</button></div>
  </div>
  <div id="hint"></div>
 </section>
@@ -316,8 +329,9 @@ function hBulk(act){var ids=hSelIds();if(!ids.length)return;
 document.querySelectorAll('nav button').forEach(function(b){b.onclick=function(){tab(b.dataset.tab);};});
 document.querySelectorAll('.step button').forEach(function(b){b.onclick=function(){step=b.dataset.s;
  document.querySelectorAll('.step button').forEach(function(x){x.classList.remove('sel');});b.classList.add('sel');};});
-document.querySelectorAll('.pad button,.zcol button,.ecol button').forEach(function(b){b.onclick=function(){
+document.querySelectorAll('.pad button,.zcol button').forEach(function(b){b.onclick=function(){
  fetch('/cmd?a='+b.dataset.a+'&s='+step).then(function(r){return r.text();}).then(function(t){$('hint').textContent=t;}).catch(function(){});};});
+function mcmd(a,s){var u='/cmd?a='+a;if(s!==undefined&&s!=='')u+='&s='+s;fetch(u).then(function(r){return r.text();}).then(function(t){if($('hint'))$('hint').textContent=t;}).catch(function(){});}
 $('bPause').onclick=function(){fetch('/ctl?a='+(curState==='PAUSE'?'resume':'pause'));};
 $('bStop').onclick=function(){if(confirm('Print stoppen?'))fetch('/ctl?a=stop');};
 $('bLight').onclick=function(){fetch('/ctl?a=light&v='+(curLight?0:1));};
@@ -414,7 +428,7 @@ function poll(){
   $('bFan').textContent='Fan '+s.fan+'%';
   if(document.activeElement!==$('speed'))$('speed').value=s.speed;
   if(!$('rollModal')||$('rollModal').style.display!=='flex'){$('amsStrip').innerHTML=amsHtml(s.ams,s.ext,true);}
-  $('movenoz').textContent='Nozzle '+s.nozzle+'/'+s.nozzle_t+'°C';
+  if($('movetemps'))$('movetemps').textContent='nozzle '+s.nozzle+'/'+s.nozzle_t+'° · bed '+s.bed+'/'+s.bed_t+'° · kamer '+s.chamber+'°';
   if(s.prints!==undefined&&$('stPrints')){$('stPrints').textContent=s.prints;$('stUsed').textContent=(s.used>=1000?(s.used/1000).toFixed(2)+' kg':s.used+' g');if($('stCost'))$('stCost').textContent='€ '+(s.cost||0).toFixed(2);}
   if(s.cfg&&s.cfg.scale_ip){scaleHost=s.cfg.scale_ip;var si=$('sIp');if(si&&!si.value)si.value=s.cfg.scale_ip;}
   if(s.cfg&&s.cfg.low)lowG=s.cfg.low;
