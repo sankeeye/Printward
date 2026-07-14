@@ -10,6 +10,7 @@
 #ifdef __ANDROID__
 #include "ui_tablet_setup.h"   // on-screen printer config (tablet only)
 #include "ui_screensaver.h"    // g_screensaver_3d toggle
+#include "ui_weigh.h"          // PandaScale management screen (tablet only)
 #endif
 
 static lv_obj_t* g_settings_screen = nullptr;
@@ -35,6 +36,10 @@ static void view_toggle_cb(lv_event_t* e) {
         lv_label_set_text(g_view_btn_label, g_screensaver_3d ? "Screensaver: 3D" : "Screensaver: 2D");
     save_settings();
     screensaver_view_changed();
+}
+static void scale_open_cb(lv_event_t* e) {
+    (void)e;
+    create_weigh_ui();
 }
 #endif
 
@@ -157,15 +162,35 @@ void create_settings_ui() {
     lv_obj_center(setup_btn_label);
     lv_obj_add_event_cb(setup_btn, printer_setup_btn_cb, LV_EVENT_CLICKED, NULL);
 
-    // Screensaver model view: 2D top-down or 3D isometric.
-    lv_obj_t* view_btn = lv_btn_create(root);
-    lv_obj_set_size(view_btn, lv_pct(100), PT_SZ(44));
+    // Row: screensaver 2D/3D toggle + open the PandaScale (scale) screen.
+    lv_obj_t* row2 = lv_obj_create(root);
+    lv_obj_set_size(row2, lv_pct(100), PT_SZ(44));
+    lv_obj_set_style_bg_opa(row2, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_border_width(row2, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(row2, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_gap(row2, PT_SZ(8), LV_PART_MAIN);
+    lv_obj_set_flex_flow(row2, LV_FLEX_FLOW_ROW);
+    lv_obj_clear_flag(row2, LV_OBJ_FLAG_SCROLLABLE);
+
+    lv_obj_t* view_btn = lv_btn_create(row2);
+    lv_obj_set_flex_grow(view_btn, 1);
+    lv_obj_set_height(view_btn, lv_pct(100));
     lv_obj_set_style_bg_color(view_btn, lv_color_hex(0x555555), LV_PART_MAIN);
     g_view_btn_label = lv_label_create(view_btn);
     lv_label_set_text(g_view_btn_label, g_screensaver_3d ? "Screensaver: 3D" : "Screensaver: 2D");
     lv_obj_set_style_text_font(g_view_btn_label, &lv_font_montserrat_14, 0);
     lv_obj_center(g_view_btn_label);
     lv_obj_add_event_cb(view_btn, view_toggle_cb, LV_EVENT_CLICKED, NULL);
+
+    lv_obj_t* scale_btn = lv_btn_create(row2);
+    lv_obj_set_flex_grow(scale_btn, 1);
+    lv_obj_set_height(scale_btn, lv_pct(100));
+    lv_obj_set_style_bg_color(scale_btn, lv_color_hex(0x8e44ad), LV_PART_MAIN);
+    lv_obj_t* scale_lbl = lv_label_create(scale_btn);
+    lv_label_set_text(scale_lbl, "Schaal beheren");
+    lv_obj_set_style_text_font(scale_lbl, &lv_font_montserrat_14, 0);
+    lv_obj_center(scale_lbl);
+    lv_obj_add_event_cb(scale_btn, scale_open_cb, LV_EVENT_CLICKED, NULL);
 #endif
 
     lv_obj_t* bright_row = lv_obj_create(root);

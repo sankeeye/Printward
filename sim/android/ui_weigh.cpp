@@ -4,6 +4,7 @@
 // this file only builds the LVGL UI and reads/queues via that client.
 #include "ui_weigh.h"
 #include "ui_printer.h"
+#include "ui_settings.h"   // return to Settings on Back (the scale opens from there)
 #include "scale_client.h"
 #include "filament_track.h"   // filament_weigh_assign()
 #include "spool_db.h"         // g_empties (empty-spool library)
@@ -105,7 +106,7 @@ static void ip_fix_cb(lv_event_t*) {
 
 static void back_cb(lv_event_t*) {
     scale_set_polling(false);
-    lv_scr_load(g_main_screen);
+    create_settings_ui();   // opened from Settings, so return there
 }
 
 static lv_obj_t* make_btn(lv_obj_t* parent, const char* txt, uint32_t color, lv_event_cb_t cb, int w) {

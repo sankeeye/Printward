@@ -179,9 +179,6 @@ static void move_btn_cb(lv_event_t* e) {
 }
 
 #ifdef __ANDROID__
-static void scale_btn_cb(lv_event_t* e) {
-    create_weigh_ui();
-}
 static void spools_btn_cb(lv_event_t* e) {
     create_spools_ui();
 }
@@ -260,15 +257,6 @@ void create_printer_ui() {
     lv_obj_add_event_cb(move_btn, move_btn_cb, LV_EVENT_CLICKED, NULL);
 
 #ifdef __ANDROID__
-    lv_obj_t* scale_btn = lv_btn_create(header);
-    lv_obj_set_size(scale_btn, PT_SZ(74), PT_SZ(26));
-    lv_obj_set_style_bg_color(scale_btn, lv_color_hex(0x333333), LV_PART_MAIN);
-    lv_obj_t* scale_label = lv_label_create(scale_btn);
-    lv_label_set_text(scale_label, "Scale");
-    lv_obj_set_style_text_font(scale_label, &lv_font_montserrat_12, 0);
-    lv_obj_center(scale_label);
-    lv_obj_add_event_cb(scale_btn, scale_btn_cb, LV_EVENT_CLICKED, NULL);
-
     lv_obj_t* spools_btn = lv_btn_create(header);
     lv_obj_set_size(spools_btn, PT_SZ(78), PT_SZ(26));
     lv_obj_set_style_bg_color(spools_btn, lv_color_hex(0x333333), LV_PART_MAIN);
