@@ -4,6 +4,7 @@
 #include "ui_spools.h"
 #include "ui_printer.h"
 #include "spool_db.h"
+#include "history.h"        // print log + cost per print
 #include "scale_client.h"   // read the live scale weight for empty-spool weighing
 #include <lvgl.h>
 #include <cstdio>
@@ -157,6 +158,92 @@ void spools_live_loop() {
         if (g_row_lbl[i]) { char b[96]; format_spool_row(b, sizeof(b), g_spools[i]); lv_label_set_text(g_row_lbl[i], b); }
 }
 
+// --- print history / cost per project ------------------------------------
+static void history_back_cb(lv_event_t*) { create_spools_ui(); }
+
+void create_history_ui() {
+    if (g_screen) { lv_obj_del(g_screen); g_screen = nullptr; }
+    g_kb = nullptr;
+    scale_set_polling(false);
+
+    g_screen = mk_screen();
+    lv_obj_t* root = mk_root(g_screen, false);
+
+    // Header: title + Back
+    lv_obj_t* header = lv_obj_create(root);
+    lv_obj_set_size(header, lv_pct(100), PT_SZ(42));
+    lv_obj_set_style_bg_opa(header, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_border_width(header, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(header, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_gap(header, PT_SZ(8), LV_PART_MAIN);
+    lv_obj_set_flex_flow(header, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(header, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_clear_flag(header, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_t* title = lv_label_create(header);
+    lv_label_set_text(title, "Historie / kosten");
+    lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
+    lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
+    lv_obj_set_flex_grow(title, 1);
+    mk_btn(header, "Back", 0x333333, history_back_cb, nullptr, 80, 34);
+
+    // Summary: number of logged prints + total cost
+    lv_obj_t* sum = lv_label_create(root);
+    lv_label_set_text_fmt(sum, "%d prints in het logboek   -   totaal EUR %.2f",
+                          g_hist_count, g_hist_total_cost);
+    lv_obj_set_style_text_font(sum, &lv_font_montserrat_18, 0);
+    lv_obj_set_style_text_color(sum, lv_color_hex(0x2ecc71), 0);
+
+    // Scrollable list, newest first
+    lv_obj_t* list = lv_obj_create(root);
+    lv_obj_set_width(list, lv_pct(100));
+    lv_obj_set_flex_grow(list, 1);
+    lv_obj_set_style_bg_opa(list, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_border_width(list, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(list, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_row(list, PT_SZ(6), LV_PART_MAIN);
+    lv_obj_set_flex_flow(list, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_scroll_dir(list, LV_DIR_VER);
+
+    if (g_hist_count == 0) {
+        lv_obj_t* e = lv_label_create(list);
+        lv_label_set_text(e, "Nog geen prints in het logboek.");
+        lv_obj_set_style_text_color(e, lv_color_hex(0x777777), 0);
+    }
+    for (int i = 0; i < g_hist_count; i++) {
+        PrintRec& r = g_history[i];
+        lv_obj_t* row = lv_obj_create(list);
+        lv_obj_set_size(row, lv_pct(100), PT_SZ(46));
+        lv_obj_set_style_bg_color(row, lv_color_hex(0x1c2229), LV_PART_MAIN);
+        lv_obj_set_style_border_width(row, 0, LV_PART_MAIN);
+        lv_obj_set_style_pad_hor(row, PT_SZ(10), LV_PART_MAIN);
+        lv_obj_set_style_pad_ver(row, 0, LV_PART_MAIN);
+        lv_obj_set_style_pad_gap(row, PT_SZ(8), LV_PART_MAIN);
+        lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
+        lv_obj_set_flex_align(row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+        lv_obj_clear_flag(row, LV_OBJ_FLAG_SCROLLABLE);
+
+        lv_obj_t* mark = lv_label_create(row);
+        lv_label_set_text(mark, r.ok ? LV_SYMBOL_OK : LV_SYMBOL_CLOSE);
+        lv_obj_set_style_text_color(mark, lv_color_hex(r.ok ? 0x2ecc71 : 0xe74c3c), 0);
+
+        lv_obj_t* nm = lv_label_create(row);
+        lv_label_set_text_fmt(nm, "%s   %s", r.name, r.when);
+        lv_obj_set_style_text_font(nm, &lv_font_montserrat_14, 0);
+        lv_obj_set_style_text_color(nm, lv_color_hex(0xFFFFFF), 0);
+        lv_obj_set_flex_grow(nm, 1);
+        lv_label_set_long_mode(nm, LV_LABEL_LONG_DOT);
+
+        lv_obj_t* cost = lv_label_create(row);
+        if (r.cost > 0) lv_label_set_text_fmt(cost, "%.0f g   EUR %.2f", r.grams, r.cost);
+        else            lv_label_set_text_fmt(cost, "%.0f g", r.grams);
+        lv_obj_set_style_text_font(cost, &lv_font_montserrat_14, 0);
+        lv_obj_set_style_text_color(cost, lv_color_hex(0xdddddd), 0);
+    }
+
+    lv_scr_load(g_screen);
+}
+static void history_cb(lv_event_t*) { create_history_ui(); }
+
 void create_spools_ui() {
     if (g_screen) { lv_obj_del(g_screen); g_screen = nullptr; }
     g_kb = nullptr;
@@ -182,6 +269,7 @@ void create_spools_ui() {
     lv_obj_set_flex_grow(title, 1);
     mk_btn(header, "Nieuwe rol", 0x27ae60, new_cb, nullptr, 130, 34);
     mk_btn(header, "Lege spoelen", 0x555555, empties_cb, nullptr, 140, 34);
+    mk_btn(header, "Historie", 0x3465a4, history_cb, nullptr, 120, 34);
     mk_btn(header, "Back", 0x333333, back_cb, nullptr, 80, 34);
 
     // Scrollable list of spools

@@ -7,4 +7,7 @@
 // an AMS slot (weight tracking + printer AMS over MQTT).
 void create_spools_ui();
 
+// The print history / cost-per-print screen (reachable from the Spools screen).
+void create_history_ui();
+
 #endif
