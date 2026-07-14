@@ -449,6 +449,15 @@ static void handle_conn(int fd) {
         else send_resp(fd, "500 Error", "text/plain", "", 0);
         return;
     }
+    if (!strcmp(path, "/delete")) {          // delete one file over FTP (DELE)
+        char pth[220];
+        parse_query(query, "path", pth, sizeof(pth));
+        if (!pth[0]) { send_resp(fd, "400 Bad Request", "text/plain; charset=utf-8", "geen pad", 8); return; }
+        String err;
+        if (bambu_ftp_delete(pth, &err)) send_resp(fd, "200 OK", "text/plain; charset=utf-8", "verwijderd", 10);
+        else { String m = "fout: " + err; send_resp(fd, "500 Error", "text/plain; charset=utf-8", m.c_str(), (int)m.length()); }
+        return;
+    }
     if (!strcmp(path, "/cmd")) {
         char a[16], sbuf[16];
         parse_query(query, "a", a, sizeof(a));

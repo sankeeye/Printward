@@ -493,3 +493,39 @@ bool bambu_ftp_download(const char* full_path, ftp_download_cb cb, void* ctx,
     if (aborted) { *err = "aborted"; return false; }
     return total > 0;
 }
+
+// -----------------------------------------------------------------------------
+//  File delete (DELE) - control channel only, no data connection
+// -----------------------------------------------------------------------------
+bool bambu_ftp_delete(const char* full_path, String* err) {
+    if (strlen(g_printer_ip) == 0) { if (err) *err = "No printer IP configured yet"; return false; }
+    ftp_use_psram_tls();
+
+    String fp = full_path ? String(full_path) : String("");
+    int slash = fp.lastIndexOf('/');
+    String dir  = (slash > 0) ? fp.substring(0, slash) : String("");
+    String name = (slash >= 0) ? fp.substring(slash + 1) : fp;
+    if (name.length() == 0) { if (err) *err = "empty name"; return false; }
+
+    FtpConn ctrl; String cerr;
+    if (!ftpc_connect(ctrl, g_printer_ip, 990, nullptr, &cerr)) {
+        if (err) *err = "control connect failed (" + cerr + ")"; ftpc_close(ctrl); return false;
+    }
+    auto fail = [&](const String& msg) -> bool { if (err) *err = msg; ftpc_close(ctrl); return false; };
+
+    String resp; int code;
+    code = ftp_read_reply(ctrl, &resp);
+    if (code < 200 || code >= 300) return fail("no FTP greeting");
+    code = ftp_send_cmd(ctrl, "USER bblp", &resp);
+    if (code == 331) code = ftp_send_cmd(ctrl, String("PASS ") + g_printer_access_code, &resp);
+    if (code != 230) return fail("FTP login failed");
+    if (dir.length() > 0 && dir != "/") {
+        code = ftp_send_cmd(ctrl, String("CWD ") + dir, &resp);
+        if (code < 200 || code >= 300) return fail("CWD \"" + dir + "\" failed: " + resp);
+    }
+    code = ftp_send_cmd(ctrl, String("DELE ") + name, &resp);
+    ftp_send_cmd(ctrl, "QUIT", &resp);
+    ftpc_close(ctrl);
+    if (code < 200 || code >= 300) { if (err) *err = "DELE \"" + name + "\" failed: " + resp; return false; }
+    return true;
+}

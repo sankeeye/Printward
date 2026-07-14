@@ -122,7 +122,7 @@ section#spools{max-width:1040px}
 </section>
 
 <section id="files">
- <div class="fbar"><button id="fUp">⬆ Up</button><span id="fpath">/</span><button id="fRef">↻</button></div>
+ <div class="fbar"><button id="fUp">⬆ Up</button><span id="fpath">/</span><button id="fRef">↻</button><button id="fDel" style="display:none;background:#a40000;margin-left:auto">Verwijder</button></div>
  <div id="flist" class="muted">…</div>
 </section>
 
@@ -303,17 +303,24 @@ function loadFiles(path){curPath=path;$('fpath').textContent=path;$('flist').inn
   var h='';
   d.items.forEach(function(it){
    if(it.dir)h+='<div class="fitem" data-dir="'+it.name+'"><b>📁 '+it.name+'</b><span></span></div>';
-   else h+='<div class="fitem"><span>📄 '+it.name+'</span><span class=muted>'+fmtSize(it.size)+'</span><button class="fstart" data-f="'+it.name+'">Start</button></div>';
+   else h+='<div class="fitem"><input type="checkbox" class="fsel" data-p="'+joinPath(path,it.name)+'" style="width:20px;height:20px;flex:0 0 auto"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">📄 '+it.name+'</span><span class=muted>'+fmtSize(it.size)+'</span><button class="fstart" data-f="'+it.name+'">Start</button></div>';
   });
   $('flist').innerHTML=h||'<div class=muted>leeg</div>';
   document.querySelectorAll('.fitem[data-dir]').forEach(function(el){el.onclick=function(){loadFiles(joinPath(path,el.dataset.dir));};});
   document.querySelectorAll('.fstart').forEach(function(el){el.onclick=function(e){e.stopPropagation();
    if(confirm('Print starten: '+el.dataset.f+' ?\n(kan door printer-firmware geweigerd worden)'))
     fetch('/start?path='+encodeURIComponent(joinPath(path,el.dataset.f))).then(function(r){return r.text();}).then(function(t){alert(t);});};});
+  document.querySelectorAll('.fsel').forEach(function(el){el.onchange=fSelUpd;});fSelUpd();
  }).catch(function(){$('flist').innerHTML='<div class=muted>geen verbinding</div>';});
 }
 $('fUp').onclick=function(){var p=curPath.replace(/\/[^\/]*\/?$/,'');loadFiles(p||'/');};
 $('fRef').onclick=function(){loadFiles(curPath);};
+function fSelPaths(){var a=[];document.querySelectorAll('.fsel:checked').forEach(function(el){a.push(el.dataset.p);});return a;}
+function fSelUpd(){var n=fSelPaths().length;var b=$('fDel');if(b){b.style.display=n?'inline-block':'none';b.textContent='Verwijder ('+n+')';}}
+$('fDel').onclick=function(){var ps=fSelPaths();if(!ps.length)return;
+ if(!confirm(ps.length+' bestand(en) definitief van de printer verwijderen?'))return;
+ var i=0;(function nxt(){if(i>=ps.length){loadFiles(curPath);return;}
+  fetch('/delete?path='+encodeURIComponent(ps[i])).then(function(){i++;nxt();}).catch(function(){i++;nxt();});})();};
 function amt(t){
  if(t.gram>=0){return '<div class="muted"'+(t.gram<lowG?' style="color:#e74c3c;font-weight:600"':'')+'>'+t.gram+' g</div>';}
  return '<div class="muted">'+(t.remain>=0?t.remain+'%':'–')+'</div>';

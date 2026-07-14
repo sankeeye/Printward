@@ -34,4 +34,7 @@ typedef bool (*ftp_download_cb)(const uint8_t* data, unsigned int len, void* ctx
 bool bambu_ftp_download(const char* full_path, ftp_download_cb cb, void* ctx,
                         uint32_t* out_bytes, String* err);
 
+// Delete a file on the printer over FTP (DELE). Returns false + err on failure.
+bool bambu_ftp_delete(const char* full_path, String* err);
+
 #endif
