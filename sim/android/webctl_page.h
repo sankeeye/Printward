@@ -246,14 +246,14 @@ section#spools{max-width:1040px}
   <div class="muted" style="font-size:12px;margin-top:8px">Installeer de gratis <b>ntfy</b>-app (of ntfy.sh in de browser) en abonneer op dit topic. Je krijgt een melding bij print klaar/mislukt en filament tekort.</div>
   <div id="cNtfyMsg" class="muted" style="margin-top:6px"></div>
  </div>
- <div class="card"><h3>Statistieken</h3>
+</section>
+
+<section id="hist"><div class="card"><h3>Statistieken</h3>
   <div class="muted" style="font-size:16px">Voltooide prints: <b id="stPrints">–</b></div>
   <div class="muted" style="font-size:16px;margin-top:4px">Totaal filament gebruikt: <b id="stUsed">–</b></div>
   <div class="muted" style="font-size:16px;margin-top:4px">Totale filament-uitgave: <b id="stCost">–</b></div>
  </div>
-</section>
-
-<section id="hist"><div class="card"><h3>Historie / kosten</h3>
+ <div class="card"><h3>Historie / kosten</h3>
  <div id="histTotal" class="muted" style="font-size:16px;margin-bottom:8px"></div>
  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
   <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="hArch" onchange="renderHist()" style="width:18px;height:18px">Gearchiveerd tonen</label>
