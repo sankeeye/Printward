@@ -303,13 +303,12 @@ function loadFiles(path){curPath=path;$('fpath').textContent=path;$('flist').inn
   var h='';
   d.items.forEach(function(it){
    if(it.dir)h+='<div class="fitem" data-dir="'+it.name+'"><b>📁 '+it.name+'</b><span></span></div>';
-   else h+='<div class="fitem"><input type="checkbox" class="fsel" data-p="'+joinPath(path,it.name)+'" style="width:20px;height:20px;flex:0 0 auto"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">📄 '+it.name+'</span><span class=muted>'+fmtSize(it.size)+'</span><button class="fstart" data-f="'+it.name+'">Start</button></div>';
+   else {var fp=joinPath(path,it.name);
+    var th=/\.3mf$/i.test(it.name)?'<img loading="lazy" src="/thumb?path='+encodeURIComponent(fp)+'" style="width:46px;height:46px;object-fit:cover;border-radius:6px;background:#0d1117;flex:0 0 auto" onerror="this.style.display=\'none\'">':'';
+    h+='<div class="fitem"><input type="checkbox" class="fsel" data-p="'+fp+'" style="width:20px;height:20px;flex:0 0 auto">'+th+'<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">📄 '+it.name+'</span><span class=muted>'+fmtSize(it.size)+'</span></div>';}
   });
   $('flist').innerHTML=h||'<div class=muted>leeg</div>';
   document.querySelectorAll('.fitem[data-dir]').forEach(function(el){el.onclick=function(){loadFiles(joinPath(path,el.dataset.dir));};});
-  document.querySelectorAll('.fstart').forEach(function(el){el.onclick=function(e){e.stopPropagation();
-   if(confirm('Print starten: '+el.dataset.f+' ?\n(kan door printer-firmware geweigerd worden)'))
-    fetch('/start?path='+encodeURIComponent(joinPath(path,el.dataset.f))).then(function(r){return r.text();}).then(function(t){alert(t);});};});
   document.querySelectorAll('.fsel').forEach(function(el){el.onchange=fSelUpd;});fSelUpd();
  }).catch(function(){$('flist').innerHTML='<div class=muted>geen verbinding</div>';});
 }

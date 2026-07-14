@@ -249,10 +249,10 @@ static void row_click_cb(lv_event_t* e) {
     if (entry.is_dir) {
         g_current_path = join_path(g_current_path, entry.name);
         request_list_refresh();
-    } else if (has_ext(entry.name, ".3mf") || has_ext(entry.name, ".gcode")) {
-        open_confirm_modal(entry);
     } else {
-        lv_label_set_text(g_status_label, "Not a printable file (only .3mf / .gcode)");
+        // Starting a print is blocked by Bambu firmware >= 01.08 from third-party
+        // tools, so this is browse-only; start prints from Studio/Handy.
+        lv_label_set_text(g_status_label, "Printen gaat via Bambu Studio/Handy (firmware blokkeert start van derden).");
     }
 }
 
