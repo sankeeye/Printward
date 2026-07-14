@@ -230,6 +230,7 @@ int main(int argc, char **argv) {
     webctl_start();                          // LAN control page (http://<ip>:8080)
     scale_client_start();                    // background poller for the PandaScale
     create_screensaver();                    // idle dashboard (top layer, hidden)
+    filament_roll_picker_init();             // roll picker on the top layer (opened from the Dashboard AMS slots)
     pt_set_backlight(g_brightness, false);   // dim overlay sits above the screensaver
 #else
     sim_load_mock_data();
@@ -276,7 +277,6 @@ int main(int argc, char **argv) {
 #ifdef __ANDROID__
             update_move_ui();   // refresh live nozzle temp if the Move screen is open
             update_weigh_ui();  // refresh live weight if the Scale screen is open
-            update_filament_ui(); // live remaining grams as the print consumes
 #endif
         }
         SDL_Delay(5);

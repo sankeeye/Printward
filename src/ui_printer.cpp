@@ -8,6 +8,7 @@
 #ifdef __ANDROID__
 #include "ui_weigh.h"    // "Scale" screen (tablet only)
 #include "ui_spools.h"   // "Spools" screen (tablet only)
+#include "filament_track.h"  // filament_remaining() for the per-slot grams (tablet only)
 #endif
 #include "pt/pt_display.h"
 #include "ui_scale.h"   // tablet font scaling (Android only)
@@ -37,6 +38,8 @@ static lv_obj_t* g_ams_row = nullptr;
 static lv_obj_t* g_ams_boxes[AMS_MAX_UNITS] = {nullptr};
 static lv_obj_t* g_ams_tray_dots[AMS_MAX_UNITS][AMS_MAX_TRAYS] = {{nullptr}};
 static lv_obj_t* g_ams_tray_labels[AMS_MAX_UNITS][AMS_MAX_TRAYS] = {{nullptr}};
+static lv_obj_t* g_ams_tray_grams[AMS_MAX_UNITS][AMS_MAX_TRAYS] = {{nullptr}};
+static lv_obj_t* g_ams_humidity_labels[AMS_MAX_UNITS] = {nullptr};
 static lv_obj_t* g_ext_row = nullptr;
 static lv_obj_t* g_ext_swatch = nullptr;
 static lv_obj_t* g_ext_type_label = nullptr;
@@ -167,10 +170,6 @@ static void settings_btn_cb(lv_event_t* e) {
     create_settings_ui();
 }
 
-static void filament_btn_cb(lv_event_t* e) {
-    create_filament_ui();
-}
-
 static void files_btn_cb(lv_event_t* e) {
     create_files_ui();
 }
@@ -185,6 +184,9 @@ static void scale_btn_cb(lv_event_t* e) {
 }
 static void spools_btn_cb(lv_event_t* e) {
     create_spools_ui();
+}
+static void ams_cell_cb(lv_event_t* e) {   // tap an AMS/external slot -> pick a roll
+    filament_open_roll_picker((int)(uintptr_t)lv_event_get_user_data(e));
 }
 #endif
 
@@ -277,15 +279,6 @@ void create_printer_ui() {
     lv_obj_add_event_cb(spools_btn, spools_btn_cb, LV_EVENT_CLICKED, NULL);
 #endif
 
-    lv_obj_t* filament_btn = lv_btn_create(header);
-    lv_obj_set_size(filament_btn, PT_SZ(90), PT_SZ(26));
-    lv_obj_set_style_bg_color(filament_btn, lv_color_hex(0x333333), LV_PART_MAIN);
-    lv_obj_t* filament_label = lv_label_create(filament_btn);
-    lv_label_set_text(filament_label, "Filament");
-    lv_obj_set_style_text_font(filament_label, &lv_font_montserrat_12, 0);
-    lv_obj_center(filament_label);
-    lv_obj_add_event_cb(filament_btn, filament_btn_cb, LV_EVENT_CLICKED, NULL);
-
     lv_obj_t* files_btn = lv_btn_create(header);
     lv_obj_set_size(files_btn, PT_SZ(80), PT_SZ(26));
     lv_obj_set_style_bg_color(files_btn, lv_color_hex(0x333333), LV_PART_MAIN);
@@ -363,7 +356,7 @@ void create_printer_ui() {
     // material type text). Boxes don't wrap internally - if more than ~2
     // units are present the row itself scrolls horizontally instead.
     g_ams_row = lv_obj_create(root);
-    lv_obj_set_size(g_ams_row, lv_pct(100), PT_SZ(80));
+    lv_obj_set_size(g_ams_row, lv_pct(100), PT_SZ(94));
     lv_obj_set_style_bg_opa(g_ams_row, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(g_ams_row, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(g_ams_row, 0, LV_PART_MAIN);
@@ -375,32 +368,67 @@ void create_printer_ui() {
 
     for (int u = 0; u < AMS_MAX_UNITS; u++) {
         lv_obj_t* box = lv_obj_create(g_ams_row);
-        lv_obj_set_size(box, PT_SZ(280), PT_SZ(80));
+        lv_obj_set_size(box, PT_SZ(280), PT_SZ(94));
         lv_obj_set_style_bg_color(box, lv_color_hex(0x1c1c1c), LV_PART_MAIN);
         lv_obj_set_style_border_color(box, lv_color_hex(0x333333), LV_PART_MAIN);
-        lv_obj_set_style_pad_all(box, 6, LV_PART_MAIN);
-        lv_obj_set_style_pad_gap(box, 4, LV_PART_MAIN);
-        lv_obj_set_flex_flow(box, LV_FLEX_FLOW_ROW);
-        lv_obj_set_flex_align(box, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+        lv_obj_set_style_pad_hor(box, 6, LV_PART_MAIN);
+        lv_obj_set_style_pad_ver(box, 4, LV_PART_MAIN);
+        lv_obj_set_style_pad_gap(box, 2, LV_PART_MAIN);
+        lv_obj_set_flex_flow(box, LV_FLEX_FLOW_COLUMN);
+        lv_obj_set_flex_align(box, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER);
         lv_obj_clear_flag(box, LV_OBJ_FLAG_SCROLLABLE);
         g_ams_boxes[u] = box;
+
+        // header row: "AMS n" on the left, humidity on the right
+        lv_obj_t* head = lv_obj_create(box);
+        lv_obj_set_size(head, lv_pct(100), PT_SZ(16));
+        lv_obj_set_style_bg_opa(head, LV_OPA_TRANSP, LV_PART_MAIN);
+        lv_obj_set_style_border_width(head, 0, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(head, 0, LV_PART_MAIN);
+        lv_obj_clear_flag(head, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_t* unm = lv_label_create(head);
+        lv_label_set_text_fmt(unm, "AMS %d", u + 1);
+        lv_obj_set_style_text_font(unm, &lv_font_montserrat_12, 0);
+        lv_obj_set_style_text_color(unm, lv_color_hex(0x999999), 0);
+        lv_obj_align(unm, LV_ALIGN_LEFT_MID, 0, 0);
+        lv_obj_t* hum = lv_label_create(head);
+        lv_label_set_text(hum, "");
+        lv_obj_set_style_text_font(hum, &lv_font_montserrat_12, 0);
+        lv_obj_align(hum, LV_ALIGN_RIGHT_MID, 0, 0);
+        g_ams_humidity_labels[u] = hum;
+
+        // tray row: the 4 slot cells side by side (each tappable -> roll picker)
+        lv_obj_t* tray_row = lv_obj_create(box);
+        lv_obj_set_size(tray_row, lv_pct(100), PT_SZ(68));
+        lv_obj_set_style_bg_opa(tray_row, LV_OPA_TRANSP, LV_PART_MAIN);
+        lv_obj_set_style_border_width(tray_row, 0, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(tray_row, 0, LV_PART_MAIN);
+        lv_obj_set_flex_flow(tray_row, LV_FLEX_FLOW_ROW);
+        lv_obj_set_flex_align(tray_row, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+        lv_obj_clear_flag(tray_row, LV_OBJ_FLAG_SCROLLABLE);
+
         for (int t = 0; t < AMS_MAX_TRAYS; t++) {
-            lv_obj_t* cell = lv_obj_create(box);
+            lv_obj_t* cell = lv_obj_create(tray_row);
             lv_obj_set_size(cell, PT_SZ(62), PT_SZ(68));
             lv_obj_set_style_bg_opa(cell, LV_OPA_TRANSP, LV_PART_MAIN);
             lv_obj_set_style_border_width(cell, 0, LV_PART_MAIN);
             lv_obj_set_style_pad_all(cell, 0, LV_PART_MAIN);
-            lv_obj_set_style_pad_gap(cell, 3, LV_PART_MAIN);
+            lv_obj_set_style_pad_gap(cell, 2, LV_PART_MAIN);
             lv_obj_set_flex_flow(cell, LV_FLEX_FLOW_COLUMN);
             lv_obj_set_flex_align(cell, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
             lv_obj_clear_flag(cell, LV_OBJ_FLAG_SCROLLABLE);
-
+#ifdef __ANDROID__
+            lv_obj_add_flag(cell, LV_OBJ_FLAG_CLICKABLE);
+            lv_obj_add_event_cb(cell, ams_cell_cb, LV_EVENT_CLICKED,
+                                (void*)(uintptr_t)(u * AMS_MAX_TRAYS + t));
+#endif
             lv_obj_t* dot = lv_obj_create(cell);
-            lv_obj_set_size(dot, PT_SZ(50), PT_SZ(34));
+            lv_obj_set_size(dot, PT_SZ(50), PT_SZ(30));
             lv_obj_set_style_radius(dot, 6, LV_PART_MAIN);
             lv_obj_set_style_border_width(dot, 1, LV_PART_MAIN);
             lv_obj_set_style_border_color(dot, lv_color_hex(0x555555), LV_PART_MAIN);
             lv_obj_set_style_bg_color(dot, lv_color_hex(0x333333), LV_PART_MAIN);
+            lv_obj_clear_flag(dot, LV_OBJ_FLAG_CLICKABLE);
             lv_obj_clear_flag(dot, LV_OBJ_FLAG_SCROLLABLE);
             g_ams_tray_dots[u][t] = dot;
 
@@ -409,6 +437,12 @@ void create_printer_ui() {
             lv_obj_set_style_text_font(type_label, &lv_font_montserrat_12, 0);
             lv_obj_set_style_text_color(type_label, lv_color_hex(0xAAAAAA), 0);
             g_ams_tray_labels[u][t] = type_label;
+
+            lv_obj_t* grams = lv_label_create(cell);
+            lv_label_set_text(grams, "");
+            lv_obj_set_style_text_font(grams, &lv_font_montserrat_12, 0);
+            lv_obj_set_style_text_color(grams, lv_color_hex(0x777777), 0);
+            g_ams_tray_grams[u][t] = grams;
         }
         lv_obj_add_flag(box, LV_OBJ_FLAG_HIDDEN);
     }
@@ -442,6 +476,10 @@ void create_printer_ui() {
     lv_obj_set_style_border_color(g_ext_swatch, lv_color_hex(0x555555), LV_PART_MAIN);
     lv_obj_set_style_bg_color(g_ext_swatch, lv_color_hex(0x333333), LV_PART_MAIN);
     lv_obj_clear_flag(g_ext_swatch, LV_OBJ_FLAG_SCROLLABLE);
+#ifdef __ANDROID__
+    lv_obj_add_flag(g_ext_swatch, LV_OBJ_FLAG_CLICKABLE);   // tap -> pick a roll for the external spool
+    lv_obj_add_event_cb(g_ext_swatch, ams_cell_cb, LV_EVENT_CLICKED, (void*)(uintptr_t)254);
+#endif
 
     g_ext_type_label = lv_label_create(ext_inner);
     lv_label_set_text(g_ext_type_label, "-");
@@ -569,6 +607,20 @@ void update_printer_ui() {
             continue;
         }
         lv_obj_clear_flag(g_ams_boxes[u], LV_OBJ_FLAG_HIDDEN);
+        if (g_ams_humidity_labels[u]) {
+            // Bambu humidity grade 1-5: 1 = dry (good) ... 5 = wet (bad).
+            int hu = unit.humidity;
+            if (hu >= 1) {
+                const char* hl; uint32_t hc;
+                if (hu <= 2)      { hl = "droog";    hc = 0x2ecc71; }
+                else if (hu == 3) { hl = "redelijk"; hc = 0xf39c12; }
+                else              { hl = "vochtig";  hc = 0xe74c3c; }
+                lv_label_set_text_fmt(g_ams_humidity_labels[u], "Vocht: %s", hl);
+                lv_obj_set_style_text_color(g_ams_humidity_labels[u], lv_color_hex(hc), 0);
+            } else {
+                lv_label_set_text(g_ams_humidity_labels[u], "");
+            }
+        }
         for (int t = 0; t < AMS_MAX_TRAYS; t++) {
             AmsTraySlot& slot = unit.trays[t];
             lv_obj_t* dot = g_ams_tray_dots[u][t];
@@ -588,6 +640,13 @@ void update_printer_ui() {
                     lv_obj_set_style_text_color(label, lv_color_hex(0x555555), 0);
                 }
             }
+#ifdef __ANDROID__
+            if (g_ams_tray_grams[u][t]) {
+                float rem = filament_remaining(u * AMS_MAX_TRAYS + t);
+                if (rem >= 0) lv_label_set_text_fmt(g_ams_tray_grams[u][t], "%.0f g", rem);
+                else          lv_label_set_text(g_ams_tray_grams[u][t], "");
+            }
+#endif
         }
     }
 

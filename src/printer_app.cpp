@@ -83,7 +83,6 @@ void PrinterApp::loop() {
     if (now - last_ui_refresh > 500) {
         last_ui_refresh = now;
         update_printer_ui();
-        update_filament_ui();
     }
 
     if (g_ota_screen_requested) {

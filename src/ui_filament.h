@@ -2,14 +2,15 @@
 #ifndef UI_FILAMENT_H
 #define UI_FILAMENT_H
 
-// Builds (or rebuilds) the Filament screen, showing each AMS tray's material
-// type, color, and estimated remaining amount, plus the external/manual
-// spool holder - and switches to it.
-void create_filament_ui();
+#ifdef __ANDROID__
+// One-time: build the roll-picker modal on lv_layer_top() (screen-independent),
+// so it works over the Dashboard after the Filament tab was removed. Call once
+// at startup, after the display/LVGL is up.
+void filament_roll_picker_init();
 
-// Call periodically (same cadence as update_printer_ui()) while this screen
-// might be visible, to refresh the live remaining-% values. Cheap no-op if
-// the screen hasn't been built yet.
-void update_filament_ui();
+// Open the roll picker for an AMS/external slot (u*AMS_MAX_TRAYS + t, or 254 for
+// the external spool). Tapping a Dashboard AMS slot calls this.
+void filament_open_roll_picker(int slot);
+#endif
 
 #endif
