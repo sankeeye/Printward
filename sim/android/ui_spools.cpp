@@ -136,15 +136,29 @@ static void del_cb(lv_event_t* e) { spool_delete((int)(intptr_t)lv_event_get_use
 // while a print runs on that slot) + cost. Shared by the build and the tick.
 static lv_obj_t* g_row_lbl[SPOOL_MAX] = {0};
 static int       g_row_n = 0;
+// Rough remaining length in metres from grams, using each material's density
+// (1.75 mm filament: metres = grams / (density_g_cm3 * 2.4053)).
+static float roll_meters(float grams, const char* mat) {
+    float d = 1.24f;   // PLA default
+    if      (!strcmp(mat, "PETG")) d = 1.27f;
+    else if (!strcmp(mat, "ABS"))  d = 1.04f;
+    else if (!strcmp(mat, "ASA"))  d = 1.07f;
+    else if (!strcmp(mat, "TPU"))  d = 1.21f;
+    else if (!strcmp(mat, "PC"))   d = 1.20f;
+    else if (!strcmp(mat, "PA"))   d = 1.14f;
+    else if (!strcmp(mat, "PVA"))  d = 1.23f;
+    return d > 0 ? grams / (d * 2.4053f) : 0.0f;
+}
 static void format_spool_row(char* buf, int len, const Spool& s) {
     char sl[16]; spool_slot_label(s.slot, sl, sizeof(sl));
     char slp[24] = "";
     if (sl[0]) snprintf(slp, sizeof(slp), "  [%s]", sl);
     float g = spool_live_grams(s);
+    float m = roll_meters(g, s.material);
     if (s.price_kg > 0)
-        snprintf(buf, len, "%s  %s%s  %.0f g  EUR %.2f", s.name, s.material, slp, g, g * s.price_kg / 1000.0f);
+        snprintf(buf, len, "%s  %s%s  %.0f g (~%.0f m)  EUR %.2f", s.name, s.material, slp, g, m, g * s.price_kg / 1000.0f);
     else
-        snprintf(buf, len, "%s  %s%s  %.0f g", s.name, s.material, slp, g);
+        snprintf(buf, len, "%s  %s%s  %.0f g (~%.0f m)", s.name, s.material, slp, g, m);
 }
 // Called from the main loop (~1 Hz): refresh the visible grams without rebuilding
 // the screen, so a printing slot ticks down live in the Spools list too.
@@ -328,6 +342,21 @@ void create_spools_ui() {
     mk_btn(header, "Lege spoelen", 0x555555, empties_cb, nullptr, 140, 34);
     mk_btn(header, "Historie", 0x3465a4, history_cb, nullptr, 120, 34);
     mk_btn(header, "Back", 0x333333, back_cb, nullptr, 80, 34);
+
+    // Inventory summary: number of rolls, total kg, total value.
+    {
+        float totG = 0, totV = 0;
+        for (int i = 0; i < g_spool_count; i++) {
+            float g = spool_live_grams(g_spools[i]);
+            totG += g;
+            if (g_spools[i].price_kg > 0) totV += g * g_spools[i].price_kg / 1000.0f;
+        }
+        lv_obj_t* inv = lv_label_create(root);
+        if (totV > 0) lv_label_set_text_fmt(inv, "%d rollen   -   %.2f kg   -   EUR %.2f", g_spool_count, totG / 1000.0f, totV);
+        else          lv_label_set_text_fmt(inv, "%d rollen   -   %.2f kg", g_spool_count, totG / 1000.0f);
+        lv_obj_set_style_text_font(inv, &lv_font_montserrat_14, 0);
+        lv_obj_set_style_text_color(inv, lv_color_hex(0x2ecc71), 0);
+    }
 
     // Scrollable list of spools
     lv_obj_t* list = lv_obj_create(root);

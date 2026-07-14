@@ -169,6 +169,7 @@ section#spools{max-width:1040px}
 </section>
 
 <section id="spools">
+ <div class="card" id="spInv" style="display:none"></div>
  <div class="sprow">
  <div class="card" style="flex:1 1 360px"><h3 id="spTitle">Nieuwe rol</h3>
   <div class="field" style="margin-bottom:14px"><label>Naam / merk</label><input type="text" id="spName" placeholder="bv. Bambu PLA Zwart"></div>
@@ -214,6 +215,9 @@ section#spools{max-width:1040px}
  <div class="card"><h3>Rollen</h3>
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
    <input type="text" id="spSearch" placeholder="Zoek op naam of materiaal…" oninput="renderSpList()" style="flex:1;min-width:150px;padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff;font-size:15px">
+   <select id="spFMat" onchange="renderSpList()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="">alle materialen</option></select>
+   <select id="spSort" onchange="renderSpList()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="name">naam A-Z</option><option value="low">weinig &rarr; veel</option><option value="high">veel &rarr; weinig</option><option value="price">prijs/kg</option><option value="mat">materiaal</option></select>
+   <label class="muted" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="spLow" onchange="renderSpList()" style="width:18px;height:18px">bijna leeg</label>
    <label class="muted" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="spAll" onchange="toggleAll(this.checked)" style="width:18px;height:18px"> alles</label>
   </div>
   <div id="spBulk" style="display:none;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;background:var(--panel2);border-radius:8px;padding:9px 12px">
@@ -529,22 +533,55 @@ setInterval(function(){if($('histList')&&$('histList').offsetParent!==null)loadH
 function spMsg(t){$('spMsg').textContent=t;}
 function spSlotOpts(){var o='';for(var u=0;u<2;u++)for(var t=0;t<4;t++){o+='<option value="'+(u*4+t)+'">AMS'+(u+1)+' T'+(t+1)+'</option>';}return o+'<option value="254">Externe spoel</option>';}
 function loadSpools(){
- fetch('/spools').then(function(r){return r.json();}).then(function(list){spCache=list;renderSpList();})
+ fetch('/spools').then(function(r){return r.json();}).then(function(list){spCache=list;
+  var mats={};list.forEach(function(s){if(s.material)mats[s.material]=1;});
+  var sel=$('spFMat');if(sel){var cur=sel.value,o='<option value="">alle materialen</option>';Object.keys(mats).sort().forEach(function(m){o+='<option>'+m+'</option>';});sel.innerHTML=o;sel.value=cur;}
+  renderInv();renderSpList();})
  .catch(function(){$('spList').innerHTML='<div class="muted">geen tablet</div>';});
 }
-function renderSpList(){
+function mLen(g,mat){var d={PLA:1.24,PETG:1.27,ABS:1.04,ASA:1.07,TPU:1.21,PC:1.20,PA:1.14,PVA:1.23}[mat]||1.24;return g/(d*2.4053);}
+function spGrams(s){return (s.live!=null?s.live:s.rem)||0;}
+function renderInv(){
+ var box=$('spInv');if(!box)return;
+ if(!spCache.length){box.style.display='none';return;}
+ box.style.display='block';
+ var totG=0,totV=0,mm={};
+ spCache.forEach(function(s){var g=spGrams(s);totG+=g;if(s.price>0)totV+=g*s.price/1000;var k=s.material||'?';if(!mm[k])mm[k]={g:0,n:0,v:0};mm[k].g+=g;mm[k].n++;if(s.price>0)mm[k].v+=g*s.price/1000;});
+ var h='<h3>Voorraad</h3><div style="font-size:16px"><b>'+spCache.length+'</b> rollen &middot; <b>'+(totG/1000).toFixed(2)+' kg</b> filament'+(totV>0?' &middot; waarde <b>&euro; '+totV.toFixed(2)+'</b>':'')+'</div>';
+ var mk=Object.keys(mm).sort(function(a,b){return mm[b].g-mm[a].g;}),maxG=0;
+ mk.forEach(function(k){if(mm[k].g>maxG)maxG=mm[k].g;});
+ h+='<div style="margin-top:8px">';
+ mk.forEach(function(k){h+=bar(k+' <span class="muted">('+mm[k].n+')</span>',mm[k].g,maxG,(mm[k].g/1000).toFixed(2)+' kg'+(mm[k].v>0?' · € '+mm[k].v.toFixed(2):''));});
+ box.innerHTML=h+'</div>';
+}
+function spMatch(s){
  var q=(($('spSearch')&&$('spSearch').value)||'').toLowerCase();
+ var fmat=($('spFMat')&&$('spFMat').value)||'';
+ if(q&&(s.name+' '+s.material).toLowerCase().indexOf(q)<0)return false;
+ if(fmat&&s.material!==fmat)return false;
+ if($('spLow')&&$('spLow').checked&&!(spGrams(s)<lowG))return false;
+ return true;
+}
+function renderSpList(){
+ var sort=($('spSort')&&$('spSort').value)||'name';
+ var arr=spCache.filter(spMatch);
+ arr.sort(function(a,b){
+  if(sort==='low')return spGrams(a)-spGrams(b);
+  if(sort==='high')return spGrams(b)-spGrams(a);
+  if(sort==='price')return (b.price||0)-(a.price||0);
+  if(sort==='mat')return (a.material||'').localeCompare(b.material||'')||(a.name||'').localeCompare(b.name||'');
+  return (a.name||'').localeCompare(b.name||'');});
  var h='';
- spCache.forEach(function(s){
-  if(q&&(s.name+' '+s.material).toLowerCase().indexOf(q)<0)return;
-  var g=(s.live!=null?s.live:s.rem);
+ arr.forEach(function(s){
+  var g=spGrams(s),m=mLen(g,s.material);
   var sl=(s.slot!=null&&s.slot>=0)?' <span class="badge" style="background:#1e4e6e;color:#bfe3ff">'+slotName(s.slot)+'</span>':'';
+  var low=g<lowG?' <span class="badge" style="background:#5a2020;color:#ffd0d0">bijna leeg</span>':'';
   h+='<div class="rollcard"><input type="checkbox" '+(spSel[s.i]?'checked':'')+' onchange="selToggle('+s.i+',this.checked)" style="width:20px;height:20px;flex:0 0 auto">'
    +'<div style="width:38px;height:38px;border-radius:8px;flex:0 0 auto;border:1px solid #3a434d;background:'+s.rgb+'"></div>'
-   +'<div style="min-width:0"><div class="name">'+s.name+'<span class="badge">'+s.material+'</span>'+sl+'</div>'
+   +'<div style="min-width:0"><div class="name">'+s.name+'<span class="badge">'+s.material+'</span>'+sl+low+'</div>'
    +(s.note?'<div class="muted" style="font-size:12px">'+s.note+'</div>':'')
    +(s.price>0?'<div class="muted" style="font-size:12px">€ '+s.price.toFixed(2)+'/kg</div>':'')+'</div>'
-   +'<div class="grams">'+g+' g'+(s.price>0?'<div class="muted" style="font-size:12px;font-weight:400">€ '+(g*s.price/1000).toFixed(2)+'</div>':'')+'</div>'
+   +'<div class="grams">'+g+' g<div class="muted" style="font-size:12px;font-weight:400">&asymp; '+Math.round(m)+' m'+(s.price>0?' · € '+(g*s.price/1000).toFixed(2):'')+'</div></div>'
    +'<button class="iconbtn" title="Weeg de rol" onclick="spWeigh('+s.i+')">⚖</button>'
    +'<button class="iconbtn" title="Kopieer" onclick="spCopy('+s.i+')">⧉</button>'
    +'<button class="iconbtn" title="Bewerk" onclick="spEdit('+s.i+')">✎</button>'
@@ -556,7 +593,7 @@ function renderSpList(){
 function selToggle(i,c){if(c)spSel[i]=true;else delete spSel[i];updateBulk();}
 function selIds(){return Object.keys(spSel);}
 function updateBulk(){var bar=$('spBulk');if(!bar)return;var ids=selIds();bar.style.display=ids.length?'flex':'none';if($('spSelCount'))$('spSelCount').textContent=ids.length+' geselecteerd';}
-function toggleAll(c){spSel={};if(c){var q=(($('spSearch')&&$('spSearch').value)||'').toLowerCase();spCache.forEach(function(s){if(!q||(s.name+' '+s.material).toLowerCase().indexOf(q)>=0)spSel[s.i]=true;});}renderSpList();}
+function toggleAll(c){spSel={};if(c){spCache.forEach(function(s){if(spMatch(s))spSel[s.i]=true;});}renderSpList();}
 function clearSel(){spSel={};if($('spAll'))$('spAll').checked=false;renderSpList();}
 function bulkGo(qs){fetch('/spool_bulk?idx='+selIds().join(',')+'&'+qs).then(function(){spSel={};if($('spAll'))$('spAll').checked=false;setTimeout(loadSpools,300);});}
 function bulkDel(){if(confirm(selIds().length+' rollen verwijderen?'))bulkGo('act=del');}
