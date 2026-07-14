@@ -14,6 +14,7 @@ struct PrintRec {
     float grams;
     float cost;       // EUR
     int   ok;         // 1 = finished, 0 = failed
+    char  file[64];   // printed .3mf (in /cache) for an on-demand model preview
 };
 
 extern PrintRec g_history[HIST_MAX];

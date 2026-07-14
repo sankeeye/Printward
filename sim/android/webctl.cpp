@@ -468,10 +468,11 @@ static void build_history(char* o, int n) {
     p += snprintf(o + p, n - p, "[");
     for (int i = 0; i < g_hist_count; i++) {
         PrintRec& r = g_history[i];
-        char nm[96];
+        char nm[96], fl[96];
         json_escape(r.name, nm, sizeof(nm));
-        p += snprintf(o + p, n - p, "%s{\"when\":\"%s\",\"name\":\"%s\",\"grams\":%.0f,\"cost\":%.2f,\"ok\":%d}",
-            i ? "," : "", r.when, nm, r.grams, r.cost, r.ok);
+        json_escape(r.file, fl, sizeof(fl));
+        p += snprintf(o + p, n - p, "%s{\"when\":\"%s\",\"name\":\"%s\",\"grams\":%.0f,\"cost\":%.2f,\"ok\":%d,\"file\":\"%s\"}",
+            i ? "," : "", r.when, nm, r.grams, r.cost, r.ok, fl);
     }
     snprintf(o + p, n - p, "]");
 }

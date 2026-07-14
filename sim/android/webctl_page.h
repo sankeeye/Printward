@@ -278,9 +278,19 @@ function tab(n){
 function loadHistory(){fetch('/history').then(function(r){return r.json();}).then(function(list){
  var tot=0;list.forEach(function(r){tot+=r.cost||0;});
  if($('histTotal'))$('histTotal').innerHTML=list.length+' prints in het logboek &middot; totaal <b>&euro; '+tot.toFixed(2)+'</b>';
- var h='';if(!list.length)h='<div class="muted">nog geen prints</div>';
- list.forEach(function(r){h+='<div class="chiprow"><span style="color:'+(r.ok?'#2ecc71':'#e74c3c')+'">'+(r.ok?'✓':'✗')+'</span> <span><b>'+r.name+'</b> <span class="muted">'+r.when+'</span></span><span class="muted" style="margin-left:auto;white-space:nowrap">'+r.grams+' g'+(r.cost>0?' · €'+r.cost.toFixed(2):'')+'</span></div>';});
- $('histList').innerHTML=h;}).catch(function(){});}
+ if(!list.length){$('histList').style.display='block';$('histList').innerHTML='<div class="muted">nog geen prints</div>';return;}
+ var h='';
+ list.forEach(function(r){
+  var pv=r.file?'<button class="hprev" data-p="/cache/'+r.file+'" style="background:#2c3e50;color:#fff;border:0;border-radius:6px;padding:6px 10px;margin-top:8px;cursor:pointer;width:100%">Preview</button>':'';
+  h+='<div class="rollcard" style="flex-direction:column;align-items:stretch">'
+    +'<div style="display:flex;align-items:center;gap:8px"><span style="color:'+(r.ok?'#2ecc71':'#e74c3c')+'">'+(r.ok?'✓':'✗')+'</span><b style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+r.name+'</b></div>'
+    +'<div class="muted" style="font-size:12px">'+r.when+'</div>'
+    +'<div style="margin-top:4px">'+r.grams+' g'+(r.cost>0?' &middot; <b>&euro; '+r.cost.toFixed(2)+'</b>':'')+'</div>'+pv+'</div>';
+ });
+ $('histList').style.display='grid';$('histList').style.gridTemplateColumns='repeat(auto-fill,minmax(220px,1fr))';$('histList').style.gap='10px';
+ $('histList').innerHTML=h;
+ document.querySelectorAll('.hprev').forEach(function(el){el.onclick=function(){showPreview(el.dataset.p);};});
+}).catch(function(){});}
 document.querySelectorAll('nav button').forEach(function(b){b.onclick=function(){tab(b.dataset.tab);};});
 document.querySelectorAll('.step button').forEach(function(b){b.onclick=function(){step=b.dataset.s;
  document.querySelectorAll('.step button').forEach(function(x){x.classList.remove('sel');});b.classList.add('sel');};});

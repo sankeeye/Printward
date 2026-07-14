@@ -22,8 +22,8 @@ static void history_save() {
     if (!f) return;
     for (int i = 0; i < g_hist_count; i++) {
         PrintRec r = g_history[i];
-        sani(r.when); sani(r.name);
-        fprintf(f, "%s|%s|%.1f|%.2f|%d\n", r.when, r.name, r.grams, r.cost, r.ok);
+        sani(r.when); sani(r.name); sani(r.file);
+        fprintf(f, "%s|%s|%.1f|%.2f|%d|%s\n", r.when, r.name, r.grams, r.cost, r.ok, r.file);
     }
     fclose(f);
 }
@@ -50,6 +50,7 @@ void history_init() {
         r.grams = (float)atof(fld(&p));
         r.cost = (float)atof(fld(&p));
         r.ok = atoi(fld(&p));
+        strncpy(r.file, fld(&p), sizeof(r.file) - 1);   // absent in old files -> ""
         g_history[g_hist_count++] = r;
         g_hist_total_cost += r.cost;
     }
@@ -59,10 +60,12 @@ void history_init() {
 void history_loop() {
     static char last[16] = "";
     static int last_active = 0;
+    static char last_file[64] = "";
     PrinterStatus& s = g_printer_status;
 
     bool printing = (strcmp(s.gcode_state, "RUNNING") == 0 || strcmp(s.gcode_state, "PAUSE") == 0);
     if (printing && s.active_tray_now >= 0 && s.active_tray_now != 255) last_active = s.active_tray_now;
+    if (printing && s.gcode_file[0]) { strncpy(last_file, s.gcode_file, sizeof(last_file) - 1); last_file[sizeof(last_file) - 1] = 0; }
 
     if (strcmp(last, s.gcode_state) != 0) {
         bool wasPrinting = (strcmp(last, "RUNNING") == 0 || strcmp(last, "PAUSE") == 0);
@@ -77,6 +80,7 @@ void history_loop() {
             r.grams = gcode_view_ready() ? gcode_view_filament_g() : 0.0f;
             r.ok = fin ? 1 : 0;
             r.cost = r.grams * filament_price(last_active) / 1000.0f;
+            strncpy(r.file, last_file, sizeof(r.file) - 1);   // for the on-demand preview
             for (int i = (g_hist_count < HIST_MAX ? g_hist_count : HIST_MAX - 1); i > 0; i--)
                 g_history[i] = g_history[i - 1];
             g_history[0] = r;              // newest first
