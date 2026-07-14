@@ -15,6 +15,7 @@ struct PrintRec {
     float cost;       // EUR
     int   ok;         // 1 = finished, 0 = failed
     char  file[64];   // printed .3mf (in /cache) for an on-demand model preview
+    int   arch;       // 1 = archived (hidden from the active list)
 };
 
 extern PrintRec g_history[HIST_MAX];
@@ -23,5 +24,7 @@ extern float    g_hist_total_cost;
 
 void history_init();
 void history_loop();
+void history_set_arch(int idx, int v);   // archive (1) / restore (0) an entry
+void history_remove(int idx);            // permanently delete an entry
 
 #endif

@@ -255,6 +255,11 @@ section#spools{max-width:1040px}
 
 <section id="hist"><div class="card"><h3>Historie / kosten</h3>
  <div id="histTotal" class="muted" style="font-size:16px;margin-bottom:8px"></div>
+ <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+  <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="hArch" onchange="renderHist()" style="width:18px;height:18px">Gearchiveerd tonen</label>
+  <button id="hArchBtn" onclick="hBulk(($('hArch')&&$('hArch').checked)?'unarch':'arch')" style="display:none;background:#8e44ad;color:#fff;border:0;border-radius:6px;padding:8px 12px;cursor:pointer;margin-left:auto">Archiveer</button>
+  <button id="hDelBtn" onclick="hBulk('del')" style="display:none;background:#a40000;color:#fff;border:0;border-radius:6px;padding:8px 12px;cursor:pointer">Verwijder</button>
+ </div>
  <div id="histList"></div></div></section>
 
 <div id="rollModal" class="modal"><div class="modalbox">
@@ -275,22 +280,35 @@ function tab(n){
  if(n==='spools'){loadSpools();loadEmpties();}
  if(n==='hist')loadHistory();
 }
-function loadHistory(){fetch('/history').then(function(r){return r.json();}).then(function(list){
+var histCache=[];
+function loadHistory(){fetch('/history').then(function(r){return r.json();}).then(function(list){histCache=list;renderHist();}).catch(function(){});}
+function renderHist(){
+ var showArch=$('hArch')&&$('hArch').checked;
+ var list=histCache.filter(function(r){return showArch?r.arch:!r.arch;});
  var tot=0;list.forEach(function(r){tot+=r.cost||0;});
- if($('histTotal'))$('histTotal').innerHTML=list.length+' prints in het logboek &middot; totaal <b>&euro; '+tot.toFixed(2)+'</b>';
- if(!list.length){$('histList').style.display='block';$('histList').innerHTML='<div class="muted">nog geen prints</div>';return;}
+ if($('histTotal'))$('histTotal').innerHTML=list.length+(showArch?' gearchiveerd':' prints')+' &middot; totaal <b>&euro; '+tot.toFixed(2)+'</b>';
+ if(!list.length){$('histList').style.display='block';$('histList').innerHTML='<div class="muted">'+(showArch?'niets gearchiveerd':'nog geen prints')+'</div>';hSelUpd();return;}
  var h='';
  list.forEach(function(r){
   var pv=r.file?'<button class="hprev" data-p="/cache/'+r.file+'" style="background:#2c3e50;color:#fff;border:0;border-radius:6px;padding:6px 10px;margin-top:8px;cursor:pointer;width:100%">Preview</button>':'';
   h+='<div class="rollcard" style="flex-direction:column;align-items:stretch">'
-    +'<div style="display:flex;align-items:center;gap:8px"><span style="color:'+(r.ok?'#2ecc71':'#e74c3c')+'">'+(r.ok?'✓':'✗')+'</span><b style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+r.name+'</b></div>'
+    +'<div style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="hsel" data-i="'+r.i+'" style="width:18px;height:18px;flex:0 0 auto"><span style="color:'+(r.ok?'#2ecc71':'#e74c3c')+'">'+(r.ok?'✓':'✗')+'</span><b style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+r.name+'</b></div>'
     +'<div class="muted" style="font-size:12px">'+r.when+'</div>'
     +'<div style="margin-top:4px">'+r.grams+' g'+(r.cost>0?' &middot; <b>&euro; '+r.cost.toFixed(2)+'</b>':'')+'</div>'+pv+'</div>';
  });
  $('histList').style.display='grid';$('histList').style.gridTemplateColumns='repeat(auto-fill,minmax(220px,1fr))';$('histList').style.gap='10px';
  $('histList').innerHTML=h;
  document.querySelectorAll('.hprev').forEach(function(el){el.onclick=function(){showPreview(el.dataset.p);};});
-}).catch(function(){});}
+ document.querySelectorAll('.hsel').forEach(function(el){el.onchange=hSelUpd;});
+ hSelUpd();
+}
+function hSelIds(){var a=[];document.querySelectorAll('.hsel:checked').forEach(function(el){a.push(el.dataset.i);});return a;}
+function hSelUpd(){var n=hSelIds().length;var showArch=$('hArch')&&$('hArch').checked;
+ if($('hArchBtn')){$('hArchBtn').style.display=n?'inline-block':'none';$('hArchBtn').textContent=(showArch?'Herstel':'Archiveer')+' ('+n+')';}
+ if($('hDelBtn')){$('hDelBtn').style.display=n?'inline-block':'none';$('hDelBtn').textContent='Verwijder ('+n+')';}}
+function hBulk(act){var ids=hSelIds();if(!ids.length)return;
+ if(act==='del'&&!confirm(ids.length+' item(s) definitief verwijderen?'))return;
+ fetch('/hist_bulk?act='+act+'&idx='+ids.join(',')).then(function(){setTimeout(loadHistory,300);});}
 document.querySelectorAll('nav button').forEach(function(b){b.onclick=function(){tab(b.dataset.tab);};});
 document.querySelectorAll('.step button').forEach(function(b){b.onclick=function(){step=b.dataset.s;
  document.querySelectorAll('.step button').forEach(function(x){x.classList.remove('sel');});b.classList.add('sel');};});

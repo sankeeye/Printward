@@ -23,7 +23,7 @@ static void history_save() {
     for (int i = 0; i < g_hist_count; i++) {
         PrintRec r = g_history[i];
         sani(r.when); sani(r.name); sani(r.file);
-        fprintf(f, "%s|%s|%.1f|%.2f|%d|%s\n", r.when, r.name, r.grams, r.cost, r.ok, r.file);
+        fprintf(f, "%s|%s|%.1f|%.2f|%d|%s|%d\n", r.when, r.name, r.grams, r.cost, r.ok, r.file, r.arch);
     }
     fclose(f);
 }
@@ -51,6 +51,7 @@ void history_init() {
         r.cost = (float)atof(fld(&p));
         r.ok = atoi(fld(&p));
         strncpy(r.file, fld(&p), sizeof(r.file) - 1);   // absent in old files -> ""
+        r.arch = atoi(fld(&p));                          // absent -> 0
         g_history[g_hist_count++] = r;
         g_hist_total_cost += r.cost;
     }
@@ -92,4 +93,23 @@ void history_loop() {
         strncpy(last, s.gcode_state, sizeof(last) - 1);
         last[sizeof(last) - 1] = 0;
     }
+}
+
+static void hist_recompute_total() {
+    g_hist_total_cost = 0;
+    for (int i = 0; i < g_hist_count; i++) g_hist_total_cost += g_history[i].cost;
+}
+
+void history_set_arch(int idx, int v) {
+    if (idx < 0 || idx >= g_hist_count) return;
+    g_history[idx].arch = v ? 1 : 0;
+    history_save();
+}
+
+void history_remove(int idx) {
+    if (idx < 0 || idx >= g_hist_count) return;
+    for (int i = idx; i < g_hist_count - 1; i++) g_history[i] = g_history[i + 1];
+    g_hist_count--;
+    hist_recompute_total();
+    history_save();
 }
