@@ -163,6 +163,8 @@ static void history_back_cb(lv_event_t*) { create_spools_ui(); }
 
 void create_history_ui() {
     if (g_screen) { lv_obj_del(g_screen); g_screen = nullptr; }
+    g_row_n = 0;   // the Spools list rows are gone now - stop spools_live_loop()
+                   // from writing to their freed labels (g_screen is shared).
     g_kb = nullptr;
     scale_set_polling(false);
 
@@ -415,6 +417,7 @@ static void create_spool_edit(int idx) {
     g_e_color = cur.color & 0xFFFFFF;
 
     if (g_screen) { lv_obj_del(g_screen); g_screen = nullptr; }
+    g_row_n = 0;   // see create_history_ui(): don't touch freed Spools-row labels
     scale_set_polling(true);   // live weight for the Weeg button
     g_screen = mk_screen();
     lv_obj_t* root = mk_root(g_screen, true);
@@ -562,6 +565,7 @@ static void empties_back_cb(lv_event_t*) { scale_set_polling(false); create_spoo
 
 static void create_empties_ui() {
     if (g_screen) { lv_obj_del(g_screen); g_screen = nullptr; }
+    g_row_n = 0;   // see create_history_ui(): don't touch freed Spools-row labels
     g_kb = nullptr;
     g_screen = mk_screen();
     lv_obj_t* root = mk_root(g_screen, false);
