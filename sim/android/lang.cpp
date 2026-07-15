@@ -60,6 +60,7 @@ static const Builtin BUILTIN[] = {
     {"dash.fan",            "Fan",                    "Ventilator"},
     {"dash.brightness",     "Brightness",             "Helderheid"},
     {"dash.external_spool", "External spool:",        "Externe spoel:"},
+    {"dash.filament_ams",   "Filament / AMS",         "Filament / AMS"},
     {"dash.stop_confirm_t", "Stop print?",            "Print stoppen?"},
     {"dash.stop_confirm_b", "Are you sure you want to abort this print?\nThis cannot be undone.",
                             "Weet je zeker dat je de print wilt afbreken?\nDit kan niet ongedaan worden gemaakt."},
@@ -125,6 +126,9 @@ static const Builtin BUILTIN[] = {
                             "Back-up & herstel (alles)"},
     {"set.diagnostics",     "Diagnostics",            "Diagnose"},
     {"set.language",        "Language",               "Taal"},
+    {"set.lang_hint",       "Applies to the tablet and this page. Adding a language? Drop a filatrack_lang_&lt;code&gt;.conf on the tablet - see lang/README.md.",
+                            "Geldt voor de tablet en deze pagina. Een taal toevoegen? Zet een filatrack_lang_&lt;code&gt;.conf op de tablet - zie lang/README.md."},
+    {"set.lang_saved",      "Language saved.",        "Taal opgeslagen."},
     {"set.scale",           "FilaTrack Scale",        "FilaTrack Scale"},
     {"set.screensaver",     "Screensaver",            "Screensaver"},
 };

@@ -97,12 +97,12 @@ section#spools{max-width:1040px}
 </style></head><body>
 <header><div class="t">FilaTrack</div><div style="display:flex;gap:14px;align-items:center"><span id="clock" class="muted"></span><span id="conn" class="muted">verbinden…</span></div></header>
 <nav>
- <button data-tab="dash" class="on">Dashboard</button>
- <button data-tab="files">Files</button>
- <button data-tab="move">Move</button>
- <button data-tab="spools">Spools</button>
- <button data-tab="hist">Historie</button>
- <button data-tab="set">Settings</button>
+ <button data-tab="dash" class="on" data-i18n="nav.dashboard">Dashboard</button>
+ <button data-tab="files" data-i18n="nav.files">Files</button>
+ <button data-tab="move" data-i18n="nav.move">Move</button>
+ <button data-tab="spools" data-i18n="nav.spools">Spools</button>
+ <button data-tab="hist" data-i18n="nav.history">Historie</button>
+ <button data-tab="set" data-i18n="nav.settings">Settings</button>
 </nav>
 
 <section id="dash" class="on">
@@ -111,15 +111,15 @@ section#spools{max-width:1040px}
   <div class="bar"><div id="fill"></div></div><div id="prog" class="muted"></div>
   <div id="pcost" class="muted" style="margin-top:4px"></div>
   <img id="pthumb" alt="" style="display:none;max-width:100%;max-height:240px;border-radius:8px;margin-top:10px"></div>
- <div class="card temps"><div>Nozzle <b id="noz">–</b></div><div>Bed <b id="bed">–</b></div><div>Kamer <b id="cham">–</b></div></div>
- <div class="card"><h3>Bediening</h3><div class="ctrls">
-   <button id="bPause" class="b-blue">Pause</button>
-   <button id="bStop" class="b-red">Stop</button>
+ <div class="card temps"><div><span data-i18n="dash.nozzle">Nozzle</span> <b id="noz">–</b></div><div><span data-i18n="dash.bed">Bed</span> <b id="bed">–</b></div><div><span data-i18n="dash.chamber">Kamer</span> <b id="cham">–</b></div></div>
+ <div class="card"><h3 data-i18n="dash.controls">Bediening</h3><div class="ctrls">
+   <button id="bPause" class="b-blue" data-i18n="dash.pause">Pause</button>
+   <button id="bStop" class="b-red" data-i18n="dash.stop">Stop</button>
    <button id="bLight">Licht</button>
    <button id="bFan">Fan</button>
    <select id="speed"><option value="1">Silent</option><option value="2">Standard</option><option value="3">Sport</option><option value="4">Ludicrous</option></select>
  </div></div>
- <div class="card"><h3>Filament / AMS</h3><div id="amsStrip" class="ams"></div></div>
+ <div class="card"><h3 data-i18n="dash.filament_ams">Filament / AMS</h3><div id="amsStrip" class="ams"></div></div>
 </section>
 
 <section id="files">
@@ -172,7 +172,7 @@ section#spools{max-width:1040px}
 <section id="spools">
  <div class="card" id="spInv" style="display:none"></div>
  <div class="sprow">
- <div class="card" style="flex:1 1 360px"><h3 id="spTitle">Nieuwe rol</h3>
+ <div class="card" style="flex:1 1 360px"><h3 id="spTitle" data-i18n="spools.new_roll">Nieuwe rol</h3>
   <div class="field" style="margin-bottom:14px"><label>Naam / merk</label><input type="text" id="spName" placeholder="bv. Bambu PLA Zwart"></div>
   <div class="field" style="margin-bottom:14px"><label>Kleur</label>
    <div class="swatches"><input type="color" id="spColor" value="#22aa55" class="chip"><span id="spSw" class="swatches"></span></div>
@@ -203,7 +203,7 @@ section#spools{max-width:1040px}
   <div style="display:flex;gap:10px;margin-top:16px"><button id="spSave" class="formbtn pri">Opslaan</button><button id="spNew" class="formbtn sec">Nieuw</button></div>
   <div id="spMsg" class="muted" style="margin-top:8px"></div>
  </div>
- <div class="card" style="flex:1 1 300px"><h3>Lege spoelen</h3>
+ <div class="card" style="flex:1 1 300px"><h3 data-i18n="spools.empty_spools">Lege spoelen</h3>
   <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px">
    <div class="field" style="flex:1;min-width:160px"><label>Naam</label><input type="text" id="emName" placeholder="bv. Bambu herbruikbaar"></div>
    <div class="field" style="width:120px"><label>Gewicht (g)</label><input type="number" id="emWeight" value="250"></div>
@@ -213,7 +213,7 @@ section#spools{max-width:1040px}
   <div id="emList"></div>
  </div>
  </div>
- <div class="card"><h3>Rollen</h3>
+ <div class="card"><h3 data-i18n="spools.title">Rollen</h3>
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
    <input type="text" id="spSearch" placeholder="Zoek op naam of materiaal…" oninput="renderSpList()" style="flex:1;min-width:150px;padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff;font-size:15px">
    <select id="spFMat" onchange="renderSpList()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="">alle materialen</option></select>
@@ -248,7 +248,7 @@ section#spools{max-width:1040px}
   <div class="muted" style="margin-bottom:8px">Gewicht, tarra, kalibreren en WiFi/IP van de schaal.</div>
   <button onclick="tab('scale')" class="formbtn pri">Schaal beheren</button>
  </div>
- <div class="card"><h3>Printer</h3>
+ <div class="card"><h3 data-i18n="set.printer">Printer</h3>
   <div class="frow"><label class="muted">Printer IP</label><input type="text" id="cIp"></div>
   <div class="frow"><label class="muted">Serial</label><input type="text" id="cSerial"></div>
   <div class="frow"><label class="muted">Access code</label><input type="password" id="cCode" placeholder="laat leeg = ongewijzigd"></div>
@@ -257,7 +257,7 @@ section#spools{max-width:1040px}
   <button id="cSave">Opslaan &amp; verbinden</button>
   <div id="cMsg"></div>
  </div>
- <div class="card"><h3>Meldingen (ntfy)</h3>
+ <div class="card"><h3 data-i18n="set.notifications">Meldingen (ntfy)</h3>
   <div class="frow"><label class="muted">ntfy topic (leeg = uit)</label><input type="text" id="cNtfy" placeholder="bv. filatrack-geheim-x9k2"></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button id="cNtfySave" class="formbtn pri">Opslaan</button><button id="cNtfyTest" class="formbtn sec">Test</button></div>
   <div class="frow" style="margin-top:14px"><label class="muted">Waarschuwen als een rol onder dit aantal gram komt</label>
@@ -265,7 +265,7 @@ section#spools{max-width:1040px}
   <div class="muted" style="font-size:12px;margin-top:8px">Installeer de gratis <b>ntfy</b>-app (of ntfy.sh in de browser) en abonneer op dit topic. Je krijgt een melding bij print klaar/mislukt, filament tekort en als een gewogen rol onder de drempel komt.</div>
   <div id="cNtfyMsg" class="muted" style="margin-top:6px"></div>
  </div>
- <div class="card"><h3>Back-up &amp; herstel (alles)</h3>
+ <div class="card"><h3 data-i18n="set.backup">Back-up &amp; herstel (alles)</h3>
   <div id="bkStatus" style="border-radius:8px;padding:10px 12px;margin-bottom:10px;display:none"></div>
   <div class="muted" style="font-size:12px;margin-bottom:8px">Alles op de tablet in één bestand: rollen, lege spoelen, gewichten, historie en statistieken. (Printer-IP/serial/toegangscode zitten er <b>niet</b> in.)</div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
@@ -276,19 +276,26 @@ section#spools{max-width:1040px}
   <div id="bkMsg" class="muted" style="margin-top:8px"></div>
   <div class="muted" style="font-size:12px;margin-top:8px">Alleen je rollen delen/overnemen? Dat staat bij <b>Spools</b>.</div>
  </div>
- <div class="card"><h3>Diagnose</h3>
+ <div class="card"><h3 data-i18n="set.language">Taal</h3>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+   <select id="cLang" style="padding:10px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff;font-size:16px;min-width:150px"></select>
+   <span class="muted" style="font-size:12px" data-i18n="set.lang_hint">Geldt voor de tablet én deze pagina. Een taal toevoegen? Zet een bestand filatrack_lang_&lt;code&gt;.conf op de tablet — zie lang/README.md.</span>
+  </div>
+  <div id="cLangMsg" class="muted" style="margin-top:8px"></div>
+ </div>
+ <div class="card"><h3 data-i18n="set.diagnostics">Diagnose</h3>
   <div id="diagBox" class="muted">…</div>
-  <button class="formbtn sec" style="margin-top:10px" onclick="loadDiag()">Ververs</button>
+  <button class="formbtn sec" style="margin-top:10px" onclick="loadDiag()" data-i18n="refresh">Ververs</button>
  </div>
 </section>
 
-<section id="hist"><div class="card"><h3>Statistieken</h3>
+<section id="hist"><div class="card"><h3 data-i18n="hist.stats">Statistieken</h3>
   <div class="muted">Aller tijden: <b id="stPrints">–</b> prints voltooid &middot; <b id="stUsed">–</b> filament &middot; uitgave <b id="stCost">–</b></div>
   <div id="statRich" style="margin-top:6px"></div>
  </div>
- <div class="card"><h3>Historie / kosten</h3>
+ <div class="card"><h3 data-i18n="hist.title">Historie / kosten</h3>
  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
-  <input id="hSearch" oninput="renderHist()" placeholder="Zoek op naam…" style="flex:1;min-width:130px;padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff;font-size:15px">
+  <input id="hSearch" oninput="renderHist()" data-i18n-ph="hist.search" placeholder="Zoek op naam…" style="flex:1;min-width:130px;padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff;font-size:15px">
   <select id="hMat" onchange="renderHist()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="">alle materialen</option></select>
   <select id="hOk" onchange="renderHist()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="">gelukt + mislukt</option><option value="1">alleen gelukt</option><option value="0">alleen mislukt</option></select>
   <select id="hSort" onchange="renderHist()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="date">nieuwste eerst</option><option value="cost">duurste eerst</option><option value="grams">meeste filament</option></select>
@@ -320,6 +327,43 @@ function tab(n){
  if(n==='spools'){loadSpools();loadEmpties();}
  if(n==='hist')loadHistory();
  if(n==='set')loadDiag();
+}
+// --- translations -------------------------------------------------------
+// The tablet owns the strings (built-in EN/NL + any filatrack_lang_*.conf), so
+// the page just asks for the active table. t() falls back to the key, which
+// makes a missing translation visible instead of blank.
+var I18N={},LANGS=[];
+function t(k,dflt){return (I18N[k]!==undefined)?I18N[k]:(dflt!==undefined?dflt:k);}
+function applyI18n(){
+ document.querySelectorAll('[data-i18n]').forEach(function(el){
+  var v=I18N[el.dataset.i18n]; if(v!==undefined)el.innerHTML=v;});
+ document.querySelectorAll('[data-i18n-ph]').forEach(function(el){
+  var v=I18N[el.dataset.i18nPh]; if(v!==undefined)el.placeholder=v;});
+}
+function loadLang(){
+ return fetch('/lang').then(function(r){return r.json();}).then(function(d){
+  I18N=d.s||{}; document.documentElement.lang=d.lang||'en';
+  var sel=$('cLang'); if(sel)sel.value=d.lang;
+  applyI18n();
+ }).catch(function(){});
+}
+function loadLangList(){
+ fetch('/langs').then(function(r){return r.json();}).then(function(list){
+  LANGS=list||[];
+  var sel=$('cLang'); if(!sel)return;
+  var names={en:'English',nl:'Nederlands',de:'Deutsch',fr:'Français',es:'Español',it:'Italiano',pl:'Polski',pt:'Português',sv:'Svenska',da:'Dansk',no:'Norsk',fi:'Suomi'};
+  sel.innerHTML=LANGS.map(function(c){return '<option value="'+c+'">'+(names[c]||c)+'</option>';}).join('');
+  if(lastS&&lastS.cfg&&lastS.cfg.lang)sel.value=lastS.cfg.lang;
+ }).catch(function(){});
+}
+function setLang(c){
+ fetch('/setcfg?lang='+encodeURIComponent(c)).then(function(){
+  return loadLang();
+ }).then(function(){
+  if($('cLangMsg'))$('cLangMsg').textContent=t('set.lang_saved','Taal opgeslagen.');
+  // repaint the bits that are drawn from JS rather than from the HTML
+  if($('spList'))loadSpools(); if($('histList'))loadHistory(); if($('diagBox'))loadDiag();
+ });
 }
 function fmtAge(s){if(s<0)return'onbekend';if(s<60)return s+' s';if(s<3600)return Math.round(s/60)+' min';if(s<86400)return Math.round(s/3600)+' uur';return Math.round(s/86400)+' dagen';}
 function dRow(label,val,good){return '<div style="display:flex;justify-content:space-between;gap:10px;padding:3px 0"><span>'+label+'</span><b style="color:'+(good===true?'#2ecc71':(good===false?'#e74c3c':'#eceff2'))+'">'+val+'</b></div>';}
@@ -553,6 +597,8 @@ function poll(){
 setInterval(poll,1500);poll();
 function tickClock(){var d=new Date();if($('clock'))$('clock').textContent=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
 setInterval(tickClock,10000);tickClock();
+if($('cLang'))$('cLang').onchange=function(){setLang(this.value);};
+loadLang();loadLangList();
 function sMsg(t){$('sMsg').textContent=t;}
 function scalePoll(){
  if(!$('scale').classList.contains('on')||!scaleHost)return;
@@ -589,7 +635,7 @@ function renderInv(){
  box.style.display='block';
  var totG=0,totV=0,mm={};
  spCache.forEach(function(s){var g=spGrams(s);totG+=g;if(s.price>0)totV+=g*s.price/1000;var k=s.material||'?';if(!mm[k])mm[k]={g:0,n:0,v:0};mm[k].g+=g;mm[k].n++;if(s.price>0)mm[k].v+=g*s.price/1000;});
- var h='<h3>Voorraad</h3><div style="font-size:16px"><b>'+spCache.length+'</b> rollen &middot; <b>'+(totG/1000).toFixed(2)+' kg</b> filament'+(totV>0?' &middot; waarde <b>&euro; '+totV.toFixed(2)+'</b>':'')+'</div>';
+ var h='<h3>'+t('spools.stock','Voorraad')+'</h3><div style="font-size:16px"><b>'+spCache.length+'</b> '+t('spools.rolls','rollen')+' &middot; <b>'+(totG/1000).toFixed(2)+' kg</b> '+t('spools.filament','filament')+(totV>0?' &middot; '+t('spools.value','waarde')+' <b>&euro; '+totV.toFixed(2)+'</b>':'')+'</div>';
  var mk=Object.keys(mm).sort(function(a,b){return mm[b].g-mm[a].g;}),maxG=0;
  mk.forEach(function(k){if(mm[k].g>maxG)maxG=mm[k].g;});
  h+='<div style="margin-top:8px">';
@@ -654,10 +700,10 @@ function spWeigh(i){var s=spCache[i];if(!scaleHost){alert('Geen schaal-IP bekend
 function spCopy(i){var s=spCache[i];fetch('/spool_save?idx=&name='+encodeURIComponent(s.name+' (kopie)')+'&material='+encodeURIComponent(s.material)+'&color='+encodeURIComponent(s.rgb)+'&rem='+s.rem+'&empty='+s.empty+'&nmin='+(s.nmin||0)+'&nmax='+(s.nmax||0)+'&code='+encodeURIComponent(s.code||'')+'&note='+encodeURIComponent(s.note||'')+'&price='+(s.price||0)).then(function(){setTimeout(loadSpools,300);});}
 function spLoad(i){var sl=$('ss'+i).value;fetch('/spool_load?idx='+i+'&slot='+sl).then(function(r){return r.text();}).then(function(t){spMsg(t+' in slot');});}
 function spDel(i){if(confirm('Rol verwijderen?'))fetch('/spool_del?idx='+i).then(function(){loadSpools();});}
-function spEdit(i){var s=spCache[i];$('spTitle').textContent='Rol bewerken';$('spIdx').value=i;
+function spEdit(i){var s=spCache[i];$('spTitle').textContent=t('spools.edit_roll','Rol bewerken');$('spIdx').value=i;
  $('spName').value=s.name;$('spMat').value=s.material;$('spColor').value=s.rgb;$('spRem').value=s.rem;$('spEmpty').value=s.empty;
  $('spNmin').value=s.nmin||'';$('spNmax').value=s.nmax||'';$('spCode').value=s.code||'';$('spNote').value=s.note||'';$('spPrice').value=s.price||'';}
-function spReset(){$('spTitle').textContent='Nieuwe rol';$('spIdx').value=-1;$('spName').value='';$('spNote').value='';$('spCode').value='';$('spNmin').value='';$('spNmax').value='';$('spPrice').value='';}
+function spReset(){$('spTitle').textContent=t('spools.new_roll','Nieuwe rol');$('spIdx').value=-1;$('spName').value='';$('spNote').value='';$('spCode').value='';$('spNmin').value='';$('spNmax').value='';$('spPrice').value='';}
 $('spNew').onclick=spReset;
 $('spSave').onclick=function(){
  var q='idx='+$('spIdx').value+'&name='+encodeURIComponent($('spName').value)+'&material='+encodeURIComponent($('spMat').value)
