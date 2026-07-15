@@ -115,8 +115,8 @@ section#spools{max-width:1040px}
  <div class="card"><h3 data-i18n="dash.controls">Bediening</h3><div class="ctrls">
    <button id="bPause" class="b-blue" data-i18n="dash.pause">Pause</button>
    <button id="bStop" class="b-red" data-i18n="dash.stop">Stop</button>
-   <button id="bLight">Licht</button>
-   <button id="bFan">Fan</button>
+   <button id="bLight" data-i18n="dash.light">Licht</button>
+   <button id="bFan" data-i18n="dash.fan">Fan</button>
    <select id="speed"><option value="1">Silent</option><option value="2">Standard</option><option value="3">Sport</option><option value="4">Ludicrous</option></select>
  </div></div>
  <div class="card"><h3 data-i18n="dash.filament_ams">Filament / AMS</h3><div id="amsStrip" class="ams"></div></div>
@@ -173,7 +173,7 @@ section#spools{max-width:1040px}
  <div class="card" id="spInv" style="display:none"></div>
  <div class="sprow">
  <div class="card" style="flex:1 1 360px"><h3 id="spTitle" data-i18n="spools.new_roll">Nieuwe rol</h3>
-  <div class="field" style="margin-bottom:14px"><label data-i18n="spools.name">Naam / merk</label><input type="text" id="spName" placeholder="bv. Bambu PLA Zwart"></div>
+  <div class="field" style="margin-bottom:14px"><label data-i18n="spools.name">Naam / merk</label><input type="text" id="spName" data-i18n-ph="spools.name_ph" placeholder="bv. Bambu PLA Zwart"></div>
   <div class="field" style="margin-bottom:14px"><label data-i18n="spools.colour">Kleur</label>
    <div class="swatches"><input type="color" id="spColor" value="#22aa55" class="chip"><span id="spSw" class="swatches"></span></div>
   </div>
@@ -187,8 +187,8 @@ section#spools{max-width:1040px}
   <div class="field" style="margin-bottom:14px"><label data-i18n="spools.remaining">Resterend filament (g)</label>
    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
     <input type="number" id="spRem" value="1000" style="width:130px">
-    <button class="formbtn sec" onclick="spRemWeigh()">⚖ Weeg rol</button>
-    <span class="muted" style="font-size:12px">= gewogen − leeg-spoel</span>
+    <button class="formbtn sec" onclick="spRemWeigh()">⚖ <span data-i18n="spools.weigh_roll">Weeg rol</span></button>
+    <span class="muted" style="font-size:12px" data-i18n="spools.weigh_hint">= gewogen − leeg-spoel</span>
    </div>
   </div>
   <div class="grid">
@@ -196,16 +196,16 @@ section#spools{max-width:1040px}
    <div class="field"><label data-i18n="spools.nozzle_min">Nozzle min</label><input type="number" id="spNmin" placeholder="auto"></div>
    <div class="field"><label data-i18n="spools.nozzle_max">Nozzle max</label><input type="number" id="spNmax" placeholder="auto"></div>
    <div class="field"><label data-i18n="spools.bambu_code">Bambu-code</label><input type="text" id="spCode" placeholder="auto"></div>
-   <div class="field"><label>Prijs (€/kg)</label><input type="number" id="spPrice" placeholder="0" step="0.01"></div>
+   <div class="field"><label data-i18n="spools.price">Prijs (EUR/kg)</label><input type="number" id="spPrice" placeholder="0" step="0.01"></div>
   </div>
-  <div class="field" style="margin-top:12px"><label data-i18n="spools.note">Notitie</label><input type="text" id="spNote" placeholder="bv. gedroogd 3/7"></div>
+  <div class="field" style="margin-top:12px"><label data-i18n="spools.note">Notitie</label><input type="text" id="spNote" data-i18n-ph="spools.note_ph" placeholder="bv. gedroogd 3/7"></div>
   <input type="hidden" id="spIdx" value="-1">
   <div style="display:flex;gap:10px;margin-top:16px"><button id="spSave" class="formbtn pri" data-i18n="save">Opslaan</button><button id="spNew" class="formbtn sec" data-i18n="spools.new">Nieuw</button></div>
   <div id="spMsg" class="muted" style="margin-top:8px"></div>
  </div>
  <div class="card" style="flex:1 1 300px"><h3 data-i18n="spools.empty_spools">Lege spoelen</h3>
   <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px">
-   <div class="field" style="flex:1;min-width:160px"><label data-i18n="spools.name_short">Naam</label><input type="text" id="emName" placeholder="bv. Bambu herbruikbaar"></div>
+   <div class="field" style="flex:1;min-width:160px"><label data-i18n="spools.name_short">Naam</label><input type="text" id="emName" data-i18n-ph="spools.empty_ph" placeholder="bv. Bambu herbruikbaar"></div>
    <div class="field" style="width:120px"><label data-i18n="spools.weight_g">Gewicht (g)</label><input type="number" id="emWeight" value="250"></div>
    <button class="formbtn sec" style="height:42px" onclick="emWeigh()" data-i18n="spools.weigh">Weeg</button>
    <button id="emSave" class="formbtn pri" style="height:42px" data-i18n="spools.add">Toevoegen</button>
@@ -215,11 +215,11 @@ section#spools{max-width:1040px}
  </div>
  <div class="card"><h3 data-i18n="spools.title">Rollen</h3>
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
-   <input type="text" id="spSearch" placeholder="Zoek op naam of materiaal…" oninput="renderSpList()" style="flex:1;min-width:150px;padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff;font-size:15px">
+   <input type="text" id="spSearch" data-i18n-ph="spools.search" placeholder="Zoek op naam of materiaal…" oninput="renderSpList()" style="flex:1;min-width:150px;padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff;font-size:15px">
    <select id="spFMat" onchange="renderSpList()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="" data-i18n="hist.all_materials">alle materialen</option></select>
    <select id="spSort" onchange="renderSpList()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="name" data-i18n="spools.sort_name">naam A-Z</option><option value="low" data-i18n="spools.sort_low">weinig &rarr; veel</option><option value="high" data-i18n="spools.sort_high">veel &rarr; weinig</option><option value="price" data-i18n="spools.sort_price">prijs/kg</option><option value="mat" data-i18n="spools.material">materiaal</option></select>
    <label class="muted" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="spLow" onchange="renderSpList()" style="width:18px;height:18px"><span data-i18n="spools.almost_empty">bijna leeg</span></label>
-   <label class="muted" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="spAll" onchange="toggleAll(this.checked)" style="width:18px;height:18px"> alles</label>
+   <label class="muted" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="spAll" onchange="toggleAll(this.checked)" style="width:18px;height:18px"> <span data-i18n="all">alles</span></label>
   </div>
   <div id="spBulk" style="display:none;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;background:var(--panel2);border-radius:8px;padding:9px 12px">
    <b id="spSelCount"></b>
@@ -233,13 +233,13 @@ section#spools{max-width:1040px}
   <div id="spList" class="muted">…</div>
  </div>
  <div class="card"><h3 data-i18n="spools.export_title">Rollen exporteren / importeren</h3>
-  <div class="muted" style="font-size:12px;margin-bottom:8px">Alleen je <b>rollen + lege spoelen</b>, als los bestand. Handig om te delen of van een andere tablet over te nemen. Importeren <b>voegt toe</b> — het overschrijft niets.</div>
+  <div class="muted" style="font-size:12px;margin-bottom:8px" data-i18n="spools.export_hint">Alleen je <b>rollen + lege spoelen</b>, als los bestand. Handig om te delen of van een andere tablet over te nemen. Importeren <b>voegt toe</b> — het overschrijft niets.</div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-   <button class="formbtn sec" onclick="exportRolls()">⬇ Exporteer rollen</button>
-   <label class="formbtn sec" style="cursor:pointer">⬆ Importeer rollen<input type="file" accept=".json,application/json" style="display:none" onchange="importRolls(this.files)"></label>
+   <button class="formbtn sec" onclick="exportRolls()">⬇ <span data-i18n="spools.export_btn">Exporteer rollen</span></button>
+   <label class="formbtn sec" style="cursor:pointer">⬆ <span data-i18n="spools.import_btn">Importeer rollen</span><input type="file" accept=".json,application/json" style="display:none" onchange="importRolls(this.files)"></label>
   </div>
   <div id="rollExpMsg" class="muted" style="margin-top:8px"></div>
-  <div class="muted" style="font-size:12px;margin-top:8px">Een volledige back-up (incl. historie en statistieken) staat bij <b>Settings</b>.</div>
+  <div class="muted" style="font-size:12px;margin-top:8px" data-i18n="spools.full_bk_hint">Een volledige back-up (incl. historie en statistieken) staat bij <b>Settings</b>.</div>
  </div>
 </section>
 
@@ -251,30 +251,30 @@ section#spools{max-width:1040px}
  <div class="card"><h3 data-i18n="set.printer">Printer</h3>
   <div class="frow"><label class="muted" data-i18n="set.printer_ip">Printer IP</label><input type="text" id="cIp"></div>
   <div class="frow"><label class="muted" data-i18n="set.serial">Serial</label><input type="text" id="cSerial"></div>
-  <div class="frow"><label class="muted" data-i18n="set.access_code">Access code</label><input type="password" id="cCode" placeholder="laat leeg = ongewijzigd"></div>
+  <div class="frow"><label class="muted" data-i18n="set.access_code">Access code</label><input type="password" id="cCode" data-i18n-ph="set.code_empty" placeholder="laat leeg = ongewijzigd"></div>
   <button id="cView">Screensaver: 2D</button>
   <div class="frow" style="margin-top:12px"><label class="muted" data-i18n="dash.brightness">Helderheid</label><input type="range" id="cBri" min="5" max="100"></div>
   <button id="cSave" data-i18n="set.save_connect">Opslaan &amp; verbinden</button>
   <div id="cMsg"></div>
  </div>
  <div class="card"><h3 data-i18n="set.notifications">Meldingen (ntfy)</h3>
-  <div class="frow"><label class="muted" data-i18n="set.ntfy_topic">ntfy topic (leeg = uit)</label><input type="text" id="cNtfy" placeholder="bv. filatrack-geheim-x9k2"></div>
+  <div class="frow"><label class="muted" data-i18n="set.ntfy_topic">ntfy topic (leeg = uit)</label><input type="text" id="cNtfy" data-i18n-ph="set.ntfy_ph" placeholder="bv. filatrack-geheim-x9k2"></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button id="cNtfySave" class="formbtn pri" data-i18n="save">Opslaan</button><button id="cNtfyTest" class="formbtn sec" data-i18n="set.test">Test</button></div>
   <div class="frow" style="margin-top:14px"><label class="muted" data-i18n="set.low_threshold">Waarschuwen als een rol onder dit aantal gram komt</label>
    <div style="display:flex;gap:8px;align-items:center"><input type="number" id="cLow" min="0" step="10" placeholder="100" style="width:120px"><span class="muted">g</span><button id="cLowSave" class="formbtn sec" data-i18n="save">Opslaan</button></div></div>
-  <div class="muted" style="font-size:12px;margin-top:8px">Installeer de gratis <b>ntfy</b>-app (of ntfy.sh in de browser) en abonneer op dit topic. Je krijgt een melding bij print klaar/mislukt, filament tekort en als een gewogen rol onder de drempel komt.</div>
+  <div class="muted" style="font-size:12px;margin-top:8px" data-i18n="set.ntfy_hint">Installeer de gratis <b>ntfy</b>-app (of ntfy.sh in de browser) en abonneer op dit topic. Je krijgt een melding bij print klaar/mislukt, filament tekort en als een gewogen rol onder de drempel komt.</div>
   <div id="cNtfyMsg" class="muted" style="margin-top:6px"></div>
  </div>
  <div class="card"><h3 data-i18n="set.backup">Back-up &amp; herstel (alles)</h3>
   <div id="bkStatus" style="border-radius:8px;padding:10px 12px;margin-bottom:10px;display:none"></div>
-  <div class="muted" style="font-size:12px;margin-bottom:8px">Alles op de tablet in één bestand: rollen, lege spoelen, gewichten, historie en statistieken. (Printer-IP/serial/toegangscode zitten er <b>niet</b> in.)</div>
+  <div class="muted" style="font-size:12px;margin-bottom:8px" data-i18n="set.backup_hint">Alles op de tablet in één bestand: rollen, lege spoelen, gewichten, historie en statistieken. (Printer-IP/serial/toegangscode zitten er <b>niet</b> in.)</div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-   <button id="bkDl" class="formbtn sec" onclick="downloadBackup()">⬇ Download back-up</button>
-   <label class="formbtn sec" style="cursor:pointer">⬆ Herstel alles<input type="file" accept=".ptb,.conf,.txt" style="display:none" onchange="importBackup(this.files)"></label>
-   <span class="muted" style="font-size:12px">herstel <b>overschrijft</b> je huidige rollen, historie en statistieken</span>
+   <button id="bkDl" class="formbtn sec" onclick="downloadBackup()">⬇ <span data-i18n="set.bk_download">Download back-up</span></button>
+   <label class="formbtn sec" style="cursor:pointer">⬆ <span data-i18n="set.bk_restore">Herstel alles</span><input type="file" accept=".ptb,.conf,.txt" style="display:none" onchange="importBackup(this.files)"></label>
+   <span class="muted" style="font-size:12px" data-i18n="set.restore_warn">herstel <b>overschrijft</b> je huidige rollen, historie en statistieken</span>
   </div>
   <div id="bkMsg" class="muted" style="margin-top:8px"></div>
-  <div class="muted" style="font-size:12px;margin-top:8px">Alleen je rollen delen/overnemen? Dat staat bij <b>Spools</b>.</div>
+  <div class="muted" style="font-size:12px;margin-top:8px" data-i18n="set.rolls_only_hint">Alleen je rollen delen/overnemen? Dat staat bij <b>Spools</b>.</div>
  </div>
  <div class="card"><h3 data-i18n="set.language">Taal</h3>
   <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
@@ -290,7 +290,7 @@ section#spools{max-width:1040px}
 </section>
 
 <section id="hist"><div class="card"><h3 data-i18n="hist.stats">Statistieken</h3>
-  <div class="muted">Aller tijden: <b id="stPrints">–</b> prints voltooid &middot; <b id="stUsed">–</b> filament &middot; uitgave <b id="stCost">–</b></div>
+  <div class="muted"><span data-i18n="hist.all_time">Aller tijden</span>: <b id="stPrints">–</b> <span data-i18n="hist.prints_done">prints voltooid</span> &middot; <b id="stUsed">–</b> <span data-i18n="spools.filament">filament</span> &middot; <span data-i18n="hist.spend">uitgave</span> <b id="stCost">–</b></div>
   <div id="statRich" style="margin-top:6px"></div>
  </div>
  <div class="card"><h3 data-i18n="hist.title">Historie / kosten</h3>
@@ -304,17 +304,17 @@ section#spools{max-width:1040px}
  <div id="histTotal" class="muted" style="font-size:16px;margin-bottom:8px"></div>
  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
   <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="hArch" onchange="renderHist()" style="width:18px;height:18px"><span data-i18n="hist.show_arch">Gearchiveerd tonen</span></label>
-  <button id="hArchBtn" onclick="hBulk(($('hArch')&&$('hArch').checked)?'unarch':'arch')" style="display:none;background:#8e44ad;color:#fff;border:0;border-radius:6px;padding:8px 12px;cursor:pointer;margin-left:auto">Archiveer</button>
-  <button id="hDelBtn" onclick="hBulk('del')" style="display:none;background:#a40000;color:#fff;border:0;border-radius:6px;padding:8px 12px;cursor:pointer">Verwijder</button>
+  <button id="hArchBtn" onclick="hBulk(($('hArch')&&$('hArch').checked)?'unarch':'arch')" style="display:none;background:#8e44ad;color:#fff;border:0;border-radius:6px;padding:8px 12px;cursor:pointer;margin-left:auto" data-i18n="hist.archive">Archiveer</button>
+  <button id="hDelBtn" onclick="hBulk('del')" style="display:none;background:#a40000;color:#fff;border:0;border-radius:6px;padding:8px 12px;cursor:pointer" data-i18n="delete">Verwijder</button>
  </div>
  <div id="histList"></div></div></section>
 
 <div id="rollModal" class="modal"><div class="modalbox">
- <div class="modalhead"><b id="rollTitle">Kies rol</b><button onclick="closeRoll()">Sluit</button></div>
+ <div class="modalhead"><b id="rollTitle" data-i18n="spools.pick_roll">Kies rol</b><button onclick="closeRoll()" data-i18n="close">Sluit</button></div>
  <div id="rollList"></div>
 </div></div>
 <div id="prevModal" class="modal" onclick="this.style.display='none'"><div class="modalbox" style="text-align:center">
- <div class="modalhead"><b>Voorbeeld</b><button onclick="event.stopPropagation();document.getElementById('prevModal').style.display='none'">Sluit</button></div>
+ <div class="modalhead"><b data-i18n="preview">Voorbeeld</b><button onclick="event.stopPropagation();document.getElementById('prevModal').style.display='none'" data-i18n="close">Sluit</button></div>
  <div id="prevBody" class="muted">…</div>
 </div></div>
 <script>
@@ -336,11 +336,15 @@ var I18N={},LANGS=[];
 // Bambu's gcode_state -> our keys (the state names differ from the button labels)
 var STATE_KEY={RUNNING:'dash.printing',PAUSE:'dash.paused',FINISH:'dash.finished',FAILED:'dash.failed',PREPARE:'dash.preparing',IDLE:'dash.idle'};
 function t(k,dflt){return (I18N[k]!==undefined)?I18N[k]:(dflt!==undefined?dflt:k);}
+// The screensaver button carries a 2D/3D suffix, so it cannot be a plain
+// data-i18n element - it is rebuilt whenever the text or the language changes.
+function viewBtn(){var b=$('cView');if(b)b.textContent=t('set.screensaver','Screensaver')+': '+(b.dataset.v==='1'?'3D':'2D');}
 function applyI18n(){
  document.querySelectorAll('[data-i18n]').forEach(function(el){
   var v=I18N[el.dataset.i18n]; if(v!==undefined)el.innerHTML=v;});
  document.querySelectorAll('[data-i18n-ph]').forEach(function(el){
   var v=I18N[el.dataset.i18nPh]; if(v!==undefined)el.placeholder=v;});
+ viewBtn();
 }
 function loadLang(){
  return fetch('/lang').then(function(r){return r.json();}).then(function(d){
@@ -374,15 +378,15 @@ function loadDiag(){
  fetch('/diag').then(function(r){return r.json();}).then(function(d){
   var h='';
   h+=dRow('Printer (MQTT)',d.mqtt?t('diag.connected','verbonden'):t('diag.offline','offline'),d.mqtt);
-  h+=dRow(t('diag.last_status','Laatste status'),d.age<0?'nog niets ontvangen':fmtAge(d.age)+' geleden',d.age>=0&&d.age<60);
+  h+=dRow(t('diag.last_status','Laatste status'),d.age<0?t('diag.nothing_yet','nog niets ontvangen'):fmtAge(d.age)+' '+t('ago','geleden'),d.age>=0&&d.age<60);
   h+=dRow(t('set.printer_ip','Printer-IP'),d.ip||t('diag.not_set','niet ingesteld'),!!d.ip);
-  h+=dRow('Serial',d.serial_set?'ingesteld':'ontbreekt',d.serial_set);
-  h+=dRow('Toegangscode',d.code_set?'ingesteld':'ontbreekt',d.code_set);
-  h+=dRow('Weegschaal-IP',d.scale_ip||'niet ingesteld',null);
-  h+=dRow('Webadres',d.url||'-',null);
+  h+=dRow(t('set.serial','Serial'),d.serial_set?t('diag.set','ingesteld'):t('diag.missing','ontbreekt'),d.serial_set);
+  h+=dRow(t('set.access_code','Toegangscode'),d.code_set?t('diag.set','ingesteld'):t('diag.missing','ontbreekt'),d.code_set);
+  h+=dRow(t('diag.scale_ip','Weegschaal-IP'),d.scale_ip||t('diag.not_set','niet ingesteld'),null);
+  h+=dRow(t('diag.web_url','Webadres'),d.url||'-',null);
   h+=dRow(t('diag.uptime','App draait al'),fmtAge(d.uptime),null);
-  h+='<div class="muted" style="font-size:13px;margin:10px 0 4px">Databestanden (op de tablet)</div>';
-  (d.files||[]).forEach(function(f){h+=dRow(f.n,f.ok?(f.bytes+' B · gewijzigd '+fmtAge(f.age)+' geleden'):'ontbreekt',f.ok);});
+  h+='<div class="muted" style="font-size:13px;margin:10px 0 4px">'+t('diag.data_files','Databestanden (op de tablet)')+'</div>';
+  (d.files||[]).forEach(function(f){h+=dRow(f.n,f.ok?(f.bytes+' B · '+t('diag.changed','gewijzigd')+' '+fmtAge(f.age)+' '+t('ago','geleden')):t('diag.missing','ontbreekt'),f.ok);});
   b.innerHTML=h;
  }).catch(function(){b.innerHTML='<span style="color:#e74c3c">'+t('no_conn_tablet','geen verbinding met de tablet')+'</span>';});
 }
@@ -473,28 +477,28 @@ function hSelUpd(){var n=hSelIds().length;var showArch=$('hArch')&&$('hArch').ch
  if($('hArchBtn')){$('hArchBtn').style.display=n?'inline-block':'none';$('hArchBtn').textContent=(showArch?'Herstel':'Archiveer')+' ('+n+')';}
  if($('hDelBtn')){$('hDelBtn').style.display=n?'inline-block':'none';$('hDelBtn').textContent='Verwijder ('+n+')';}}
 function hBulk(act){var ids=hSelIds();if(!ids.length)return;
- if(act==='del'&&!confirm(ids.length+' item(s) definitief verwijderen?'))return;
+ if(act==='del'&&!confirm(ids.length+' '+t('confirm.del_items','item(s) definitief verwijderen?')))return;
  fetch('/hist_bulk?act='+act+'&idx='+ids.join(',')).then(function(){setTimeout(loadHistory,300);});}
 document.querySelectorAll('nav button').forEach(function(b){b.onclick=function(){tab(b.dataset.tab);};});
 document.querySelectorAll('.step button').forEach(function(b){b.onclick=function(){step=b.dataset.s;
  document.querySelectorAll('.step button').forEach(function(x){x.classList.remove('sel');});b.classList.add('sel');};});
 document.querySelectorAll('.pad button,.zcol button').forEach(function(b){b.onclick=function(){
- fetch('/cmd?a='+b.dataset.a+'&s='+step).then(function(r){return r.text();}).then(function(t){$('hint').textContent=t;}).catch(function(){});};});
-function mcmd(a,s){var u='/cmd?a='+a;if(s!==undefined&&s!=='')u+='&s='+s;fetch(u).then(function(r){return r.text();}).then(function(t){if($('hint'))$('hint').textContent=t;}).catch(function(){});}
+ fetch('/cmd?a='+b.dataset.a+'&s='+step).then(function(r){return r.text();}).then(function(txt){$('hint').textContent=txt;}).catch(function(){});};});
+function mcmd(a,s){var u='/cmd?a='+a;if(s!==undefined&&s!=='')u+='&s='+s;fetch(u).then(function(r){return r.text();}).then(function(txt){if($('hint'))$('hint').textContent=txt;}).catch(function(){});}
 $('bPause').onclick=function(){fetch('/ctl?a='+(curState==='PAUSE'?'resume':'pause'));};
 $('bStop').onclick=function(){if(confirm('Print stoppen?'))fetch('/ctl?a=stop');};
 $('bLight').onclick=function(){fetch('/ctl?a=light&v='+(curLight?0:1));};
 $('bFan').onclick=function(){fetch('/ctl?a=fan&v='+(curFan>0?0:1));};
 $('speed').onchange=function(){fetch('/ctl?a=speed&v='+$('speed').value);};
-$('cView').onclick=function(){var b=$('cView');b.dataset.v=(b.dataset.v==='1'?'0':'1');b.textContent='Screensaver: '+(b.dataset.v==='1'?'3D':'2D');};
+$('cView').onclick=function(){var b=$('cView');b.dataset.v=(b.dataset.v==='1'?'0':'1');viewBtn();};
 $('cSave').onclick=function(){
  var q='ip='+encodeURIComponent($('cIp').value)+'&serial='+encodeURIComponent($('cSerial').value)+'&view3d='+($('cView').dataset.v||'0')+'&bri='+$('cBri').value;
  if($('cCode').value)q+='&code='+encodeURIComponent($('cCode').value);
- fetch('/setcfg?'+q).then(function(r){return r.text();}).then(function(t){$('cMsg').textContent=t+' – verbinden…';$('cCode').value='';});
+ fetch('/setcfg?'+q).then(function(r){return r.text();}).then(function(txt){$('cMsg').textContent=txt+' – '+t('set.connecting','verbinden…');$('cCode').value='';});
 };
-$('cNtfySave').onclick=function(){fetch('/setcfg?ntfy='+encodeURIComponent($('cNtfy').value)).then(function(r){return r.text();}).then(function(t){$('cNtfyMsg').textContent=t;});};
-$('cNtfyTest').onclick=function(){$('cNtfyMsg').textContent='versturen…';fetch('/setcfg?ntfy='+encodeURIComponent($('cNtfy').value)).then(function(){setTimeout(function(){fetch('/notify_test').then(function(r){return r.text();}).then(function(t){$('cNtfyMsg').textContent=t;});},500);});};
-$('cLowSave').onclick=function(){var g=parseInt($('cLow').value,10);if(isNaN(g)||g<0){$('cNtfyMsg').textContent='ongeldig getal';return;}fetch('/setcfg?low='+g).then(function(r){return r.text();}).then(function(t){lowG=g;$('cNtfyMsg').textContent='drempel opgeslagen: '+g+' g';});};
+$('cNtfySave').onclick=function(){fetch('/setcfg?ntfy='+encodeURIComponent($('cNtfy').value)).then(function(r){return r.text();}).then(function(txt){$('cNtfyMsg').textContent=txt;});};
+$('cNtfyTest').onclick=function(){$('cNtfyMsg').textContent=t('set.sending','versturen…');fetch('/setcfg?ntfy='+encodeURIComponent($('cNtfy').value)).then(function(){setTimeout(function(){fetch('/notify_test').then(function(r){return r.text();}).then(function(txt){$('cNtfyMsg').textContent=txt;});},500);});};
+$('cLowSave').onclick=function(){var g=parseInt($('cLow').value,10);if(isNaN(g)||g<0){$('cNtfyMsg').textContent=t('invalid_number','ongeldig getal');return;}fetch('/setcfg?low='+g).then(function(r){return r.text();}).then(function(txt){lowG=g;$('cNtfyMsg').textContent=t('set.threshold_saved','drempel opgeslagen')+': '+g+' g';});};
 function joinPath(b,n){return (b==='/'?'':b)+'/'+n;}
 function fmtSize(b){return b>1048576?(b/1048576).toFixed(1)+' MB':b>1024?(b/1024).toFixed(0)+' KB':b+' B';}
 function loadFiles(path){curPath=path;$('fpath').textContent=path;$('flist').innerHTML='<div class=muted>'+t('loading','laden…')+'</div>';
@@ -518,13 +522,13 @@ $('fRef').onclick=function(){loadFiles(curPath);};
 function fSelPaths(){var a=[];document.querySelectorAll('.fsel:checked').forEach(function(el){a.push(el.dataset.p);});return a;}
 function fSelUpd(){var n=fSelPaths().length;var b=$('fDel');if(b){b.style.display=n?'inline-block':'none';b.textContent='Verwijder ('+n+')';}}
 $('fDel').onclick=function(){var ps=fSelPaths();if(!ps.length)return;
- if(!confirm(ps.length+' bestand(en) definitief van de printer verwijderen?'))return;
+ if(!confirm(ps.length+' '+t('confirm.del_files','bestand(en) definitief van de printer verwijderen?')))return;
  var i=0;(function nxt(){if(i>=ps.length){loadFiles(curPath);return;}
   fetch('/delete?path='+encodeURIComponent(ps[i])).then(function(){i++;nxt();}).catch(function(){i++;nxt();});})();};
-function showPreview(p){var m=$('prevModal');if(!m)return;$('prevBody').innerHTML='<div class="muted">voorbeeld laden…</div>';m.style.display='flex';
+function showPreview(p){var m=$('prevModal');if(!m)return;$('prevBody').innerHTML='<div class="muted">'+t('preview_loading','voorbeeld laden…')+'</div>';m.style.display='flex';
  var img=new Image();img.style.maxWidth='80vw';img.style.maxHeight='70vh';img.style.borderRadius='8px';
  img.onload=function(){$('prevBody').innerHTML='';$('prevBody').appendChild(img);};
- img.onerror=function(){$('prevBody').innerHTML='<div class="muted">geen voorbeeld beschikbaar</div>';};
+ img.onerror=function(){$('prevBody').innerHTML='<div class="muted">'+t('preview_none','geen voorbeeld beschikbaar')+'</div>';};
  img.src='/thumb?path='+encodeURIComponent(p);}
 function amt(t){
  if(t.gram>=0){return '<div class="muted"'+(t.gram<lowG?' style="color:#e74c3c;font-weight:600"':'')+'>'+t.gram+' g</div>';}
@@ -548,7 +552,7 @@ function amsHtml(ams,ext,assign){
   h+='</div></div>';
  });
  if((ext&&ext.present)||assign)h+='<div class="amsbox"><div class="muted">Externe spoel</div><div class="trays">'+trayCell(ext,254,assign)+'</div></div>';
- return h||'<div class="muted">geen AMS</div>';
+ return h||'<div class="muted">'+t('dash.no_ams','geen AMS')+'</div>';
 }
 function slotMat(slot){if(!lastS)return'';if(slot===254)return(lastS.ext&&lastS.ext.type)||'';var u=Math.floor(slot/4),t=slot%4;if(lastS.ams)for(var i=0;i<lastS.ams.length;i++){if(lastS.ams[i].id===u+1){var tr=lastS.ams[i].trays[t];return(tr&&tr.type)||'';}}return'';}
 function pickRoll(slot){pickSlot=slot;$('rollTitle').textContent=t('spools.pick_for','Kies rol voor')+' '+slotName(slot);
@@ -556,7 +560,7 @@ function pickRoll(slot){pickSlot=slot;$('rollTitle').textContent=t('spools.pick_
  fetch('/spools').then(function(r){return r.json();}).then(function(list){
   if(mat)list.sort(function(a,b){return (b.material===mat?1:0)-(a.material===mat?1:0);});
   var h='<div class="fitem rollpick" onclick="clearRoll()"><div style="display:flex;align-items:center;gap:8px"><div class="sw" style="width:26px;height:20px;flex:0 0 auto;background:#555b63;border:1px solid #888"></div><span><b>Leeg</b> <span class="muted">geen rol in dit slot</span></span></div></div>';
-  if(!list.length)h+='<div class="muted">Nog geen rollen — maak ze aan op de Spools-tab.</div>';
+  if(!list.length)h+='<div class="muted">'+t('spools.none_yet','Nog geen rollen — maak ze aan op de Spools-tab.')+'</div>';
   list.forEach(function(s){var pas=(mat&&s.material===mat)?' <span class="badge" title="Zelfde materiaal als er nu in dit slot zit" style="margin-left:6px;background:#1e5f3a;color:#b9f5cf">'+s.material+' &#10003;</span>':'';
    h+='<div class="fitem rollpick" onclick="chooseRoll('+s.i+')"><div style="display:flex;align-items:center;gap:8px"><div class="sw" style="width:26px;height:20px;flex:0 0 auto;background:'+s.rgb+'"></div><span><b>'+s.name+'</b> <span class="muted">'+s.material+' · '+s.rem+' g</span>'+pas+'</span></div></div>';});
   $('rollList').innerHTML=h;$('rollModal').style.display='flex';
@@ -582,19 +586,19 @@ function poll(){
   $('bFan').textContent=t('dash.fan','Fan')+' '+s.fan+'%';
   if(document.activeElement!==$('speed'))$('speed').value=s.speed;
   if(!$('rollModal')||$('rollModal').style.display!=='flex'){$('amsStrip').innerHTML=amsHtml(s.ams,s.ext,true);}
-  if($('movetemps'))$('movetemps').textContent='nozzle '+s.nozzle+'/'+s.nozzle_t+'° · bed '+s.bed+'/'+s.bed_t+'° · kamer '+s.chamber+'°';
+  if($('movetemps'))$('movetemps').textContent=t('dash.nozzle','nozzle')+' '+s.nozzle+'/'+s.nozzle_t+'° · '+t('dash.bed','bed')+' '+s.bed+'/'+s.bed_t+'° · '+t('dash.chamber','kamer')+' '+s.chamber+'°';
   if(s.prints!==undefined&&$('stPrints')){$('stPrints').textContent=s.prints;$('stUsed').textContent=(s.used>=1000?(s.used/1000).toFixed(2)+' kg':s.used+' g');if($('stCost'))$('stCost').textContent='€ '+(s.cost||0).toFixed(2);}
   if(s.bkage!==undefined)renderBkStatus(s.bkage);
   if(s.cfg&&s.cfg.scale_ip){scaleHost=s.cfg.scale_ip;var si=$('sIp');if(si&&!si.value)si.value=s.cfg.scale_ip;}
   if(s.cfg&&s.cfg.low)lowG=s.cfg.low;
   if(!cfgFilled&&s.cfg){cfgFilled=true;
    $('cIp').value=s.cfg.ip;$('cSerial').value=s.cfg.serial;$('cBri').value=s.cfg.bri;
-   var b=$('cView');b.dataset.v=s.cfg.view3d?'1':'0';b.textContent='Screensaver: '+(s.cfg.view3d?'3D':'2D');
-   if(s.cfg.code_set)$('cCode').placeholder='•••••••• (ingesteld, laat leeg = ongewijzigd)';
+   var b=$('cView');b.dataset.v=s.cfg.view3d?'1':'0';viewBtn();
+   if(s.cfg.code_set)$('cCode').placeholder='•••••••• '+t('set.code_set','(ingesteld, laat leeg = ongewijzigd)');
    if(s.cfg.ntfy!==undefined)$('cNtfy').value=s.cfg.ntfy;
    if(s.cfg.low!==undefined&&$('cLow'))$('cLow').value=s.cfg.low;
   }
- }).catch(function(){$('conn').textContent='○ geen tablet';$('conn').style.color='#e74c3c';});
+ }).catch(function(){$('conn').textContent='○ '+t('no_tablet','geen tablet');$('conn').style.color='#e74c3c';});
 }
 setInterval(poll,1500);poll();
 function tickClock(){var d=new Date();if($('clock'))$('clock').textContent=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
@@ -606,17 +610,17 @@ function scalePoll(){
  if(!$('scale').classList.contains('on')||!scaleHost)return;
  fetch('http://'+scaleHost+'/weight?t='+Date.now()).then(function(r){return r.json();}).then(function(d){
   $('swt').textContent=d.g.toFixed(0)+' g';$('sst').textContent=d.stable?'stabiel':'…meten';
- }).catch(function(){$('sst').textContent='geen verbinding met schaal';});
+ }).catch(function(){$('sst').textContent=t('scale.no_conn','geen verbinding met schaal');});
  fetch('http://'+scaleHost+'/info?t='+Date.now()).then(function(r){return r.json();}).then(function(d){
-  $('sInfo').textContent=(d.connected?'verbonden':'AP-modus')+' · '+d.ip+' · '+d.ssid+' · '+d.rssi+'dBm'+(d.static?' · vast IP':'');
+  $('sInfo').textContent=(d.connected?t('diag.connected','verbonden'):t('scale.ap_mode','AP-modus'))+' · '+d.ip+' · '+d.ssid+' · '+d.rssi+'dBm'+(d.static?' · vast IP':'');
  }).catch(function(){});
 }
-function sGet(p){fetch('http://'+scaleHost+p).then(function(r){return r.text();}).then(sMsg).catch(function(){sMsg('geen verbinding met schaal');});}
+function sGet(p){fetch('http://'+scaleHost+p).then(function(r){return r.text();}).then(sMsg).catch(function(){sMsg(t('scale.no_conn','geen verbinding met schaal'));});}
 $('sTare').onclick=function(){sGet('/tare');};
 $('sCal').onclick=function(){sGet('/cal?known='+$('sKnown').value);};
 $('sIpFix').onclick=function(){sGet('/setip?ip='+encodeURIComponent($('sIp').value));};
 $('sWifi').onclick=function(){sGet('/setwifi?ssid='+encodeURIComponent($('sSsid').value)+'&pass='+encodeURIComponent($('sPass').value));};
-$('sIpSave').onclick=function(){var v=$('sIp').value;fetch('/setcfg?scale_ip='+encodeURIComponent(v)).then(function(){scaleHost=v;sMsg('opgeslagen op tablet');});};
+$('sIpSave').onclick=function(){var v=$('sIp').value;fetch('/setcfg?scale_ip='+encodeURIComponent(v)).then(function(){scaleHost=v;sMsg(t('scale.saved_tablet','opgeslagen op tablet'));});};
 setInterval(scalePoll,1200);
 setInterval(function(){if($('spList')&&$('spList').offsetParent!==null)loadSpools();},3000);
 setInterval(function(){if($('histList')&&$('histList').offsetParent!==null)loadHistory();},8000);
@@ -627,7 +631,7 @@ function loadSpools(){
   var mats={};list.forEach(function(s){if(s.material)mats[s.material]=1;});
   var sel=$('spFMat');if(sel){var cur=sel.value,o='<option value="">alle materialen</option>';Object.keys(mats).sort().forEach(function(m){o+='<option>'+m+'</option>';});sel.innerHTML=o;sel.value=cur;}
   renderInv();renderSpList();})
- .catch(function(){$('spList').innerHTML='<div class="muted">geen tablet</div>';});
+ .catch(function(){$('spList').innerHTML='<div class="muted">'+t('no_tablet','geen tablet')+'</div>';});
 }
 function mLen(g,mat){var d={PLA:1.24,PETG:1.27,ABS:1.04,ASA:1.07,TPU:1.21,PC:1.20,PA:1.14,PVA:1.23}[mat]||1.24;return g/(d*2.4053);}
 function spGrams(s){return (s.live!=null?s.live:s.rem)||0;}
@@ -686,22 +690,22 @@ function updateBulk(){var bar=$('spBulk');if(!bar)return;var ids=selIds();bar.st
 function toggleAll(c){spSel={};if(c){spCache.forEach(function(s){if(spMatch(s))spSel[s.i]=true;});}renderSpList();}
 function clearSel(){spSel={};if($('spAll'))$('spAll').checked=false;renderSpList();}
 function bulkGo(qs){fetch('/spool_bulk?idx='+selIds().join(',')+'&'+qs).then(function(){spSel={};if($('spAll'))$('spAll').checked=false;setTimeout(loadSpools,300);});}
-function bulkDel(){if(confirm(selIds().length+' rollen verwijderen?'))bulkGo('act=del');}
+function bulkDel(){if(confirm(selIds().length+' '+t('confirm.del_rolls','rollen verwijderen?')))bulkGo('act=del');}
 function bulkColorGo(){bulkGo('act=color&v='+encodeURIComponent($('bulkColor').value));}
 function bulkWeightGo(){if($('bulkWeight').value!=='')bulkGo('act=weight&v='+$('bulkWeight').value);}
 function bulkMatGo(){if($('bulkMat').value)bulkGo('act=material&v='+encodeURIComponent($('bulkMat').value));}
 function bulkPriceGo(){if($('bulkPrice').value!=='')bulkGo('act=price&v='+$('bulkPrice').value);}
-function spRemWeigh(){if(!scaleHost){alert('Geen schaal-IP bekend — stel het in op de Scale-tab.');return;}
- fetch('http://'+scaleHost+'/weight?t='+Date.now()).then(function(r){return r.json();}).then(function(d){var e=parseFloat($('spEmpty').value)||0;$('spRem').value=Math.max(0,Math.round(d.g-e));}).catch(function(){alert('Geen verbinding met de schaal.');});}
-function spWeigh(i){var s=spCache[i];if(!scaleHost){alert('Geen schaal-IP bekend.');return;}
+function spRemWeigh(){if(!scaleHost){alert(t('scale.no_ip_tab','Geen schaal-IP bekend — stel het in op de Scale-tab.'));return;}
+ fetch('http://'+scaleHost+'/weight?t='+Date.now()).then(function(r){return r.json();}).then(function(d){var e=parseFloat($('spEmpty').value)||0;$('spRem').value=Math.max(0,Math.round(d.g-e));}).catch(function(){alert(t('scale.no_conn_alert','Geen verbinding met de schaal.'));});}
+function spWeigh(i){var s=spCache[i];if(!scaleHost){alert(t('scale.no_ip','Geen schaal-IP bekend.'));return;}
  fetch('http://'+scaleHost+'/weight?t='+Date.now()).then(function(r){return r.json();}).then(function(d){
   var rem=Math.max(0,Math.round(d.g-s.empty));
   if(!confirm('Rol \''+s.name+'\' wegen?\nGewogen '+Math.round(d.g)+' g − leeg '+s.empty+' g = '+rem+' g resterend.'))return;
   fetch('/spool_save?idx='+i+'&name='+encodeURIComponent(s.name)+'&material='+encodeURIComponent(s.material)+'&color='+encodeURIComponent(s.rgb)+'&rem='+rem+'&empty='+s.empty+'&nmin='+(s.nmin||0)+'&nmax='+(s.nmax||0)+'&code='+encodeURIComponent(s.code||'')+'&note='+encodeURIComponent(s.note||'')+'&price='+(s.price||0)).then(function(){setTimeout(loadSpools,300);});
- }).catch(function(){alert('Geen verbinding met de schaal.');});}
+ }).catch(function(){alert(t('scale.no_conn_alert','Geen verbinding met de schaal.'));});}
 function spCopy(i){var s=spCache[i];fetch('/spool_save?idx=&name='+encodeURIComponent(s.name+' (kopie)')+'&material='+encodeURIComponent(s.material)+'&color='+encodeURIComponent(s.rgb)+'&rem='+s.rem+'&empty='+s.empty+'&nmin='+(s.nmin||0)+'&nmax='+(s.nmax||0)+'&code='+encodeURIComponent(s.code||'')+'&note='+encodeURIComponent(s.note||'')+'&price='+(s.price||0)).then(function(){setTimeout(loadSpools,300);});}
-function spLoad(i){var sl=$('ss'+i).value;fetch('/spool_load?idx='+i+'&slot='+sl).then(function(r){return r.text();}).then(function(t){spMsg(t+' in slot');});}
-function spDel(i){if(confirm('Rol verwijderen?'))fetch('/spool_del?idx='+i).then(function(){loadSpools();});}
+function spLoad(i){var sl=$('ss'+i).value;fetch('/spool_load?idx='+i+'&slot='+sl).then(function(r){return r.text();}).then(function(txt){spMsg(txt+' '+t('spools.in_slot','in slot'));});}
+function spDel(i){if(confirm(t('confirm.del_roll','Rol verwijderen?')))fetch('/spool_del?idx='+i).then(function(){loadSpools();});}
 function spEdit(i){var s=spCache[i];$('spTitle').textContent=t('spools.edit_roll','Rol bewerken');$('spIdx').value=i;
  $('spName').value=s.name;$('spMat').value=s.material;$('spColor').value=s.rgb;$('spRem').value=s.rem;$('spEmpty').value=s.empty;
  $('spNmin').value=s.nmin||'';$('spNmax').value=s.nmax||'';$('spCode').value=s.code||'';$('spNote').value=s.note||'';$('spPrice').value=s.price||'';}
@@ -711,7 +715,7 @@ $('spSave').onclick=function(){
  var q='idx='+$('spIdx').value+'&name='+encodeURIComponent($('spName').value)+'&material='+encodeURIComponent($('spMat').value)
   +'&color='+encodeURIComponent($('spColor').value)+'&rem='+($('spRem').value||0)+'&empty='+($('spEmpty').value||0)
   +'&nmin='+($('spNmin').value||0)+'&nmax='+($('spNmax').value||0)+'&code='+encodeURIComponent($('spCode').value)+'&note='+encodeURIComponent($('spNote').value)+'&price='+($('spPrice').value||0);
- fetch('/spool_save?'+q).then(function(r){return r.text();}).then(function(t){spMsg(t);spReset();setTimeout(loadSpools,300);});
+ fetch('/spool_save?'+q).then(function(r){return r.text();}).then(function(txt){spMsg(txt);spReset();setTimeout(loadSpools,300);});
 };
 function loadEmpties(){
  fetch('/empties').then(function(r){return r.json();}).then(function(list){
@@ -721,7 +725,7 @@ function loadEmpties(){
   sel.innerHTML=o;sel.value=cur;
   var h='';
   list.forEach(function(e){h+='<div class="chiprow"><span>'+e.name+'</span><span class="badge" style="margin-left:0">'+e.weight+' g</span><button class="iconbtn del" style="margin-left:auto" onclick="emDel('+e.i+')">✕</button></div>';});
-  $('emList').innerHTML=h||'<div class="muted">Nog geen lege spoelen.</div>';
+  $('emList').innerHTML=h||'<div class="muted">'+t('empties.none_yet','Nog geen lege spoelen.')+'</div>';
  }).catch(function(){});
 }
 $('spEmptySel').onchange=function(){if(this.value)$('spEmpty').value=this.value;};
@@ -729,9 +733,9 @@ $('emSave').onclick=function(){
  var q='idx=&name='+encodeURIComponent($('emName').value)+'&weight='+($('emWeight').value||0);
  fetch('/empty_save?'+q).then(function(){$('emName').value='';setTimeout(loadEmpties,300);});
 };
-function emDel(i){if(confirm('Verwijderen?'))fetch('/empty_del?idx='+i).then(function(){loadEmpties();});}
-function emWeigh(){if(!scaleHost){alert('Geen schaal-IP bekend — stel het in op de Scale-tab.');return;}
- fetch('http://'+scaleHost+'/weight?t='+Date.now()).then(function(r){return r.json();}).then(function(d){$('emWeight').value=Math.round(d.g);}).catch(function(){alert('Geen verbinding met de schaal.');});}
+function emDel(i){if(confirm(t('confirm.delete','Verwijderen?')))fetch('/empty_del?idx='+i).then(function(){loadEmpties();});}
+function emWeigh(){if(!scaleHost){alert(t('scale.no_ip_tab','Geen schaal-IP bekend — stel het in op de Scale-tab.'));return;}
+ fetch('http://'+scaleHost+'/weight?t='+Date.now()).then(function(r){return r.json();}).then(function(d){$('emWeight').value=Math.round(d.g);}).catch(function(){alert(t('scale.no_conn_alert','Geen verbinding met de schaal.'));});}
 // A snapshot on the tablet only survives an app reinstall - not a wipe or a dead
 // tablet. So we track when a backup last actually LEFT the device and say so.
 function renderBkStatus(age){
@@ -740,17 +744,17 @@ function renderBkStatus(age){
  var d=(age>=0)?Math.floor(age/86400):-1;
  var overdue=(d<0||d>=14);
  if(d<0){b.style.background='#5a2020';b.style.color='#ffd0d0';
-  b.innerHTML='&#9888; <b>Nog nooit een back-up gedownload.</b> Je data staat alleen op de tablet.';}
+  b.innerHTML='&#9888; <b>'+t('bk.never','Nog nooit een back-up gedownload.')+'</b> '+t('bk.only_tablet','Je data staat alleen op de tablet.');}
  else if(overdue){b.style.background='#5a2020';b.style.color='#ffd0d0';
-  b.innerHTML='&#9888; Laatste back-up <b>'+d+' dagen</b> geleden &mdash; tijd voor een nieuwe.';}
+  b.innerHTML='&#9888; '+t('bk.last','Laatste back-up')+' <b>'+d+' '+t('days','dagen')+'</b> '+t('ago','geleden')+' &mdash; '+t('bk.time_for_new','tijd voor een nieuwe.');}
  else{b.style.background='#1e3a28';b.style.color='#b9f5cf';
-  b.innerHTML='&#10003; Laatste back-up '+(d===0?'vandaag':(d+' dag'+(d===1?'':'en')+' geleden'))+'.';}
+  b.innerHTML='&#10003; '+t('bk.last','Laatste back-up')+' '+(d===0?t('today','vandaag'):(d+' '+t('days','dagen')+' '+t('ago','geleden')))+'.';}
  if(btn)btn.className='formbtn '+(overdue?'pri':'sec');
 }
 function downloadBackup(){
  var a=document.createElement('a');a.href='/backup';a.download='filatrack-backup.ptb';
  document.body.appendChild(a);a.click();a.remove();
- if($('bkMsg'))$('bkMsg').textContent='back-up gedownload';
+ if($('bkMsg'))$('bkMsg').textContent=t('bk.downloaded','back-up gedownload');
 }
 // Rolls-only export/import: just the spool library, as a shareable JSON file.
 // Import ADDS rolls (no wipe) - that is the whole point of keeping it separate
@@ -761,8 +765,8 @@ function exportRolls(){
   var blob=new Blob([JSON.stringify({spools:a[0],empties:a[1]},null,1)],{type:'application/json'});
   var url=URL.createObjectURL(blob),link=document.createElement('a');
   link.href=url;link.download='filatrack_rollen.json';link.click();URL.revokeObjectURL(url);
-  if(m)m.textContent=(a[0]||[]).length+' rollen geexporteerd';
- }).catch(function(){if(m)m.textContent='geen verbinding';});
+  if(m)m.textContent=(a[0]||[]).length+' '+t('roll.exported','rollen geexporteerd');
+ }).catch(function(){if(m)m.textContent=t('no_conn','geen verbinding');});
 }
 function importRolls(files){
  if(!files||!files.length)return;
@@ -770,26 +774,26 @@ function importRolls(files){
  var rd=new FileReader();
  rd.onload=function(){
   var d;
-  try{ d=JSON.parse(rd.result); }catch(e){ if(m)m.textContent='Ongeldig bestand.'; return; }
-  if(!d.spools&&!d.empties){ if(m)m.textContent='Geen rollen in dit bestand.'; return; }
+  try{ d=JSON.parse(rd.result); }catch(e){ if(m)m.textContent=t('invalid_file','Ongeldig bestand.'); return; }
+  if(!d.spools&&!d.empties){ if(m)m.textContent=t('roll.none_in_file','Geen rollen in dit bestand.'); return; }
   var ns=(d.spools||[]).length;
-  if(!confirm(ns+' rol(len) toevoegen aan je bibliotheek? Bestaande rollen blijven staan.'))return;
+  if(!confirm(ns+' '+t('roll.import_confirm','rol(len) toevoegen aan je bibliotheek? Bestaande rollen blijven staan.')))return;
   var chain=Promise.resolve();
   (d.empties||[]).forEach(function(e){chain=chain.then(function(){return fetch('/empty_save?idx=&name='+encodeURIComponent(e.name)+'&weight='+e.weight);});});
   (d.spools||[]).forEach(function(s){chain=chain.then(function(){return fetch('/spool_save?idx=&name='+encodeURIComponent(s.name)+'&material='+encodeURIComponent(s.material)+'&color='+encodeURIComponent(s.rgb)+'&rem='+(s.rem||0)+'&empty='+(s.empty||0)+'&nmin='+(s.nmin||0)+'&nmax='+(s.nmax||0)+'&code='+encodeURIComponent(s.code||'')+'&note='+encodeURIComponent(s.note||'')+'&price='+(s.price||0));});});
-  chain.then(function(){if(m)m.textContent=ns+' rollen toegevoegd.';loadSpools();loadEmpties();})
-       .catch(function(){if(m)m.textContent='importeren mislukt';});
+  chain.then(function(){if(m)m.textContent=ns+' '+t('roll.imported','rollen toegevoegd.');loadSpools();loadEmpties();})
+       .catch(function(){if(m)m.textContent=t('import_failed','importeren mislukt');});
  };
  rd.readAsText(files[0]);
 }
 function importBackup(files){
  if(!files||!files.length)return;
- if(!confirm('Volledige back-up terugzetten? Dit OVERSCHRIJFT je huidige rollen, gewichten, historie en statistieken op de tablet.'))return;
+ if(!confirm(t('bk.restore_confirm','Volledige back-up terugzetten? Dit OVERSCHRIJFT je huidige rollen, gewichten, historie en statistieken op de tablet.')))return;
  var rd=new FileReader();
  rd.onload=function(){
-  fetch('/restore',{method:'POST',body:rd.result}).then(function(r){return r.text();}).then(function(t){
-   $('bkMsg').textContent=t;setTimeout(function(){loadSpools();loadEmpties();loadHistory();},900);
-  }).catch(function(){$('bkMsg').textContent='herstel mislukt';});
+  fetch('/restore',{method:'POST',body:rd.result}).then(function(r){return r.text();}).then(function(txt){
+   $('bkMsg').textContent=txt;setTimeout(function(){loadSpools();loadEmpties();loadHistory();},900);
+  }).catch(function(){$('bkMsg').textContent=t('bk.restore_failed','herstel mislukt');});
  };
  rd.readAsText(files[0]);
 }

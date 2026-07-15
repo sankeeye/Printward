@@ -31,7 +31,8 @@
   waarschuwingspill · uitgebreide historie (zoeken/filteren/sorteren/CSV) ·
   voorraadoverzicht + restlengte · diagnose-scherm · self-test · **hernoemd naar FilaTrack**
   (incl. datamigratie) · package `nl.filatrack.app` · ESP32-firmware verwijderd (2097 regels).
-- **Waar we gebleven zijn**: net begonnen aan **meertalige interface** (web + tablet).
+- **Waar we gebleven zijn**: **de web-interface is helemaal vertaald** (EN/NL/DE compleet,
+  264 sleutels). De tablet-UI staat nog in het Nederlands — dat is de volgende stap.
 - **Ontwerp i18n** (afgesproken 15-07): teksten krijgen een **sleutel** (`dash.printing`);
   **EN + NL zitten ingebouwd** zodat het out-of-the-box werkt zonder bestanden; daarnaast
   laadt de app **losse taalbestanden** `/sdcard/filatrack_lang_<code>.conf` (`sleutel=vertaling`,
@@ -39,8 +40,26 @@
   nieuwe taal toevoegen — **een taal erbij = een bestand neerzetten, geen hercompilatie**.
   Eén set bestanden bedient zowel tablet als web (web haalt ze via `/lang`), dus vertalingen
   hoeven maar één keer. `lang=` in filatrack.conf, `/setcfg?lang=`, keuze in Settings.
-- **Volgende stap**: `sim/android/lang.{h,cpp}` bouwen (ingebouwde EN/NL + loader + `T(key)`),
-  daarna schermen omzetten (web eerst — dat zien buitenstaanders het eerst).
+- **Volgende stap**: de **tablet-UI** omzetten naar `T("sleutel")` (~10 bestanden in `src/`
+  en `sim/android/`). Let op de LVGL-ASCII-valkuil hierboven: in de *ingebouwde* tabel geen
+  `€`/`·`/`✓`. Zet daarna nieuwe sleutels ook in `lang/filatrack_lang_de.conf` — de self-test
+  faalt als een taal niet compleet is.
+- **Drie plekken met tekst, niet één** (dit kostte twee ronden "toch niet alles Engels"):
+  1. `webctl_page.h` JS → `t('sleutel','fallback')`
+  2. `webctl_page.h` statische HTML → `data-i18n=` / `data-i18n-ph=` op het element
+  3. **`webctl.cpp` serverantwoorden** → `send_msg(fd, status, "sleutel")`. Die tekst zet de
+     pagina rechtstreeks op het scherm, dus vertalen aan de webkant helpt daar niets.
+  Ook `src/ui_move.cpp` (`move_blocked`) — die reden gaat naar tablet én web.
+- **Valkuilen i18n**:
+  - `applyI18n()` doet `el.innerHTML = ...`. Zet `data-i18n` dus **nooit** op een element dat
+    een control omsluit — de `<label>`s bij importeren/herstellen bevatten een
+    `<input type=file>`; die zou verdwijnen. Tekst in een eigen `<span>` zetten.
+  - Noem een callback-parameter nooit `t` (`.then(function(t){...})`) — dat overschaduwt de
+    vertaalfunctie `t()`. Gebruik `txt`.
+  - `send_resp()` wil een lengte; met vertaalde tekst klopt een handgeteld getal niet meer.
+    Daarom `send_msg()`, die `strlen(T(key))` pakt.
+  - Taalbestand: max **320 bytes** per tekst, 400 sleutels. De tablet meldt afkappen in
+    `adb logcat -s SDL/APP | grep LANG` in plaats van het stil te doen.
 - **Openstaand aan Arno's kant**: kiosk opnieuw kiezen (Home → FilaTrack → Altijd; reset door
   de nieuwe package) · `tools\Backup instellen.bat` draaien voor de dagelijkse back-up ·
   `Eigen-bambu-hulp` archiveren op GitHub.
@@ -58,8 +77,13 @@ adb install -r C:\pt_android\app\build\outputs\apk\debug\app-debug.apk
 adb shell monkey -p nl.filatrack.app -c android.intent.category.LAUNCHER 1
 adb logcat -s FILATRACK          # onze logs
 
-X:\projects\panda\FilaTrack\tools\selftest.ps1    # 18 checks tegen de echte tablet
+X:\projects\panda\FilaTrack\tools\selftest.ps1    # 28 checks tegen de echte tablet
 ```
+
+- **Git op de NAS**: de repo staat op een share, dus git wil een `safe.directory`-regel voor
+  het **exacte pad**. Na de hernoeming klopte die niet meer ("dubious ownership"). Staat nu
+  goed; komt hij terug na een hernoeming, dan:
+  `git config --global --add safe.directory '%(prefix)///192.168.2.111/data/projects/panda/<map>'`
 
 - **Scratch-boom `C:\pt_android`**: `Android.mk`, `build.gradle`, `AndroidManifest.xml` en
   `res/` zijn **aparte kopieën** — de sync kopieert die NIET. Nieuw bronbestand? Voeg het toe

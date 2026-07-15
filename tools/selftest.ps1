@@ -117,6 +117,52 @@ finally {
     }
 }
 
+# --- taal: elke taal moet compleet zijn -----------------------------------
+# Waarom: "op de site is niet alles Engels" kwam twee keer terug. Een taal is pas
+# af als hij dezelfde sleutels heeft als Engels; ontbreekt er een, dan valt die
+# stilletjes terug op Engels en zie je dat pas op het scherm.
+#
+# Zet de taal tijdelijk om en zet hem daarna terug - net als de wegwerprol.
+Write-Host "taal:"
+$origLang = $null
+try {
+    $origLang = (Get-Json '/status').cfg.lang
+    $codes = Get-Json '/langs'
+    Check "meer dan 1 taal beschikbaar" ($codes.Count -ge 2) "-> $($codes -join ',')"
+
+    $keysPer = @{}
+    foreach ($c in $codes) {
+        Hit "/setcfg?lang=$c" | Out-Null
+        Start-Sleep -Milliseconds 300
+        $l = Get-Json '/lang'
+        Check "/lang volgt taal $c" ($l.lang -eq $c) "-> kreeg '$($l.lang)'"
+        $keysPer[$c] = @($l.s.PSObject.Properties.Name)
+    }
+
+    $en = $keysPer['en']
+    Check "Engels heeft sleutels" ($en.Count -gt 100) "-> $($en.Count)"
+    foreach ($c in $codes) {
+        if ($c -eq 'en') { continue }
+        $missing = $en | Where-Object { $keysPer[$c] -notcontains $_ }
+        Check "$c is compleet t.o.v. Engels" ($missing.Count -eq 0) `
+              "-> mist $($missing.Count): $(($missing | Select-Object -First 6) -join ', ')"
+    }
+
+    # Een lege vertaling toont een leeg label op het scherm.
+    foreach ($c in $codes) {
+        Hit "/setcfg?lang=$c" | Out-Null
+        Start-Sleep -Milliseconds 300
+        $l = Get-Json '/lang'
+        $blank = @($l.s.PSObject.Properties | Where-Object { -not $_.Value })
+        Check "$c heeft geen lege teksten" ($blank.Count -eq 0) `
+              "-> leeg: $(($blank.Name | Select-Object -First 6) -join ', ')"
+    }
+} catch {
+    Check "taalcontrole" $false $_.Exception.Message
+} finally {
+    if ($origLang) { try { Hit "/setcfg?lang=$origLang" | Out-Null } catch {} }
+}
+
 Write-Host ""
 if ($script:fails -eq 0) { Write-Host "ALLES GOED" -ForegroundColor Green; exit 0 }
 Write-Host ("$script:fails CHECK(S) GEFAALD") -ForegroundColor Red

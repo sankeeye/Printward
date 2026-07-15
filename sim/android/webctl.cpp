@@ -164,6 +164,14 @@ static int code_from_name(const char* a) {
     return 0;
 }
 
+// Reply with a one-line message in the UI language. The length has to come from
+// the translation itself - the old hand-counted literals only matched the Dutch.
+static void send_resp(int fd, const char* status, const char* ctype, const char* body, int blen);
+static void send_msg(int fd, const char* status, const char* key) {
+    const char* m = T(key);
+    send_resp(fd, status, "text/plain; charset=utf-8", m, (int)strlen(m));
+}
+
 static void send_resp(int fd, const char* status, const char* ctype, const char* body, int blen) {
     char hdr[256];
     int n = snprintf(hdr, sizeof(hdr),
@@ -560,7 +568,7 @@ static void handle_conn(int fd) {
         char* cl = strstr(buf, "Content-Length:");
         if (!cl) cl = strstr(buf, "content-length:");
         int clen = cl ? atoi(cl + 15) : 0;
-        if (!bodystart || clen <= 0 || clen > 1024 * 1024) { send_resp(fd, "400 Bad Request", "text/plain; charset=utf-8", "ongeldig", 8); return; }
+        if (!bodystart || clen <= 0 || clen > 1024 * 1024) { send_msg(fd, "400 Bad Request", "invalid"); return; }
         bodystart += 4;
         int have = r - (int)(bodystart - buf);
         if (have > clen) have = clen;
@@ -578,9 +586,9 @@ static void handle_conn(int fd) {
             fwrite(body, 1, have, tf);
             fclose(tf);
             q_push(Q_RESTORE, 0, 0, nullptr);
-            send_resp(fd, "200 OK", "text/plain; charset=utf-8", "hersteld - herstart de app om alles te laden", 44);
+            send_msg(fd, "200 OK", "bk.restored");
         } else {
-            send_resp(fd, "500 Error", "text/plain; charset=utf-8", "schrijven mislukt", 17);
+            send_msg(fd, "500 Error", "write_failed");
         }
         free(body);
         return;
@@ -625,10 +633,10 @@ static void handle_conn(int fd) {
     if (!strcmp(path, "/delete")) {          // delete one file over FTP (DELE)
         char pth[220];
         parse_query(query, "path", pth, sizeof(pth));
-        if (!pth[0]) { send_resp(fd, "400 Bad Request", "text/plain; charset=utf-8", "geen pad", 8); return; }
+        if (!pth[0]) { send_msg(fd, "400 Bad Request", "no_path"); return; }
         String err;
-        if (bambu_ftp_delete(pth, &err)) send_resp(fd, "200 OK", "text/plain; charset=utf-8", "verwijderd", 10);
-        else { String m = "fout: " + err; send_resp(fd, "500 Error", "text/plain; charset=utf-8", m.c_str(), (int)m.length()); }
+        if (bambu_ftp_delete(pth, &err)) send_msg(fd, "200 OK", "deleted");
+        else { String m = String(T("error")) + ": " + err; send_resp(fd, "500 Error", "text/plain; charset=utf-8", m.c_str(), (int)m.length()); }
         return;
     }
     if (!strcmp(path, "/thumb")) {           // .3mf model preview (embedded PNG)
@@ -651,11 +659,11 @@ static void handle_conn(int fd) {
         parse_query(query, "s", sbuf, sizeof(sbuf));
         float step = sbuf[0] ? (float)atof(sbuf) : 1.0f;
         int code = code_from_name(a);
-        if (!code) { send_resp(fd, "400 Bad Request", "text/plain; charset=utf-8", "onbekend commando", 17); return; }
+        if (!code) { send_msg(fd, "400 Bad Request", "unknown_cmd"); return; }
         const char* reason = "";
         if (move_blocked(code, &reason)) { send_resp(fd, "200 OK", "text/plain; charset=utf-8", reason, (int)strlen(reason)); return; }
         q_push(Q_MOVE, code, step, nullptr);
-        send_resp(fd, "200 OK", "text/plain; charset=utf-8", "verstuurd", 9);
+        send_msg(fd, "200 OK", "sent");
         return;
     }
     if (!strcmp(path, "/ctl")) {
@@ -672,7 +680,7 @@ static void handle_conn(int fd) {
         else if (!strcmp(a, "speed")) code = CTL_SPEED;
         if (!code) { send_resp(fd, "400 Bad Request", "text/plain", "", 0); return; }
         q_push(Q_CTL, code, v, nullptr);
-        send_resp(fd, "200 OK", "text/plain; charset=utf-8", "verstuurd", 9);
+        send_msg(fd, "200 OK", "sent");
         return;
     }
     if (!strcmp(path, "/start")) {
@@ -680,12 +688,12 @@ static void handle_conn(int fd) {
         parse_query(query, "path", pth, sizeof(pth));
         if (!pth[0]) { send_resp(fd, "400 Bad Request", "text/plain", "", 0); return; }
         q_push(Q_START, 0, 0, pth);
-        send_resp(fd, "200 OK", "text/plain; charset=utf-8", "print-start verstuurd", 21);
+        send_msg(fd, "200 OK", "print_start_sent");
         return;
     }
     if (!strcmp(path, "/setcfg")) {
         q_push(Q_CFG, 0, 0, query ? query : "");
-        send_resp(fd, "200 OK", "text/plain; charset=utf-8", "opgeslagen", 10);
+        send_msg(fd, "200 OK", "saved");
         return;
     }
     if (!strcmp(path, "/spools")) {
@@ -698,14 +706,14 @@ static void handle_conn(int fd) {
         char idxs[8];
         parse_query(query, "idx", idxs, sizeof(idxs));
         q_push(Q_SPOOL_SAVE, idxs[0] ? atoi(idxs) : -1, 0, query ? query : "");
-        send_resp(fd, "200 OK", "text/plain; charset=utf-8", "opgeslagen", 10);
+        send_msg(fd, "200 OK", "saved");
         return;
     }
     if (!strcmp(path, "/spool_del")) {
         char idxs[8];
         parse_query(query, "idx", idxs, sizeof(idxs));
         q_push(Q_SPOOL_DEL, atoi(idxs), 0, nullptr);
-        send_resp(fd, "200 OK", "text/plain; charset=utf-8", "verwijderd", 10);
+        send_msg(fd, "200 OK", "deleted");
         return;
     }
     if (!strcmp(path, "/spool_load")) {
@@ -713,14 +721,14 @@ static void handle_conn(int fd) {
         parse_query(query, "idx", idxs, sizeof(idxs));
         parse_query(query, "slot", slots, sizeof(slots));
         q_push(Q_SPOOL_LOAD, atoi(idxs), (float)atoi(slots), nullptr);
-        send_resp(fd, "200 OK", "text/plain; charset=utf-8", "geladen", 7);
+        send_msg(fd, "200 OK", "loaded");
         return;
     }
     if (!strcmp(path, "/spool_clear")) {
         char slots[8];
         parse_query(query, "slot", slots, sizeof(slots));
         q_push(Q_SPOOL_CLEAR, 0, (float)atoi(slots), nullptr);
-        send_resp(fd, "200 OK", "text/plain; charset=utf-8", "leeg", 4);
+        send_msg(fd, "200 OK", "empty");
         return;
     }
     if (!strcmp(path, "/empties")) {
@@ -733,14 +741,14 @@ static void handle_conn(int fd) {
         char idxs[8];
         parse_query(query, "idx", idxs, sizeof(idxs));
         q_push(Q_EMPTY_SAVE, idxs[0] ? atoi(idxs) : -1, 0, query ? query : "");
-        send_resp(fd, "200 OK", "text/plain; charset=utf-8", "opgeslagen", 10);
+        send_msg(fd, "200 OK", "saved");
         return;
     }
     if (!strcmp(path, "/empty_del")) {
         char idxs[8];
         parse_query(query, "idx", idxs, sizeof(idxs));
         q_push(Q_EMPTY_DEL, atoi(idxs), 0, nullptr);
-        send_resp(fd, "200 OK", "text/plain; charset=utf-8", "verwijderd", 10);
+        send_msg(fd, "200 OK", "deleted");
         return;
     }
     if (!strcmp(path, "/spool_bulk")) {
@@ -750,7 +758,7 @@ static void handle_conn(int fd) {
     }
     if (!strcmp(path, "/notify_test")) {
         notify_send("FilaTrack", "Test melding - het werkt!");
-        send_resp(fd, "200 OK", "text/plain; charset=utf-8", "testmelding verstuurd", 21);
+        send_msg(fd, "200 OK", "test_sent");
         return;
     }
     if (!strcmp(path, "/lang")) {          // active translation table for the web page

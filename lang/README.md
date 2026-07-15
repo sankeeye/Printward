@@ -43,6 +43,20 @@ Ask the tablet — it lists every key with its current text:
 curl http://<tablet-ip>:8080/lang
 ```
 
+## Limits
+
+One line per key, and the text after `=` has to stay under **320 bytes**
+(accented letters count double: `ü` is 2). Keys stay under 48 characters, and a
+file holds up to 400 of them. Go over and the tablet says so in the log rather
+than quietly cutting your text off:
+
+```
+adb logcat -s SDL/APP | grep LANG
+```
+
+Watch the width too: the tablet is 480 px wide, so a label that runs much
+longer than the English one gets clipped on screen even though it fits here.
+
 Keys are grouped by screen: `dash.*` (dashboard), `nav.*` (tabs), `spools.*`,
 `hist.*` (history/statistics), `set.*` (settings), plus a few generic ones
 (`ok`, `cancel`, `back`, …).

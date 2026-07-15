@@ -7,6 +7,7 @@
 // The action logic (move_blocked / move_perform) is factored out so the web
 // control page (sim/android/webctl.cpp) drives the exact same guarded path.
 #include "ui_move.h"
+#include "lang.h"   // blocked-reason text is shown on the tablet and the web
 #include "ui_printer.h"
 #include "bambu_mqtt.h"
 #include <lvgl.h>
@@ -62,11 +63,11 @@ bool move_blocked(int code, const char** reason) {
             return false;
     }
     if (is_printing()) {   // jog / home / extrude / motors-off / goto: not while printing
-        *reason = "Bezig met printen - bewegen uitgeschakeld";
+        *reason = T("move.blocked_printing");
         return true;
     }
     if ((code == MOVE_EEXT || code == MOVE_ERET) && g_printer_status.nozzle_temp < MIN_EXTRUDE_TEMP) {
-        *reason = "Nozzle te koud (<170\xC2\xB0" "C) - eerst opwarmen";
+        *reason = T("move.nozzle_cold");
         return true;
     }
     return false;

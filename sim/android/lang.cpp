@@ -206,6 +206,96 @@ static const Builtin BUILTIN[] = {
     {"preview",               "Preview",                   "Voorbeeld"},
     {"hist.archived",         "archived",                  "gearchiveerd"},
 
+    // --- static page text (hints, placeholders, buttons) ---
+    {"spools.weigh_hint",     "= weighed - empty spool", "= gewogen - leeg-spoel"},
+    {"spools.name_ph",        "e.g. Bambu PLA Black", "bv. Bambu PLA Zwart"},
+    {"spools.note_ph",        "e.g. dried 3/7", "bv. gedroogd 3/7"},
+    {"spools.empty_ph",       "e.g. Bambu reusable", "bv. Bambu herbruikbaar"},
+    {"spools.search",         "Search by name or material&hellip;", "Zoek op naam of materiaal&hellip;"},
+    {"all",                   "all", "alles"},
+    {"spools.export_hint",    "Just your <b>rolls + empty spools</b>, as a separate file. Handy to share, or to take over from another tablet. Importing <b>adds</b> - it overwrites nothing.", "Alleen je <b>rollen + lege spoelen</b>, als los bestand. Handig om te delen of van een andere tablet over te nemen. Importeren <b>voegt toe</b> - het overschrijft niets."},
+    {"spools.export_btn",     "Export rolls", "Exporteer rollen"},
+    {"spools.import_btn",     "Import rolls", "Importeer rollen"},
+    {"spools.full_bk_hint",   "A full backup (including history and statistics) lives under <b>Settings</b>.", "Een volledige back-up (incl. historie en statistieken) staat bij <b>Settings</b>."},
+    {"set.code_empty",        "leave empty = unchanged", "laat leeg = ongewijzigd"},
+    {"set.ntfy_ph",           "e.g. filatrack-secret-x9k2", "bv. filatrack-geheim-x9k2"},
+    {"set.ntfy_hint",         "Install the free <b>ntfy</b> app (or ntfy.sh in the browser) and subscribe to this topic. You get a notification when a print finishes or fails, when filament runs short, and when a weighed roll drops below the threshold.", "Installeer de gratis <b>ntfy</b>-app (of ntfy.sh in de browser) en abonneer op dit topic. Je krijgt een melding bij print klaar/mislukt, filament tekort en als een gewogen rol onder de drempel komt."},
+    {"set.backup_hint",       "Everything on the tablet in one file: rolls, empty spools, weights, history and statistics. (Printer IP/serial/access code are <b>not</b> included.)", "Alles op de tablet in een bestand: rollen, lege spoelen, gewichten, historie en statistieken. (Printer-IP/serial/toegangscode zitten er <b>niet</b> in.)"},
+    {"set.bk_download",       "Download backup", "Download back-up"},
+    {"set.bk_restore",        "Restore everything", "Herstel alles"},
+    {"set.restore_warn",      "restoring <b>overwrites</b> your current rolls, history and statistics", "herstel <b>overschrijft</b> je huidige rollen, historie en statistieken"},
+    {"set.rolls_only_hint",   "Only want to share or take over your rolls? That is under <b>Spools</b>.", "Alleen je rollen delen/overnemen? Dat staat bij <b>Spools</b>."},
+    {"hist.archive",          "Archive", "Archiveer"},
+
+    // --- server replies / blocked reasons ---
+    {"invalid",               "invalid",                   "ongeldig"},
+    {"error",                 "error",                     "fout"},
+    {"bk.restore_failed",     "restore failed",            "herstel mislukt"},
+    {"bk.restored",           "restored - restart the app to load everything", "hersteld - herstart de app om alles te laden"},
+    {"write_failed",          "write failed",              "schrijven mislukt"},
+    {"no_path",               "no path",                   "geen pad"},
+    {"deleted",               "deleted",                   "verwijderd"},
+    {"unknown_cmd",           "unknown command",           "onbekend commando"},
+    {"sent",                  "sent",                      "verstuurd"},
+    {"print_start_sent",      "print start sent",          "print-start verstuurd"},
+    {"saved",                 "saved",                     "opgeslagen"},
+    {"loaded",                "loaded",                    "geladen"},
+    {"test_sent",             "test notification sent",    "testmelding verstuurd"},
+    {"move.blocked_printing", "Printing - motion disabled", "Bezig met printen - bewegen uitgeschakeld"},
+    {"move.nozzle_cold",    "Nozzle too cold (<170\xC2\xB0" "C) - heat it first", "Nozzle te koud (<170\xC2\xB0" "C) - eerst opwarmen"},
+
+    // --- dialogs / status messages ---
+    {"set.connecting",        "connecting&hellip;",        "verbinden&hellip;"},
+    {"set.sending",           "sending&hellip;",           "versturen&hellip;"},
+    {"invalid_number",        "invalid number",            "ongeldig getal"},
+    {"set.threshold_saved",   "threshold saved",           "drempel opgeslagen"},
+    {"spools.in_slot",        "in slot",                   "in slot"},
+
+    {"empties.none_yet",      "No empty spools yet.",      "Nog geen lege spoelen."},
+    {"bk.downloaded",         "backup downloaded",         "back-up gedownload"},
+    {"roll.exported",         "rolls exported",            "rollen geexporteerd"},
+    {"invalid_file",          "Invalid file.",             "Ongeldig bestand."},
+    {"roll.none_in_file",     "No rolls in this file.",    "Geen rollen in dit bestand."},
+    {"roll.import_confirm",   "roll(s) - add to your library? Existing rolls are kept.", "rol(len) toevoegen aan je bibliotheek? Bestaande rollen blijven staan."},
+    {"roll.imported",         "rolls added.",              "rollen toegevoegd."},
+    {"import_failed",         "import failed",             "importeren mislukt"},
+    {"bk.restore_confirm",    "Restore the full backup? This OVERWRITES your current rolls, weights, history and statistics on the tablet.", "Volledige back-up terugzetten? Dit OVERSCHRIJFT je huidige rollen, gewichten, historie en statistieken op de tablet."},
+    {"diag.offline",          "offline",                   "offline"},
+
+    {"hist.all_time",         "All time",                  "Aller tijden"},
+    {"hist.prints_done",      "prints completed",          "prints voltooid"},
+    {"hist.spend",            "spend",                     "uitgave"},
+    {"diag.nothing_yet",      "nothing received yet",      "nog niets ontvangen"},
+    {"ago",                   "ago",                       "geleden"},
+    {"diag.set",              "set",                       "ingesteld"},
+    {"diag.missing",          "missing",                   "ontbreekt"},
+    {"diag.scale_ip",         "Scale IP",                  "Weegschaal-IP"},
+    {"diag.web_url",          "Web address",               "Webadres"},
+    {"diag.data_files",       "Data files (on the tablet)", "Databestanden (op de tablet)"},
+    {"diag.changed",          "changed",                   "gewijzigd"},
+    {"bk.never",              "No backup has ever been downloaded.", "Nog nooit een back-up gedownload."},
+    {"bk.only_tablet",        "Your data only exists on the tablet.", "Je data staat alleen op de tablet."},
+    {"bk.last",               "Last backup",               "Laatste back-up"},
+    {"bk.time_for_new",       "time for a new one.",       "tijd voor een nieuwe."},
+    {"today",                 "today",                     "vandaag"},
+    {"confirm.del_items",     "item(s) - delete permanently?", "item(s) definitief verwijderen?"},
+    {"confirm.del_files",     "file(s) - delete from the printer permanently?", "bestand(en) definitief van de printer verwijderen?"},
+    {"confirm.del_roll",      "Delete this roll?",         "Rol verwijderen?"},
+    {"confirm.del_rolls",     "rolls - delete?",           "rollen verwijderen?"},
+    {"confirm.delete",        "Delete?",                   "Verwijderen?"},
+    {"preview_loading",       "loading preview&hellip;",   "voorbeeld laden&hellip;"},
+    {"preview_none",          "no preview available",      "geen voorbeeld beschikbaar"},
+    {"dash.no_ams",           "no AMS",                    "geen AMS"},
+    {"spools.none_yet",       "No rolls yet - create them on the Spools tab.", "Nog geen rollen - maak ze aan op de Spools-tab."},
+    {"set.code_set",          "(set - leave empty to keep)", "(ingesteld, laat leeg = ongewijzigd)"},
+    {"no_tablet",             "no tablet",                 "geen tablet"},
+    {"scale.no_conn",         "no connection to the scale", "geen verbinding met schaal"},
+    {"scale.ap_mode",         "AP mode",                   "AP-modus"},
+    {"scale.saved_tablet",    "saved on the tablet",       "opgeslagen op tablet"},
+    {"scale.no_ip_tab",       "No scale IP known - set it on the Scale tab.", "Geen schaal-IP bekend - stel het in op de Scale-tab."},
+    {"scale.no_conn_alert",   "No connection to the scale.", "Geen verbinding met de schaal."},
+    {"scale.no_ip",           "No scale IP known.",        "Geen schaal-IP bekend."},
+
     // --- settings ---
     {"set.printer",         "Printer",                "Printer"},
     {"set.printer_ip",      "Printer IP",             "Printer-IP"},
@@ -228,7 +318,11 @@ static const int NBUILTIN = (int)(sizeof(BUILTIN) / sizeof(BUILTIN[0]));
 
 // --- runtime overrides (from /sdcard/filatrack_lang_<code>.conf) -----------
 #define OVR_MAX 400
-struct Ovr { char key[48]; char val[160]; };
+// val is sized for the longest built-in text, not the average one: the ntfy and
+// backup hints are a couple of sentences, and a translation tends to run longer
+// than the English. ~147 KB of static RAM, which is nothing on the tablet, and
+// it keeps the drop-in .conf able to override every string rather than most.
+struct Ovr { char key[48]; char val[320]; };
 static Ovr  g_ovr[OVR_MAX];
 static int  g_ovr_n = 0;
 static char g_active[8] = "en";
@@ -241,21 +335,40 @@ static void ovr_load(const char* code) {
     snprintf(path, sizeof(path), LANG_FILE_FMT, code);
     FILE* f = fopen(path, "r");
     if (!f) return;
-    char line[224];
+    char line[512];   // key + '=' + val, with room to spare
+    int skipped = 0;
     while (fgets(line, sizeof(line), f) && g_ovr_n < OVR_MAX) {
-        char* nl = strpbrk(line, "\r\n"); if (nl) *nl = 0;
+        char* nl = strpbrk(line, "\r\n");
+        if (nl) *nl = 0;
+        else {
+            // The line outran the buffer. Drop the tail, or the leftover would
+            // come back as a line of its own and be parsed as a bogus key.
+            int c; while ((c = fgetc(f)) != EOF && c != '\n') {}
+        }
         if (!line[0] || line[0] == '#') continue;
         char* eq = strchr(line, '=');
         if (!eq) continue;
         *eq = 0;
+        // Translations are written by hand, so say when one does not fit rather
+        // than truncating it silently.
+        if (strlen(line) >= sizeof(g_ovr[0].key) - 1)
+            Serial.printf("LANG: %s: key '%s' over %d chars - truncated\n",
+                          code, line, (int)sizeof(g_ovr[0].key) - 1);
+        if (strlen(eq + 1) >= sizeof(g_ovr[0].val) - 1)
+            Serial.printf("LANG: %s: text for '%s' over %d bytes - truncated\n",
+                          code, line, (int)sizeof(g_ovr[0].val) - 1);
         strncpy(g_ovr[g_ovr_n].key, line, sizeof(g_ovr[0].key) - 1);
         g_ovr[g_ovr_n].key[sizeof(g_ovr[0].key) - 1] = 0;
         strncpy(g_ovr[g_ovr_n].val, eq + 1, sizeof(g_ovr[0].val) - 1);
         g_ovr[g_ovr_n].val[sizeof(g_ovr[0].val) - 1] = 0;
         g_ovr_n++;
     }
+    if (g_ovr_n >= OVR_MAX && fgets(line, sizeof(line), f)) skipped = 1;
     fclose(f);
     Serial.printf("LANG: %s - %d string(s) from %s\n", code, g_ovr_n, path);
+    if (skipped)
+        Serial.printf("LANG: %s - file has more than %d strings, the rest is ignored\n",
+                      code, OVR_MAX);
 }
 
 void lang_init() {
