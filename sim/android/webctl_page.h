@@ -95,7 +95,7 @@ h3{margin:0 0 10px;font-size:15px;color:var(--muted);font-weight:600}
 .sprow .card{margin-bottom:0}
 section#spools{max-width:1040px}
 </style></head><body>
-<header><div class="t">FilaTrack</div><div style="display:flex;gap:14px;align-items:center"><span id="clock" class="muted"></span><span id="conn" class="muted">verbinden…</span></div></header>
+<header><div class="t">FilaTrack</div><div style="display:flex;gap:14px;align-items:center"><span id="clock" class="muted"></span><span id="conn" class="muted" data-i18n="dash.connecting">verbinden…</span></div></header>
 <nav>
  <button data-tab="dash" class="on" data-i18n="nav.dashboard">Dashboard</button>
  <button data-tab="files" data-i18n="nav.files">Files</button>
@@ -179,7 +179,7 @@ section#spools{max-width:1040px}
   </div>
   <div class="field" style="margin-bottom:14px"><label data-i18n="spools.empty_weight">Leeg spoel</label>
    <div style="display:flex;gap:8px;align-items:center">
-    <select id="spEmptySel" style="flex:1"><option value="">— kies uit bibliotheek —</option></select>
+    <select id="spEmptySel" style="flex:1"><option value="" data-i18n="spools.pick_library">— kies uit bibliotheek —</option></select>
     <input type="number" id="spEmpty" value="250" style="width:100px" title="gewicht van de lege spoel in gram">
     <span class="muted">g</span>
    </div>
@@ -193,9 +193,9 @@ section#spools{max-width:1040px}
   </div>
   <div class="grid">
    <div class="field"><label data-i18n="spools.material">Materiaal</label><select id="spMat"><option>PLA</option><option>PETG</option><option>ABS</option><option>TPU</option><option>ASA</option><option>PC</option><option>PA</option><option>PVA</option></select></div>
-   <div class="field"><label>Nozzle min</label><input type="number" id="spNmin" placeholder="auto"></div>
-   <div class="field"><label>Nozzle max</label><input type="number" id="spNmax" placeholder="auto"></div>
-   <div class="field"><label>Bambu-code</label><input type="text" id="spCode" placeholder="auto"></div>
+   <div class="field"><label data-i18n="spools.nozzle_min">Nozzle min</label><input type="number" id="spNmin" placeholder="auto"></div>
+   <div class="field"><label data-i18n="spools.nozzle_max">Nozzle max</label><input type="number" id="spNmax" placeholder="auto"></div>
+   <div class="field"><label data-i18n="spools.bambu_code">Bambu-code</label><input type="text" id="spCode" placeholder="auto"></div>
    <div class="field"><label>Prijs (€/kg)</label><input type="number" id="spPrice" placeholder="0" step="0.01"></div>
   </div>
   <div class="field" style="margin-top:12px"><label data-i18n="spools.note">Notitie</label><input type="text" id="spNote" placeholder="bv. gedroogd 3/7"></div>
@@ -205,7 +205,7 @@ section#spools{max-width:1040px}
  </div>
  <div class="card" style="flex:1 1 300px"><h3 data-i18n="spools.empty_spools">Lege spoelen</h3>
   <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px">
-   <div class="field" style="flex:1;min-width:160px"><label>Naam</label><input type="text" id="emName" placeholder="bv. Bambu herbruikbaar"></div>
+   <div class="field" style="flex:1;min-width:160px"><label data-i18n="spools.name_short">Naam</label><input type="text" id="emName" placeholder="bv. Bambu herbruikbaar"></div>
    <div class="field" style="width:120px"><label data-i18n="spools.weight_g">Gewicht (g)</label><input type="number" id="emWeight" value="250"></div>
    <button class="formbtn sec" style="height:42px" onclick="emWeigh()" data-i18n="spools.weigh">Weeg</button>
    <button id="emSave" class="formbtn pri" style="height:42px" data-i18n="spools.add">Toevoegen</button>
@@ -217,22 +217,22 @@ section#spools{max-width:1040px}
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
    <input type="text" id="spSearch" placeholder="Zoek op naam of materiaal…" oninput="renderSpList()" style="flex:1;min-width:150px;padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff;font-size:15px">
    <select id="spFMat" onchange="renderSpList()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="" data-i18n="hist.all_materials">alle materialen</option></select>
-   <select id="spSort" onchange="renderSpList()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="name" data-i18n="spools.sort_name">naam A-Z</option><option value="low">weinig &rarr; veel</option><option value="high">veel &rarr; weinig</option><option value="price" data-i18n="spools.sort_price">prijs/kg</option><option value="mat" data-i18n="spools.material">materiaal</option></select>
+   <select id="spSort" onchange="renderSpList()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="name" data-i18n="spools.sort_name">naam A-Z</option><option value="low" data-i18n="spools.sort_low">weinig &rarr; veel</option><option value="high" data-i18n="spools.sort_high">veel &rarr; weinig</option><option value="price" data-i18n="spools.sort_price">prijs/kg</option><option value="mat" data-i18n="spools.material">materiaal</option></select>
    <label class="muted" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="spLow" onchange="renderSpList()" style="width:18px;height:18px"><span data-i18n="spools.almost_empty">bijna leeg</span></label>
    <label class="muted" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="spAll" onchange="toggleAll(this.checked)" style="width:18px;height:18px"> alles</label>
   </div>
   <div id="spBulk" style="display:none;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;background:var(--panel2);border-radius:8px;padding:9px 12px">
    <b id="spSelCount"></b>
-   <button class="formbtn" style="background:#4a2323;color:#ff9a9a;padding:8px 14px" onclick="bulkDel()">Verwijder</button>
-   <span style="display:flex;align-items:center;gap:5px"><input type="color" id="bulkColor" value="#22aa55" class="chip" style="width:34px;height:32px"><button class="formbtn sec" style="padding:8px 12px" onclick="bulkColorGo()">Kleur</button></span>
-   <span style="display:flex;align-items:center;gap:5px"><input type="number" id="bulkWeight" placeholder="g" style="width:74px;padding:8px;border-radius:8px;border:1px solid #333b44;background:var(--bg);color:#fff"><button class="formbtn sec" style="padding:8px 12px" onclick="bulkWeightGo()">Gewicht</button></span>
-   <span style="display:flex;align-items:center;gap:5px"><select id="bulkMat" style="padding:8px;border-radius:8px;border:1px solid #333b44;background:var(--bg);color:#fff"><option value="">materiaal…</option><option>PLA</option><option>PETG</option><option>ABS</option><option>TPU</option><option>ASA</option><option>PC</option><option>PA</option><option>PVA</option></select><button class="formbtn sec" style="padding:8px 12px" onclick="bulkMatGo()">Zet</button></span>
-   <span style="display:flex;align-items:center;gap:5px"><input type="number" id="bulkPrice" placeholder="€/kg" step="0.01" style="width:74px;padding:8px;border-radius:8px;border:1px solid #333b44;background:var(--bg);color:#fff"><button class="formbtn sec" style="padding:8px 12px" onclick="bulkPriceGo()">Prijs</button></span>
-   <button class="formbtn sec" style="padding:8px 12px" onclick="clearSel()">Deselecteer</button>
+   <button class="formbtn" style="background:#4a2323;color:#ff9a9a;padding:8px 14px" onclick="bulkDel()" data-i18n="delete">Verwijder</button>
+   <span style="display:flex;align-items:center;gap:5px"><input type="color" id="bulkColor" value="#22aa55" class="chip" style="width:34px;height:32px"><button class="formbtn sec" style="padding:8px 12px" onclick="bulkColorGo()" data-i18n="spools.colour">Kleur</button></span>
+   <span style="display:flex;align-items:center;gap:5px"><input type="number" id="bulkWeight" placeholder="g" style="width:74px;padding:8px;border-radius:8px;border:1px solid #333b44;background:var(--bg);color:#fff"><button class="formbtn sec" style="padding:8px 12px" onclick="bulkWeightGo()" data-i18n="spools.weight">Gewicht</button></span>
+   <span style="display:flex;align-items:center;gap:5px"><select id="bulkMat" style="padding:8px;border-radius:8px;border:1px solid #333b44;background:var(--bg);color:#fff"><option value="" data-i18n="spools.material_dots">materiaal…</option><option>PLA</option><option>PETG</option><option>ABS</option><option>TPU</option><option>ASA</option><option>PC</option><option>PA</option><option>PVA</option></select><button class="formbtn sec" style="padding:8px 12px" onclick="bulkMatGo()" data-i18n="spools.set">Zet</button></span>
+   <span style="display:flex;align-items:center;gap:5px"><input type="number" id="bulkPrice" placeholder="€/kg" step="0.01" style="width:74px;padding:8px;border-radius:8px;border:1px solid #333b44;background:var(--bg);color:#fff"><button class="formbtn sec" style="padding:8px 12px" onclick="bulkPriceGo()" data-i18n="spools.price_short">Prijs</button></span>
+   <button class="formbtn sec" style="padding:8px 12px" onclick="clearSel()" data-i18n="spools.deselect">Deselecteer</button>
   </div>
   <div id="spList" class="muted">…</div>
  </div>
- <div class="card"><h3>Rollen exporteren / importeren</h3>
+ <div class="card"><h3 data-i18n="spools.export_title">Rollen exporteren / importeren</h3>
   <div class="muted" style="font-size:12px;margin-bottom:8px">Alleen je <b>rollen + lege spoelen</b>, als los bestand. Handig om te delen of van een andere tablet over te nemen. Importeren <b>voegt toe</b> — het overschrijft niets.</div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
    <button class="formbtn sec" onclick="exportRolls()">⬇ Exporteer rollen</button>
@@ -244,24 +244,24 @@ section#spools{max-width:1040px}
 </section>
 
 <section id="set">
- <div class="card"><h3>FilaTrack Scale (weegschaal)</h3>
-  <div class="muted" style="margin-bottom:8px">Gewicht, tarra, kalibreren en WiFi/IP van de schaal.</div>
-  <button onclick="tab('scale')" class="formbtn pri">Schaal beheren</button>
+ <div class="card"><h3 data-i18n="set.scale">FilaTrack Scale (weegschaal)</h3>
+  <div class="muted" style="margin-bottom:8px" data-i18n="set.scale_hint">Gewicht, tarra, kalibreren en WiFi/IP van de schaal.</div>
+  <button onclick="tab('scale')" class="formbtn pri" data-i18n="set.manage_scale">Schaal beheren</button>
  </div>
  <div class="card"><h3 data-i18n="set.printer">Printer</h3>
-  <div class="frow"><label class="muted">Printer IP</label><input type="text" id="cIp"></div>
-  <div class="frow"><label class="muted">Serial</label><input type="text" id="cSerial"></div>
-  <div class="frow"><label class="muted">Access code</label><input type="password" id="cCode" placeholder="laat leeg = ongewijzigd"></div>
+  <div class="frow"><label class="muted" data-i18n="set.printer_ip">Printer IP</label><input type="text" id="cIp"></div>
+  <div class="frow"><label class="muted" data-i18n="set.serial">Serial</label><input type="text" id="cSerial"></div>
+  <div class="frow"><label class="muted" data-i18n="set.access_code">Access code</label><input type="password" id="cCode" placeholder="laat leeg = ongewijzigd"></div>
   <button id="cView">Screensaver: 2D</button>
-  <div class="frow" style="margin-top:12px"><label class="muted">Helderheid</label><input type="range" id="cBri" min="5" max="100"></div>
-  <button id="cSave">Opslaan &amp; verbinden</button>
+  <div class="frow" style="margin-top:12px"><label class="muted" data-i18n="dash.brightness">Helderheid</label><input type="range" id="cBri" min="5" max="100"></div>
+  <button id="cSave" data-i18n="set.save_connect">Opslaan &amp; verbinden</button>
   <div id="cMsg"></div>
  </div>
  <div class="card"><h3 data-i18n="set.notifications">Meldingen (ntfy)</h3>
-  <div class="frow"><label class="muted">ntfy topic (leeg = uit)</label><input type="text" id="cNtfy" placeholder="bv. filatrack-geheim-x9k2"></div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button id="cNtfySave" class="formbtn pri">Opslaan</button><button id="cNtfyTest" class="formbtn sec">Test</button></div>
-  <div class="frow" style="margin-top:14px"><label class="muted">Waarschuwen als een rol onder dit aantal gram komt</label>
-   <div style="display:flex;gap:8px;align-items:center"><input type="number" id="cLow" min="0" step="10" placeholder="100" style="width:120px"><span class="muted">g</span><button id="cLowSave" class="formbtn sec">Opslaan</button></div></div>
+  <div class="frow"><label class="muted" data-i18n="set.ntfy_topic">ntfy topic (leeg = uit)</label><input type="text" id="cNtfy" placeholder="bv. filatrack-geheim-x9k2"></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button id="cNtfySave" class="formbtn pri" data-i18n="save">Opslaan</button><button id="cNtfyTest" class="formbtn sec" data-i18n="set.test">Test</button></div>
+  <div class="frow" style="margin-top:14px"><label class="muted" data-i18n="set.low_threshold">Waarschuwen als een rol onder dit aantal gram komt</label>
+   <div style="display:flex;gap:8px;align-items:center"><input type="number" id="cLow" min="0" step="10" placeholder="100" style="width:120px"><span class="muted">g</span><button id="cLowSave" class="formbtn sec" data-i18n="save">Opslaan</button></div></div>
   <div class="muted" style="font-size:12px;margin-top:8px">Installeer de gratis <b>ntfy</b>-app (of ntfy.sh in de browser) en abonneer op dit topic. Je krijgt een melding bij print klaar/mislukt, filament tekort en als een gewogen rol onder de drempel komt.</div>
   <div id="cNtfyMsg" class="muted" style="margin-top:6px"></div>
  </div>
@@ -333,6 +333,8 @@ function tab(n){
 // the page just asks for the active table. t() falls back to the key, which
 // makes a missing translation visible instead of blank.
 var I18N={},LANGS=[];
+// Bambu's gcode_state -> our keys (the state names differ from the button labels)
+var STATE_KEY={RUNNING:'dash.printing',PAUSE:'dash.paused',FINISH:'dash.finished',FAILED:'dash.failed',PREPARE:'dash.preparing',IDLE:'dash.idle'};
 function t(k,dflt){return (I18N[k]!==undefined)?I18N[k]:(dflt!==undefined?dflt:k);}
 function applyI18n(){
  document.querySelectorAll('[data-i18n]').forEach(function(el){
@@ -365,10 +367,10 @@ function setLang(c){
   if($('spList'))loadSpools(); if($('histList'))loadHistory(); if($('diagBox'))loadDiag();
  });
 }
-function fmtAge(s){if(s<0)return'onbekend';if(s<60)return s+' s';if(s<3600)return Math.round(s/60)+' min';if(s<86400)return Math.round(s/3600)+' uur';return Math.round(s/86400)+' dagen';}
+function fmtAge(s){if(s<0)return t('unknown','onbekend');if(s<60)return s+' s';if(s<3600)return Math.round(s/60)+' '+t('min','min');if(s<86400)return Math.round(s/3600)+' '+t('hour','uur');return Math.round(s/86400)+' '+t('days','dagen');}
 function dRow(label,val,good){return '<div style="display:flex;justify-content:space-between;gap:10px;padding:3px 0"><span>'+label+'</span><b style="color:'+(good===true?'#2ecc71':(good===false?'#e74c3c':'#eceff2'))+'">'+val+'</b></div>';}
 function loadDiag(){
- var b=$('diagBox');if(!b)return;b.innerHTML='laden…';
+ var b=$('diagBox');if(!b)return;b.innerHTML=t('loading','laden…');
  fetch('/diag').then(function(r){return r.json();}).then(function(d){
   var h='';
   h+=dRow('Printer (MQTT)',d.mqtt?t('diag.connected','verbonden'):t('diag.offline','offline'),d.mqtt);
@@ -382,7 +384,7 @@ function loadDiag(){
   h+='<div class="muted" style="font-size:13px;margin:10px 0 4px">Databestanden (op de tablet)</div>';
   (d.files||[]).forEach(function(f){h+=dRow(f.n,f.ok?(f.bytes+' B · gewijzigd '+fmtAge(f.age)+' geleden'):'ontbreekt',f.ok);});
   b.innerHTML=h;
- }).catch(function(){b.innerHTML='<span style="color:#e74c3c">geen verbinding met de tablet</span>';});
+ }).catch(function(){b.innerHTML='<span style="color:#e74c3c">'+t('no_conn_tablet','geen verbinding met de tablet')+'</span>';});
 }
 var histCache=[];
 function loadHistory(){fetch('/history').then(function(r){return r.json();}).then(function(list){histCache=list;
@@ -390,7 +392,7 @@ function loadHistory(){fetch('/history').then(function(r){return r.json();}).the
  var sel=$('hMat');if(sel){var cur=sel.value,o='<option value="">alle materialen</option>';Object.keys(mats).sort().forEach(function(m){o+='<option>'+m+'</option>';});sel.innerHTML=o;sel.value=cur;}
  renderStats();renderHist();
 }).catch(function(){});}
-function fmtDur(m){if(!m||m<=0)return'';if(m<60)return m+' min';var h=Math.floor(m/60),mm=m%60;return h+'u'+(mm<10?'0':'')+mm;}
+function fmtDur(m){if(!m||m<=0)return'';if(m<60)return m+' '+t('min','min');var h=Math.floor(m/60),mm=m%60;return h+'u'+(mm<10?'0':'')+mm;}
 function statCell(t,big,sub){return '<div style="background:var(--panel2);border-radius:10px;padding:10px 12px"><div class="muted" style="font-size:12px">'+t+'</div><div style="font-size:20px;font-weight:600">'+big+'</div><div class="muted" style="font-size:12px">'+sub+'</div></div>';}
 function bar(label,val,max,extra){var pct=max>0?Math.round(val/max*100):0;return '<div style="margin:4px 0"><div style="display:flex;justify-content:space-between;font-size:13px;gap:8px"><span>'+label+'</span><span class="muted" style="white-space:nowrap">'+extra+'</span></div><div style="height:9px;background:#232a31;border-radius:5px;overflow:hidden;margin-top:2px"><div style="height:100%;width:'+pct+'%;background:#3465a4"></div></div></div>';}
 function grid(){return 'display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px';}
@@ -443,11 +445,11 @@ function renderHist(){
  else if(sort==='grams')list.sort(function(a,b){return (b.grams||0)-(a.grams||0);});
  else list.sort(function(a,b){return (b.ts||0)-(a.ts||0);});
  var tot=0,totg=0;list.forEach(function(r){tot+=r.cost||0;totg+=r.grams||0;});
- if($('histTotal'))$('histTotal').innerHTML=list.length+(showArch?' gearchiveerd':' prints')+' &middot; '+Math.round(totg)+' g &middot; totaal <b>&euro; '+tot.toFixed(2)+'</b>';
- if(!list.length){$('histList').style.display='block';$('histList').innerHTML='<div class="muted">geen resultaten</div>';hSelUpd();return;}
+ if($('histTotal'))$('histTotal').innerHTML=list.length+' '+(showArch?t('hist.archived','gearchiveerd'):t('prints','prints'))+' &middot; '+Math.round(totg)+' g &middot; '+t('total','totaal')+' <b>&euro; '+tot.toFixed(2)+'</b>';
+ if(!list.length){$('histList').style.display='block';$('histList').innerHTML='<div class="muted">'+t('no_results','geen resultaten')+'</div>';hSelUpd();return;}
  var h='';
  list.forEach(function(r){
-  var pv=r.file?'<button class="hprev" data-p="/cache/'+r.file+'" style="background:#2c3e50;color:#fff;border:0;border-radius:6px;padding:6px 10px;margin-top:8px;cursor:pointer;width:100%">Preview</button>':'';
+  var pv=r.file?'<button class="hprev" data-p="/cache/'+r.file+'" style="background:#2c3e50;color:#fff;border:0;border-radius:6px;padding:6px 10px;margin-top:8px;cursor:pointer;width:100%">'+t('preview','Preview')+'</button>':'';
   var dur=fmtDur(r.mins);
   h+='<div class="rollcard" style="flex-direction:column;align-items:stretch">'
     +'<div style="display:flex;align-items:center;gap:8px"><input type="checkbox" class="hsel" data-i="'+r.i+'" style="width:18px;height:18px;flex:0 0 auto"><span style="color:'+(r.ok?'#2ecc71':'#e74c3c')+'">'+(r.ok?'✓':'✗')+'</span><b style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+r.name+'</b></div>'
@@ -495,7 +497,7 @@ $('cNtfyTest').onclick=function(){$('cNtfyMsg').textContent='versturen…';fetch
 $('cLowSave').onclick=function(){var g=parseInt($('cLow').value,10);if(isNaN(g)||g<0){$('cNtfyMsg').textContent='ongeldig getal';return;}fetch('/setcfg?low='+g).then(function(r){return r.text();}).then(function(t){lowG=g;$('cNtfyMsg').textContent='drempel opgeslagen: '+g+' g';});};
 function joinPath(b,n){return (b==='/'?'':b)+'/'+n;}
 function fmtSize(b){return b>1048576?(b/1048576).toFixed(1)+' MB':b>1024?(b/1024).toFixed(0)+' KB':b+' B';}
-function loadFiles(path){curPath=path;$('fpath').textContent=path;$('flist').innerHTML='<div class=muted>laden…</div>';
+function loadFiles(path){curPath=path;$('fpath').textContent=path;$('flist').innerHTML='<div class=muted>'+t('loading','laden…')+'</div>';
  fetch('/files?path='+encodeURIComponent(path)).then(function(r){return r.json();}).then(function(d){
   if(!d.ok){$('flist').innerHTML='<div class=muted>fout: '+(d.err||'')+'</div>';return;}
   var h='';
@@ -505,11 +507,11 @@ function loadFiles(path){curPath=path;$('fpath').textContent=path;$('flist').inn
     var pv=/\.3mf$/i.test(it.name)?'<button class="fprev" data-p="'+fp+'" title="Toon voorbeeld" style="background:#2c3e50;color:#fff;border:0;border-radius:6px;padding:6px 10px;cursor:pointer">Preview</button>':'';
     h+='<div class="fitem"><input type="checkbox" class="fsel" data-p="'+fp+'" style="width:20px;height:20px;flex:0 0 auto"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">📄 '+it.name+'</span><span class=muted>'+fmtSize(it.size)+'</span>'+pv+'</div>';}
   });
-  $('flist').innerHTML=h||'<div class=muted>leeg</div>';
+  $('flist').innerHTML=h||'<div class=muted>'+t('empty','leeg')+'</div>';
   document.querySelectorAll('.fitem[data-dir]').forEach(function(el){el.onclick=function(){loadFiles(joinPath(path,el.dataset.dir));};});
   document.querySelectorAll('.fsel').forEach(function(el){el.onchange=fSelUpd;});fSelUpd();
   document.querySelectorAll('.fprev').forEach(function(el){el.onclick=function(e){e.stopPropagation();showPreview(el.dataset.p);};});
- }).catch(function(){$('flist').innerHTML='<div class=muted>geen verbinding</div>';});
+ }).catch(function(){$('flist').innerHTML='<div class=muted>'+t('no_conn','geen verbinding')+'</div>';});
 }
 $('fUp').onclick=function(){var p=curPath.replace(/\/[^\/]*\/?$/,'');loadFiles(p||'/');};
 $('fRef').onclick=function(){loadFiles(curPath);};
@@ -565,19 +567,19 @@ function clearRoll(){fetch('/spool_clear?slot='+pickSlot).then(function(){closeR
 function closeRoll(){$('rollModal').style.display='none';}
 function poll(){
  fetch('/status').then(function(r){return r.json();}).then(function(s){
-  $('conn').textContent=s.conn?'● verbonden':'○ offline';$('conn').style.color=s.conn?'#2ecc71':'#e74c3c';
+  $('conn').textContent=s.conn?'● '+t('diag.connected','verbonden'):'○ '+t('diag.offline','offline');$('conn').style.color=s.conn?'#2ecc71':'#e74c3c';
   curState=s.state;curLight=s.light;curFan=s.fan;lastS=s;
-  $('state').textContent=s.state||'–';$('task').textContent=s.name||'';
+  $('state').textContent=s.state?t(STATE_KEY[s.state]||'',s.state):'–';$('task').textContent=s.name||'';
   $('fill').style.width=(s.pct||0)+'%';
-  var eta='';if(s.remain>0){var f=new Date(Date.now()+s.remain*60000);eta='  klaar '+('0'+f.getHours()).slice(-2)+':'+('0'+f.getMinutes()).slice(-2);}
-  $('prog').textContent=(s.pct||0)+'%'+(s.total?('  laag '+s.layer+'/'+s.total):'')+(s.remain?('  ~'+s.remain+' min'+eta):'');
-  if($('pcost'))$('pcost').innerHTML=(s.printg>=0)?('deze print: <b>'+s.printg+' g</b>'+(s.printcost>0?(' &middot; <b>&euro; '+s.printcost.toFixed(2)+'</b>'):'')):'';
+  var eta='';if(s.remain>0){var f=new Date(Date.now()+s.remain*60000);eta='  '+t('dash.eta','klaar')+' '+('0'+f.getHours()).slice(-2)+':'+('0'+f.getMinutes()).slice(-2);}
+  $('prog').textContent=(s.pct||0)+'%'+(s.total?('  '+t('dash.layer','laag')+' '+s.layer+'/'+s.total):'')+(s.remain?('  ~'+s.remain+' '+t('min','min')+eta):'');
+  if($('pcost'))$('pcost').innerHTML=(s.printg>=0)?(t('dash.this_print','deze print')+': <b>'+s.printg+' g</b>'+(s.printcost>0?(' &middot; <b>&euro; '+s.printcost.toFixed(2)+'</b>'):'')):'';
   if($('pthumb')){var pf=((s.state==='RUNNING'||s.state==='PAUSE')&&s.file)?s.file:'';if(pf!==pthumbFile){pthumbFile=pf;if(pf){var pth=pf.charAt(0)==='/'?pf:'/cache/'+pf;var im=$('pthumb');im.onload=function(){im.style.display='block';};im.onerror=function(){im.style.display='none';};im.src='/thumb?path='+encodeURIComponent(pth);}else{$('pthumb').style.display='none';}}}
-  var w=$('warn');if(w){if(s.short>0){w.style.display='block';w.textContent='⚠ Filament tekort — komt ~'+s.short+' g te kort voor deze print op het actieve slot. Overweeg een vollere spoel.';}else{w.style.display='none';}}
+  var w=$('warn');if(w){if(s.short>0){w.style.display='block';w.textContent='⚠ '+t('dash.warn_short','Filament tekort')+' — ~'+s.short+' g '+t('dash.short_body','te kort voor deze print op het actieve slot.');}else{w.style.display='none';}}
   $('noz').textContent=s.nozzle+'/'+s.nozzle_t+'°';$('bed').textContent=s.bed+'/'+s.bed_t+'°';$('cham').textContent=s.chamber+'°';
-  $('bPause').textContent=(s.state==='PAUSE')?'Resume':'Pause';
-  $('bLight').textContent='Licht: '+(s.light?'aan':'uit');
-  $('bFan').textContent='Fan '+s.fan+'%';
+  $('bPause').textContent=(s.state==='PAUSE')?t('dash.resume','Resume'):t('dash.pause','Pause');
+  $('bLight').textContent=t('dash.light','Licht')+': '+(s.light?t('on','aan'):t('off','uit'));
+  $('bFan').textContent=t('dash.fan','Fan')+' '+s.fan+'%';
   if(document.activeElement!==$('speed'))$('speed').value=s.speed;
   if(!$('rollModal')||$('rollModal').style.display!=='flex'){$('amsStrip').innerHTML=amsHtml(s.ams,s.ext,true);}
   if($('movetemps'))$('movetemps').textContent='nozzle '+s.nozzle+'/'+s.nozzle_t+'° · bed '+s.bed+'/'+s.bed_t+'° · kamer '+s.chamber+'°';
