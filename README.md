@@ -83,13 +83,26 @@ Notes:
   Windows‑only — on Linux/macOS just use a plaintext `bambu_password` in your (git‑ignored)
   `config.json`, or a `custom_token`.
 
+## How it started
+
+FilaTrack began as firmware for a small ESP32 handheld panel — somewhere to see what
+the P1S was doing without opening Bambu Studio on a laptop. It worked, but the
+hardware ended up being the thing that limited it, and an old Android tablet turned
+out to do the same job better: a bigger screen, WiFi the OS already takes care of,
+and room to grow.
+
+Grow it did — and the interesting part was not another status readout. It was the
+question that actually comes up in the workshop: *how much filament is still on that
+spool, and what did this print cost me?* Answering that honestly needs real weights,
+not a percentage guess, so a second device joined in: an ESP32‑S3 with a load cell —
+the FilaTrack Scale. From there came the spool library, cost per print, the history
+and the statistics.
+
+The ESP32 firmware has since been removed. What's left is the tablet app, its web
+interface, and the scale.
+
 ## Credits
 
-- FilaTrack started out in 2026 as an experiment on ESP32 handheld hardware, briefly
-  building on [Disttrack's PandaTouch StreamDeck](https://github.com/Disttrack/PandaTouch_streamDeck)
-  (MIT). None of that firmware — or its code — is part of FilaTrack any more: the app
-  was rewritten for Android tablets and the ESP32 firmware has been removed. Thanks to
-  Disttrack all the same for the early groundwork.
 - Built on LVGL and SDL, plus the open‑source libraries listed in `platformio.ini`.
 
 ## License
