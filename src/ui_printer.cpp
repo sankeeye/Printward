@@ -322,8 +322,10 @@ void create_printer_ui() {
     // --- Print state + task name ---
     lv_obj_t* state_row = make_row(root, 50);
     lv_obj_set_flex_align(state_row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_gap(state_row, PT_SZ(10), LV_PART_MAIN);
     lv_obj_t* state_col = lv_obj_create(state_row);
-    lv_obj_set_size(state_col, lv_pct(100), LV_SIZE_CONTENT);
+    lv_obj_set_height(state_col, LV_SIZE_CONTENT);
+    lv_obj_set_flex_grow(state_col, 1);
     lv_obj_set_style_bg_opa(state_col, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(state_col, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(state_col, 0, LV_PART_MAIN);
@@ -341,6 +343,25 @@ void create_printer_ui() {
     lv_obj_set_style_text_color(g_task_label, lv_color_hex(0x999999), 0);
     lv_label_set_long_mode(g_task_label, LV_LABEL_LONG_DOT);
     lv_obj_set_width(g_task_label, lv_pct(100));
+
+#ifdef __ANDROID__
+    // Filament warning pill. It sits in the free space at the RIGHT of the state
+    // row (a normal flex child), so it never covers the header buttons and never
+    // grows the layout - it just takes space that was empty anyway.
+    g_warn_banner = lv_obj_create(state_row);
+    lv_obj_set_size(g_warn_banner, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    lv_obj_set_style_bg_color(g_warn_banner, lv_color_hex(0x7a2020), 0);
+    lv_obj_set_style_border_width(g_warn_banner, 0, 0);
+    lv_obj_set_style_radius(g_warn_banner, 8, 0);
+    lv_obj_set_style_pad_hor(g_warn_banner, PT_SZ(12), 0);
+    lv_obj_set_style_pad_ver(g_warn_banner, PT_SZ(5), 0);
+    lv_obj_clear_flag(g_warn_banner, LV_OBJ_FLAG_SCROLLABLE);
+    g_warn_label = lv_label_create(g_warn_banner);
+    lv_obj_set_style_text_font(g_warn_label, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(g_warn_label, lv_color_hex(0xffe0e0), 0);
+    lv_label_set_text(g_warn_label, "");
+    lv_obj_add_flag(g_warn_banner, LV_OBJ_FLAG_HIDDEN);
+#endif
 
     // --- Progress bar + % + remaining time ---
     lv_obj_t* prog_row = make_row(root, 34);
@@ -562,26 +583,6 @@ void create_printer_ui() {
     lv_slider_set_value(g_slider, g_brightness, LV_ANIM_OFF);
     lv_obj_add_event_cb(g_slider, slider_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
 
-#ifdef __ANDROID__
-    // Filament warning banner: a floating pill over the top of the dashboard,
-    // shown only when a shortfall/low condition is active (see update_printer_ui).
-    // Lives on the screen (not root) so it overlays without shifting the layout.
-    g_warn_banner = lv_obj_create(g_main_screen);
-    lv_obj_set_size(g_warn_banner, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-    lv_obj_align(g_warn_banner, LV_ALIGN_TOP_MID, 0, PT_SZ(4));
-    lv_obj_set_style_bg_color(g_warn_banner, lv_color_hex(0x7a2020), 0);
-    lv_obj_set_style_border_width(g_warn_banner, 0, 0);
-    lv_obj_set_style_radius(g_warn_banner, 8, 0);
-    lv_obj_set_style_pad_hor(g_warn_banner, PT_SZ(16), 0);
-    lv_obj_set_style_pad_ver(g_warn_banner, PT_SZ(6), 0);
-    lv_obj_clear_flag(g_warn_banner, LV_OBJ_FLAG_SCROLLABLE);
-    g_warn_label = lv_label_create(g_warn_banner);
-    lv_obj_set_style_text_font(g_warn_label, &lv_font_montserrat_14, 0);
-    lv_obj_set_style_text_color(g_warn_label, lv_color_hex(0xffe0e0), 0);
-    lv_label_set_text(g_warn_label, "");
-    lv_obj_add_flag(g_warn_banner, LV_OBJ_FLAG_HIDDEN);
-#endif
-
     update_status_label();
     update_printer_ui();
 }
@@ -795,15 +796,11 @@ void update_printer_ui() {
     if (g_warn_banner && g_warn_label) {
         float sh = filament_shortfall();
         if (sh > 0) {
-            lv_label_set_text_fmt(g_warn_label, "Filament tekort: ~%.0f g te kort voor deze print", sh);
+            lv_label_set_text_fmt(g_warn_label, "Filament tekort: ~%.0f g", sh);
             lv_obj_clear_flag(g_warn_banner, LV_OBJ_FLAG_HIDDEN);
-            lv_obj_move_foreground(g_warn_banner);
-            lv_obj_align(g_warn_banner, LV_ALIGN_TOP_MID, 0, PT_SZ(4));
         } else if (filament_any_low()) {
-            lv_label_set_text(g_warn_label, "Filament bijna op - controleer je rollen");
+            lv_label_set_text(g_warn_label, "Filament bijna op");
             lv_obj_clear_flag(g_warn_banner, LV_OBJ_FLAG_HIDDEN);
-            lv_obj_move_foreground(g_warn_banner);
-            lv_obj_align(g_warn_banner, LV_ALIGN_TOP_MID, 0, PT_SZ(4));
         } else {
             lv_obj_add_flag(g_warn_banner, LV_OBJ_FLAG_HIDDEN);
         }
