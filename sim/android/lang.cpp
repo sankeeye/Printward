@@ -155,6 +155,22 @@ static const Builtin BUILTIN[] = {
     {"spools.sort_name",      "name A-Z",                  "naam A-Z"},
     {"spools.sort_price",     "price/kg",                  "prijs/kg"},
 
+    // --- generated lists / diagnostics ---
+    {"of",                    "of",                        "van"},
+    {"hist.no_waste",         "no waste",                  "geen verspilling"},
+    {"total",                 "total",                     "totaal"},
+    {"prints",                "prints",                    "prints"},
+    {"hist.based_on",         "Based on your log",         "Op basis van je logboek"},
+    {"hist.log_empty",        "No prints in the log yet.", "Nog geen prints in het logboek."},
+    {"spools.weigh_roll",     "Weigh this roll",           "Weeg de rol"},
+    {"copy",                  "Copy",                      "Kopieer"},
+    {"edit",                  "Edit",                      "Bewerk"},
+    {"spools.none_found",     "No rolls found.",           "Geen rollen gevonden."},
+    {"diag.connected",        "connected",                 "verbonden"},
+    {"diag.last_status",      "Last status",               "Laatste status"},
+    {"diag.not_set",          "not set",                   "niet ingesteld"},
+    {"diag.uptime",           "App running for",           "App draait al"},
+
     // --- settings ---
     {"set.printer",         "Printer",                "Printer"},
     {"set.printer_ip",      "Printer IP",             "Printer-IP"},

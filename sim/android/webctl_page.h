@@ -371,14 +371,14 @@ function loadDiag(){
  var b=$('diagBox');if(!b)return;b.innerHTML='laden…';
  fetch('/diag').then(function(r){return r.json();}).then(function(d){
   var h='';
-  h+=dRow('Printer (MQTT)',d.mqtt?'verbonden':'offline',d.mqtt);
-  h+=dRow('Laatste status',d.age<0?'nog niets ontvangen':fmtAge(d.age)+' geleden',d.age>=0&&d.age<60);
-  h+=dRow('Printer-IP',d.ip||'niet ingesteld',!!d.ip);
+  h+=dRow('Printer (MQTT)',d.mqtt?t('diag.connected','verbonden'):t('diag.offline','offline'),d.mqtt);
+  h+=dRow(t('diag.last_status','Laatste status'),d.age<0?'nog niets ontvangen':fmtAge(d.age)+' geleden',d.age>=0&&d.age<60);
+  h+=dRow(t('set.printer_ip','Printer-IP'),d.ip||t('diag.not_set','niet ingesteld'),!!d.ip);
   h+=dRow('Serial',d.serial_set?'ingesteld':'ontbreekt',d.serial_set);
   h+=dRow('Toegangscode',d.code_set?'ingesteld':'ontbreekt',d.code_set);
   h+=dRow('Weegschaal-IP',d.scale_ip||'niet ingesteld',null);
   h+=dRow('Webadres',d.url||'-',null);
-  h+=dRow('App draait al',fmtAge(d.uptime),null);
+  h+=dRow(t('diag.uptime','App draait al'),fmtAge(d.uptime),null);
   h+='<div class="muted" style="font-size:13px;margin:10px 0 4px">Databestanden (op de tablet)</div>';
   (d.files||[]).forEach(function(f){h+=dRow(f.n,f.ok?(f.bytes+' B · gewijzigd '+fmtAge(f.age)+' geleden'):'ontbreekt',f.ok);});
   b.innerHTML=h;
@@ -397,37 +397,37 @@ function grid(){return 'display:grid;grid-template-columns:repeat(auto-fit,minma
 function renderStats(){
  var box=$('statRich');if(!box)return;
  var list=histCache.filter(function(r){return !r.arch;});
- if(!list.length){box.innerHTML='<div class="muted" style="margin-top:8px">Nog geen prints in het logboek.</div>';return;}
+ if(!list.length){box.innerHTML='<div class="muted" style="margin-top:8px">'+t('hist.log_empty','Nog geen prints in het logboek.')+'</div>';return;}
  var ok=list.filter(function(r){return r.ok;}),fail=list.filter(function(r){return !r.ok;});
  var okG=0,okC=0,okT=0,failG=0,failC=0,totT=0;
  ok.forEach(function(r){okG+=r.grams||0;okC+=r.cost||0;okT+=r.mins||0;});
  fail.forEach(function(r){failG+=r.grams||0;failC+=r.cost||0;});
  list.forEach(function(r){totT+=r.mins||0;});
  var rate=Math.round(ok.length/list.length*100);
- var h='<div class="muted" style="font-size:13px;margin:6px 0 4px">Op basis van je logboek ('+list.length+' prints)</div>';
+ var h='<div class="muted" style="font-size:13px;margin:6px 0 4px">'+t('hist.based_on','Op basis van je logboek')+' ('+list.length+')</div>';
  h+='<div style="'+grid()+'">';
- h+=statCell('Geslaagd',rate+'%',ok.length+' van '+list.length);
- h+=statCell('Mislukt',fail.length+'x',failG>0?(Math.round(failG)+' g · € '+failC.toFixed(2)+' verspild'):'geen verspilling');
- h+=statCell('Gem./print',(ok.length?Math.round(okG/ok.length):0)+' g',(ok.length&&okC>0?'€ '+(okC/ok.length).toFixed(2):'')+(okT>0?' · '+fmtDur(Math.round(okT/ok.length)):''));
- h+=statCell('Printtijd',fmtDur(totT)||'–',totT>0?'totaal':'onbekend');
+ h+=statCell(t('hist.succeeded','Geslaagd'),rate+'%',ok.length+' '+t('of','van')+' '+list.length);
+ h+=statCell(t('hist.failed','Mislukt'),fail.length+'x',failG>0?(Math.round(failG)+' g · € '+failC.toFixed(2)+' '+t('hist.wasted','verspild')):t('hist.no_waste','geen verspilling'));
+ h+=statCell(t('hist.per_print','Gem./print'),(ok.length?Math.round(okG/ok.length):0)+' g',(ok.length&&okC>0?'€ '+(okC/ok.length).toFixed(2):'')+(okT>0?' · '+fmtDur(Math.round(okT/ok.length)):''));
+ h+=statCell(t('hist.print_time','Printtijd'),fmtDur(totT)||'–',totT>0?t('total','totaal'):t('unknown','onbekend'));
  h+='</div>';
  var now=Date.now()/1000,DAY=86400;
  function since(d){var s={n:0,g:0,c:0};list.forEach(function(r){if(r.ts&&now-r.ts<=d*DAY){s.n++;s.g+=r.grams||0;s.c+=r.cost||0;}});return s;}
  var wk=since(7),mo=since(30),yr=since(365);
- h+='<div class="muted" style="font-size:13px;margin:12px 0 4px">Tijdlijn</div><div style="'+grid()+'">';
- h+=statCell('Deze week',wk.n+' prints',Math.round(wk.g)+' g · € '+wk.c.toFixed(2));
- h+=statCell('Deze maand',mo.n+' prints',Math.round(mo.g)+' g · € '+mo.c.toFixed(2));
- h+=statCell('Dit jaar',yr.n+' prints',Math.round(yr.g)+' g · € '+yr.c.toFixed(2));
+ h+='<div class="muted" style="font-size:13px;margin:12px 0 4px">'+t('hist.timeline','Tijdlijn')+'</div><div style="'+grid()+'">';
+ h+=statCell(t('hist.this_week','Deze week'),wk.n+' '+t('prints','prints'),Math.round(wk.g)+' g · € '+wk.c.toFixed(2));
+ h+=statCell(t('hist.this_month','Deze maand'),mo.n+' '+t('prints','prints'),Math.round(mo.g)+' g · € '+mo.c.toFixed(2));
+ h+=statCell(t('hist.this_year','Dit jaar'),yr.n+' '+t('prints','prints'),Math.round(yr.g)+' g · € '+yr.c.toFixed(2));
  h+='</div>';
  var mm={};list.forEach(function(r){var k=r.mat||'?';if(!mm[k])mm[k]={g:0,c:0,n:0};mm[k].g+=r.grams||0;mm[k].c+=r.cost||0;mm[k].n++;});
  var mk=Object.keys(mm).sort(function(a,b){return mm[b].g-mm[a].g;}),maxG=0,totG=0;
  mk.forEach(function(k){if(mm[k].g>maxG)maxG=mm[k].g;totG+=mm[k].g;});
- h+='<div class="muted" style="font-size:13px;margin:12px 0 4px">Per materiaal</div>';
+ h+='<div class="muted" style="font-size:13px;margin:12px 0 4px">'+t('hist.per_material','Per materiaal')+'</div>';
  mk.forEach(function(k){var pc=totG>0?Math.round(mm[k].g/totG*100):0;h+=bar(k+' <span class="muted">('+mm[k].n+'x)</span>',mm[k].g,maxG,Math.round(mm[k].g)+' g · € '+mm[k].c.toFixed(2)+' · '+pc+'%');});
  var mon={};list.forEach(function(r){if(!r.ts)return;var d=new Date(r.ts*1000),key=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2);if(!mon[key])mon[key]={n:0,g:0};mon[key].n++;mon[key].g+=r.grams||0;});
  var mkeys=Object.keys(mon).sort();
  if(mkeys.length){mkeys=mkeys.slice(-6);var maxN=0;mkeys.forEach(function(k){if(mon[k].n>maxN)maxN=mon[k].n;});
-  h+='<div class="muted" style="font-size:13px;margin:12px 0 4px">Prints per maand</div>';
+  h+='<div class="muted" style="font-size:13px;margin:12px 0 4px">'+t('hist.per_month','Prints per maand')+'</div>';
   mkeys.forEach(function(k){h+=bar(k,mon[k].n,maxN,mon[k].n+' prints · '+Math.round(mon[k].g)+' g');});}
  box.innerHTML=h;
 }
@@ -528,12 +528,12 @@ function amt(t){
  if(t.gram>=0){return '<div class="muted"'+(t.gram<lowG?' style="color:#e74c3c;font-weight:600"':'')+'>'+t.gram+' g</div>';}
  return '<div class="muted">'+(t.remain>=0?t.remain+'%':'–')+'</div>';
 }
-function humHtml(h){if(!h||h<1)return'';var l,c;if(h<=2){l='droog';c='#2ecc71';}else if(h===3){l='redelijk';c='#f39c12';}else{l='vochtig';c='#e74c3c';}return ' · <span style="color:'+c+'">vocht: '+l+'</span>';}
+function humHtml(h){if(!h||h<1)return'';var l,c;if(h<=2){l=t('dash.hum_dry','droog');c='#2ecc71';}else if(h===3){l=t('dash.hum_ok','redelijk');c='#f39c12';}else{l=t('dash.hum_wet','vochtig');c='#e74c3c';}return ' · <span style="color:'+c+'">'+t('dash.humidity','vocht')+': '+l+'</span>';}
 function slotName(slot){return slot===254?'externe spoel':('AMS'+(Math.floor(slot/4)+1)+' T'+(slot%4+1));}
 function trayCell(t,slot,assign){
  var inner;
  if(t&&t.present)inner='<div class="sw" style="background:'+t.rgb+'"></div><div>'+t.type+'</div>'+amt(t);
- else inner='<div class="sw empty"></div><div class="muted">leeg</div><div></div>';
+ else inner='<div class="sw empty"></div><div class="muted">'+t('spools.empty_slot','leeg')+'</div><div></div>';
  if(assign)inner+='<button class="rolbtn" onclick="pickRoll('+slot+')">Rol</button>';
  var act=(lastS&&lastS.active_tray===slot)?' style="outline:2px solid #2ecc71;outline-offset:3px;border-radius:6px" title="Wordt nu gebruikt"':'';
  return '<div class="tray"'+act+'>'+inner+'</div>';
@@ -549,7 +549,7 @@ function amsHtml(ams,ext,assign){
  return h||'<div class="muted">geen AMS</div>';
 }
 function slotMat(slot){if(!lastS)return'';if(slot===254)return(lastS.ext&&lastS.ext.type)||'';var u=Math.floor(slot/4),t=slot%4;if(lastS.ams)for(var i=0;i<lastS.ams.length;i++){if(lastS.ams[i].id===u+1){var tr=lastS.ams[i].trays[t];return(tr&&tr.type)||'';}}return'';}
-function pickRoll(slot){pickSlot=slot;$('rollTitle').textContent='Kies rol voor '+slotName(slot);
+function pickRoll(slot){pickSlot=slot;$('rollTitle').textContent=t('spools.pick_for','Kies rol voor')+' '+slotName(slot);
  var mat=slotMat(slot);
  fetch('/spools').then(function(r){return r.json();}).then(function(list){
   if(mat)list.sort(function(a,b){return (b.material===mat?1:0)-(a.material===mat?1:0);});
@@ -663,19 +663,19 @@ function renderSpList(){
  arr.forEach(function(s){
   var g=spGrams(s),m=mLen(g,s.material);
   var sl=(s.slot!=null&&s.slot>=0)?' <span class="badge" style="background:#1e4e6e;color:#bfe3ff">'+slotName(s.slot)+'</span>':'';
-  var low=g<lowG?' <span class="badge" style="background:#5a2020;color:#ffd0d0">bijna leeg</span>':'';
+  var low=g<lowG?' <span class="badge" style="background:#5a2020;color:#ffd0d0">'+t('spools.almost_empty','bijna leeg')+'</span>':'';
   h+='<div class="rollcard"><input type="checkbox" '+(spSel[s.i]?'checked':'')+' onchange="selToggle('+s.i+',this.checked)" style="width:20px;height:20px;flex:0 0 auto">'
    +'<div style="width:38px;height:38px;border-radius:8px;flex:0 0 auto;border:1px solid #3a434d;background:'+s.rgb+'"></div>'
    +'<div style="min-width:0"><div class="name">'+s.name+'<span class="badge">'+s.material+'</span>'+sl+low+'</div>'
    +(s.note?'<div class="muted" style="font-size:12px">'+s.note+'</div>':'')
    +(s.price>0?'<div class="muted" style="font-size:12px">€ '+s.price.toFixed(2)+'/kg</div>':'')+'</div>'
    +'<div class="grams">'+g+' g<div class="muted" style="font-size:12px;font-weight:400">&asymp; '+Math.round(m)+' m'+(s.price>0?' · € '+(g*s.price/1000).toFixed(2):'')+'</div></div>'
-   +'<button class="iconbtn" title="Weeg de rol" onclick="spWeigh('+s.i+')">⚖</button>'
-   +'<button class="iconbtn" title="Kopieer" onclick="spCopy('+s.i+')">⧉</button>'
-   +'<button class="iconbtn" title="Bewerk" onclick="spEdit('+s.i+')">✎</button>'
-   +'<button class="iconbtn del" title="Verwijder" onclick="spDel('+s.i+')">✕</button></div>';
+   +'<button class="iconbtn" title="'+t('spools.weigh_roll','Weeg de rol')+'" onclick="spWeigh('+s.i+')">⚖</button>'
+   +'<button class="iconbtn" title="'+t('copy','Kopieer')+'" onclick="spCopy('+s.i+')">⧉</button>'
+   +'<button class="iconbtn" title="'+t('edit','Bewerk')+'" onclick="spEdit('+s.i+')">✎</button>'
+   +'<button class="iconbtn del" title="'+t('delete','Verwijder')+'" onclick="spDel('+s.i+')">✕</button></div>';
  });
- $('spList').innerHTML=h||'<div class="muted">Geen rollen gevonden.</div>';
+ $('spList').innerHTML=h||'<div class="muted">'+t('spools.none_found','Geen rollen gevonden.')+'</div>';
  updateBulk();
 }
 function selToggle(i,c){if(c)spSel[i]=true;else delete spSel[i];updateBulk();}
