@@ -50,3 +50,4 @@ android/local.properties
 
 # Simulator build output
 sim/build/
+de_missing.txt
