@@ -265,6 +265,10 @@ section#spools{max-width:1040px}
   <div class="muted" style="font-size:12px;margin-top:8px">Installeer de gratis <b>ntfy</b>-app (of ntfy.sh in de browser) en abonneer op dit topic. Je krijgt een melding bij print klaar/mislukt, filament tekort en als een gewogen rol onder de drempel komt.</div>
   <div id="cNtfyMsg" class="muted" style="margin-top:6px"></div>
  </div>
+ <div class="card"><h3>Diagnose</h3>
+  <div id="diagBox" class="muted">…</div>
+  <button class="formbtn sec" style="margin-top:10px" onclick="loadDiag()">Ververs</button>
+ </div>
 </section>
 
 <section id="hist"><div class="card"><h3>Statistieken</h3>
@@ -304,6 +308,26 @@ function tab(n){
  if(n==='files')loadFiles(curPath);
  if(n==='spools'){loadSpools();loadEmpties();}
  if(n==='hist')loadHistory();
+ if(n==='set')loadDiag();
+}
+function fmtAge(s){if(s<0)return'onbekend';if(s<60)return s+' s';if(s<3600)return Math.round(s/60)+' min';if(s<86400)return Math.round(s/3600)+' uur';return Math.round(s/86400)+' dagen';}
+function dRow(label,val,good){return '<div style="display:flex;justify-content:space-between;gap:10px;padding:3px 0"><span>'+label+'</span><b style="color:'+(good===true?'#2ecc71':(good===false?'#e74c3c':'#eceff2'))+'">'+val+'</b></div>';}
+function loadDiag(){
+ var b=$('diagBox');if(!b)return;b.innerHTML='laden…';
+ fetch('/diag').then(function(r){return r.json();}).then(function(d){
+  var h='';
+  h+=dRow('Printer (MQTT)',d.mqtt?'verbonden':'offline',d.mqtt);
+  h+=dRow('Laatste status',d.age<0?'nog niets ontvangen':fmtAge(d.age)+' geleden',d.age>=0&&d.age<60);
+  h+=dRow('Printer-IP',d.ip||'niet ingesteld',!!d.ip);
+  h+=dRow('Serial',d.serial_set?'ingesteld':'ontbreekt',d.serial_set);
+  h+=dRow('Toegangscode',d.code_set?'ingesteld':'ontbreekt',d.code_set);
+  h+=dRow('Weegschaal-IP',d.scale_ip||'niet ingesteld',null);
+  h+=dRow('Webadres',d.url||'-',null);
+  h+=dRow('App draait al',fmtAge(d.uptime),null);
+  h+='<div class="muted" style="font-size:13px;margin:10px 0 4px">Databestanden (op de tablet)</div>';
+  (d.files||[]).forEach(function(f){h+=dRow(f.n,f.ok?(f.bytes+' B · gewijzigd '+fmtAge(f.age)+' geleden'):'ontbreekt',f.ok);});
+  b.innerHTML=h;
+ }).catch(function(){b.innerHTML='<span style="color:#e74c3c">geen verbinding met de tablet</span>';});
 }
 var histCache=[];
 function loadHistory(){fetch('/history').then(function(r){return r.json();}).then(function(list){histCache=list;

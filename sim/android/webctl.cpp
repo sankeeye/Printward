@@ -31,6 +31,8 @@
 #include <cstring>
 #include <cstdlib>
 #include <strings.h>
+#include <ctime>
+#include <sys/stat.h>        // data-file health for /diag
 #include <zlib.h>            // inflate .3mf thumbnail PNGs for the Files previews
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -414,6 +416,40 @@ static void build_status(char* o, int n) {
         (unsigned)(e.color & 0xFFFFFF), e.remain, filament_remaining(254));
 }
 
+// Health snapshot: is the printer link alive, is the config complete, and is the
+// data actually on disk? Saves digging through adb logcat when something is off.
+static void build_diag(char* o, int n) {
+    PrinterStatus& s = g_printer_status;
+    unsigned long now = millis();
+    int p = 0;
+    p += snprintf(o + p, n - p,
+        "{\"uptime\":%lu,\"mqtt\":%s,\"have_data\":%s,\"age\":%ld,"
+        "\"ip\":\"%s\",\"serial_set\":%s,\"code_set\":%s,\"scale_ip\":\"%s\",\"url\":\"%s\",\"files\":[",
+        now / 1000UL, s.mqtt_connected ? "true" : "false", s.have_data ? "true" : "false",
+        s.last_update_ms ? (long)((now - s.last_update_ms) / 1000UL) : -1L,
+        g_printer_ip, g_printer_serial[0] ? "true" : "false",
+        g_printer_access_code[0] ? "true" : "false", g_scale_ip, webctl_url());
+
+    struct DiagFile { const char* tag; const char* path; };
+    static const DiagFile F[] = {
+        {"rollen",     "/sdcard/pandatouch_spools.conf"},
+        {"lege spoel", "/sdcard/pandatouch_empties.conf"},
+        {"gewichten",  "/sdcard/pandatouch_weights.conf"},
+        {"historie",   "/sdcard/pandatouch_history.conf"},
+        {"statistiek", "/sdcard/pandatouch_stats.conf"},
+        {"snapshot",   "/sdcard/ptbackup/spools.conf"},
+    };
+    time_t tnow = time(nullptr);
+    for (int i = 0; i < (int)(sizeof(F) / sizeof(F[0])); i++) {
+        struct stat st;
+        bool ok = (stat(F[i].path, &st) == 0);
+        p += snprintf(o + p, n - p, "%s{\"n\":\"%s\",\"ok\":%s,\"bytes\":%ld,\"age\":%ld}",
+            i ? "," : "", F[i].tag, ok ? "true" : "false",
+            ok ? (long)st.st_size : 0L, ok ? (long)(tnow - st.st_mtime) : -1L);
+    }
+    snprintf(o + p, n - p, "]}");
+}
+
 static void build_files(const char* path, char* o, int n) {
     FtpEntry entries[FTP_MAX_ENTRIES];
     int count = 0;
@@ -705,6 +741,12 @@ static void handle_conn(int fd) {
     if (!strcmp(path, "/notify_test")) {
         notify_send("PandaTouch", "Test melding - het werkt!");
         send_resp(fd, "200 OK", "text/plain; charset=utf-8", "testmelding verstuurd", 21);
+        return;
+    }
+    if (!strcmp(path, "/diag")) {
+        char* js = (char*)malloc(2048);
+        if (js) { build_diag(js, 2048); send_resp(fd, "200 OK", "application/json", js, (int)strlen(js)); free(js); }
+        else send_resp(fd, "500 Error", "text/plain", "", 0);
         return;
     }
     if (!strcmp(path, "/history")) {
