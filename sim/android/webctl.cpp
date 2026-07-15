@@ -20,6 +20,7 @@
 #include "ui_screensaver.h"   // g_screensaver_3d, screensaver_view_changed()
 #include "thumb.h"            // .3mf model-preview extraction (Files/Historie)
 #include "backup.h"           // download / restore all tablet data
+#include "lang.h"             // UI translations, served to the web page via /lang
 #include "bambu_mqtt.h"
 #include "bambu_ftp.h"
 #include "storage.h"
@@ -235,6 +236,9 @@ void webctl_loop() {
                     int lw = atoi(v); if (lw < 0) lw = 0; if (lw > 5000) lw = 5000;
                     if (lw != g_low_threshold_g) { g_low_threshold_g = lw; filament_save(); }
                 }
+                if (parse_query(c.arg, "lang", v, sizeof(v)) && v[0]) {
+                    if (strcmp(v, g_lang)) lang_set(v);   // persists + reloads the table
+                }
                 save_settings();
                 if (viewchg) screensaver_view_changed();
                 if (reconnect) bambu_mqtt_settings_changed();
@@ -391,9 +395,9 @@ static void build_status(char* o, int n) {
         "\"bkage\":%ld,",
         backup_seconds_since_dl());
     p += snprintf(o + p, n - p,
-        "\"cfg\":{\"ip\":\"%s\",\"serial\":\"%s\",\"view3d\":%s,\"bri\":%d,\"code_set\":%s,\"scale_ip\":\"%s\",\"low\":%d,\"ntfy\":\"%s\"},",
+        "\"cfg\":{\"ip\":\"%s\",\"serial\":\"%s\",\"view3d\":%s,\"bri\":%d,\"code_set\":%s,\"scale_ip\":\"%s\",\"low\":%d,\"ntfy\":\"%s\",\"lang\":\"%s\"},",
         g_printer_ip, g_printer_serial, g_screensaver_3d ? "true" : "false",
-        g_brightness, g_printer_access_code[0] ? "true" : "false", g_scale_ip, g_low_threshold_g, g_ntfy_topic);
+        g_brightness, g_printer_access_code[0] ? "true" : "false", g_scale_ip, g_low_threshold_g, g_ntfy_topic, lang_current());
 
     p += snprintf(o + p, n - p, "\"ams\":[");
     bool first = true;
@@ -747,6 +751,22 @@ static void handle_conn(int fd) {
     if (!strcmp(path, "/notify_test")) {
         notify_send("FilaTrack", "Test melding - het werkt!");
         send_resp(fd, "200 OK", "text/plain; charset=utf-8", "testmelding verstuurd", 21);
+        return;
+    }
+    if (!strcmp(path, "/lang")) {          // active translation table for the web page
+        char* js = (char*)malloc(16384);
+        if (js) { lang_json(js, 16384); send_resp(fd, "200 OK", "application/json", js, (int)strlen(js)); free(js); }
+        else send_resp(fd, "500 Error", "text/plain", "", 0);
+        return;
+    }
+    if (!strcmp(path, "/langs")) {         // which languages are available (built-in + files)
+        char codes[16][8];
+        int n = lang_codes(codes, 16);
+        char js[256]; int p = 0;
+        p += snprintf(js + p, sizeof(js) - p, "[");
+        for (int i = 0; i < n; i++) p += snprintf(js + p, sizeof(js) - p, "%s\"%s\"", i ? "," : "", codes[i]);
+        snprintf(js + p, sizeof(js) - p, "]");
+        send_resp(fd, "200 OK", "application/json", js, (int)strlen(js));
         return;
     }
     if (!strcmp(path, "/diag")) {

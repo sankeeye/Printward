@@ -28,6 +28,7 @@
 #include "stats.h"             // lifetime print statistics
 #include "history.h"           // recent print log + cost
 #include "backup.h"            // rolling on-device snapshot of all data files
+#include "lang.h"              // UI translations (built-in EN/NL + language files)
 #include "webctl.h"            // LAN web control server (same Move actions)
 #include "bambu_ftp.h"
 #include "gcode_view.h"
@@ -224,6 +225,7 @@ int main(int argc, char **argv) {
     migrate_legacy_data();                   // rename pre-FilaTrack files FIRST,
                                              // or an upgrade would start empty
     load_settings();
+    lang_init();                             // UI language; needs g_lang from the conf
     filament_track_init();                   // load persisted spool weights
     spool_db_load();                         // load the spool library
     empty_db_load();                         // load the empty-spool weights
