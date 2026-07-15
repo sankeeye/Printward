@@ -9,11 +9,16 @@ else {
 
 android {
     if (buildAsApplication) {
+        // namespace = the package the Java/R classes live in. It stays org.libsdl.app
+        // because that's where SDL's own Activity is, and the manifest resolves
+        // android:name="SDLActivity" against THIS - not against applicationId.
         namespace "org.libsdl.app"
     }
     compileSdkVersion 34
     ndkVersion "25.2.9519653"
     defaultConfig {
+        // applicationId = how the device identifies the installed app. Ours, not SDL's.
+        applicationId "nl.filatrack.app"
         minSdkVersion 19
         targetSdkVersion 34
         versionCode 1

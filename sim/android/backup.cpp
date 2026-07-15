@@ -213,7 +213,7 @@ const char* backup_sd_dir() {
         struct stat st;
         if (stat(roots[i], &st) != 0 || !S_ISDIR(st.st_mode)) continue;   // no card here
         char dir[192];
-        snprintf(dir, sizeof(dir), "%s/Android/data/org.libsdl.app/files", roots[i]);
+        snprintf(dir, sizeof(dir), "%s/Android/data/nl.filatrack.app/files", roots[i]);
         if (!ensure_dir(dir)) continue;
         char probe[224];
         snprintf(probe, sizeof(probe), "%s/.pt_write_test", dir);
