@@ -610,7 +610,7 @@ static void handle_conn(int fd) {
     }
     if (!strcmp(path, "/status")) {
         char* js = (char*)malloc(3000);
-        if (js) { build_status(js, 3000); send_resp(fd, "200 OK", "application/json", js, (int)strlen(js)); free(js); }
+        if (js) { build_status(js, 3000); send_resp(fd, "200 OK", "application/json; charset=utf-8", js, (int)strlen(js)); free(js); }
         else send_resp(fd, "500 Error", "text/plain", "", 0);
         return;
     }
@@ -618,7 +618,7 @@ static void handle_conn(int fd) {
         char pth[200];
         parse_query(query, "path", pth, sizeof(pth));
         char* js = (char*)malloc(8192);
-        if (js) { build_files(pth, js, 8192); send_resp(fd, "200 OK", "application/json", js, (int)strlen(js)); free(js); }
+        if (js) { build_files(pth, js, 8192); send_resp(fd, "200 OK", "application/json; charset=utf-8", js, (int)strlen(js)); free(js); }
         else send_resp(fd, "500 Error", "text/plain", "", 0);
         return;
     }
@@ -690,7 +690,7 @@ static void handle_conn(int fd) {
     }
     if (!strcmp(path, "/spools")) {
         char* js = (char*)malloc(12000);
-        if (js) { build_spools(js, 12000); send_resp(fd, "200 OK", "application/json", js, (int)strlen(js)); free(js); }
+        if (js) { build_spools(js, 12000); send_resp(fd, "200 OK", "application/json; charset=utf-8", js, (int)strlen(js)); free(js); }
         else send_resp(fd, "500 Error", "text/plain", "", 0);
         return;
     }
@@ -725,7 +725,7 @@ static void handle_conn(int fd) {
     }
     if (!strcmp(path, "/empties")) {
         char* js = (char*)malloc(4000);
-        if (js) { build_empties(js, 4000); send_resp(fd, "200 OK", "application/json", js, (int)strlen(js)); free(js); }
+        if (js) { build_empties(js, 4000); send_resp(fd, "200 OK", "application/json; charset=utf-8", js, (int)strlen(js)); free(js); }
         else send_resp(fd, "500 Error", "text/plain", "", 0);
         return;
     }
@@ -755,7 +755,7 @@ static void handle_conn(int fd) {
     }
     if (!strcmp(path, "/lang")) {          // active translation table for the web page
         char* js = (char*)malloc(16384);
-        if (js) { lang_json(js, 16384); send_resp(fd, "200 OK", "application/json", js, (int)strlen(js)); free(js); }
+        if (js) { lang_json(js, 16384); send_resp(fd, "200 OK", "application/json; charset=utf-8", js, (int)strlen(js)); free(js); }
         else send_resp(fd, "500 Error", "text/plain", "", 0);
         return;
     }
@@ -766,18 +766,18 @@ static void handle_conn(int fd) {
         p += snprintf(js + p, sizeof(js) - p, "[");
         for (int i = 0; i < n; i++) p += snprintf(js + p, sizeof(js) - p, "%s\"%s\"", i ? "," : "", codes[i]);
         snprintf(js + p, sizeof(js) - p, "]");
-        send_resp(fd, "200 OK", "application/json", js, (int)strlen(js));
+        send_resp(fd, "200 OK", "application/json; charset=utf-8", js, (int)strlen(js));
         return;
     }
     if (!strcmp(path, "/diag")) {
         char* js = (char*)malloc(2048);
-        if (js) { build_diag(js, 2048); send_resp(fd, "200 OK", "application/json", js, (int)strlen(js)); free(js); }
+        if (js) { build_diag(js, 2048); send_resp(fd, "200 OK", "application/json; charset=utf-8", js, (int)strlen(js)); free(js); }
         else send_resp(fd, "500 Error", "text/plain", "", 0);
         return;
     }
     if (!strcmp(path, "/history")) {
         char* js = (char*)malloc(24576);
-        if (js) { build_history(js, 24576); send_resp(fd, "200 OK", "application/json", js, (int)strlen(js)); free(js); }
+        if (js) { build_history(js, 24576); send_resp(fd, "200 OK", "application/json; charset=utf-8", js, (int)strlen(js)); free(js); }
         else send_resp(fd, "500 Error", "text/plain", "", 0);
         return;
     }
