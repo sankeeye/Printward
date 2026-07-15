@@ -30,9 +30,12 @@
   filament-balkjes · verbindingsbol · ETA + laagteller · actief slot · klok ·
   waarschuwingspill · uitgebreide historie (zoeken/filteren/sorteren/CSV) ·
   voorraadoverzicht + restlengte · diagnose-scherm · self-test · **hernoemd naar FilaTrack**
-  (incl. datamigratie) · package `nl.filatrack.app` · ESP32-firmware verwijderd (2097 regels).
-- **Waar we gebleven zijn**: **de web-interface is helemaal vertaald** (EN/NL/DE compleet,
-  264 sleutels). De tablet-UI staat nog in het Nederlands — dat is de volgende stap.
+  (incl. datamigratie) · package `nl.filatrack.app` · ESP32-firmware verwijderd (2097 regels) ·
+  **web volledig meertalig** (EN/NL/DE, incl. serverantwoorden) + `tools/i18n_audit.py` ·
+  race in `/setcfg` weg (taal wisselt in één klik).
+- **Waar we gebleven zijn**: **de web-interface is helemaal vertaald en door Arno afgetekend**
+  (EN/NL/DE compleet, 274 sleutels, taal wisselt in één klik). De tablet-UI staat nog volledig
+  in het Nederlands — dat is de volgende stap.
 - **Ontwerp i18n** (afgesproken 15-07): teksten krijgen een **sleutel** (`dash.printing`);
   **EN + NL zitten ingebouwd** zodat het out-of-the-box werkt zonder bestanden; daarnaast
   laadt de app **losse taalbestanden** `/sdcard/filatrack_lang_<code>.conf` (`sleutel=vertaling`,
