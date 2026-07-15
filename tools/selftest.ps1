@@ -87,13 +87,11 @@ try {
 
 # --- 5. price survives a save that omits it (the weigh regression) ---------
 Write-Host "prijs blijft behouden bij wegen:"
-$made = $false
 try {
     if (Find-Test) { Write-Host "  (oude testrol gevonden, wordt opgeruimd)" -ForegroundColor DarkGray }
     else {
         Hit ("/spool_save?idx=&name=$TESTNAME&material=PLA&color=%23888888&rem=500&empty=200&price=9.99") | Out-Null
-        Start-Sleep -Milliseconds 600
-        $made = $true
+        Start-Sleep -Milliseconds 600   # /spool_save wacht niet op de hoofdthread (anders dan /setcfg)
     }
     $t = Find-Test
     Check "testrol aangemaakt" ($null -ne $t)
@@ -130,12 +128,15 @@ try {
     $codes = Get-Json '/langs'
     Check "meer dan 1 taal beschikbaar" ($codes.Count -ge 2) "-> $($codes -join ',')"
 
+    # GEEN sleep tussen setcfg en /lang. Dat is precies de bug die Arno meldde:
+    # /setcfg zette de wijziging in de wachtrij en antwoordde meteen, dus /lang gaf
+    # nog de oude tabel en je moest een paar keer klikken. /setcfg wacht nu tot de
+    # hoofdthread het heeft toegepast; een sleep hier zou dat weer verstoppen.
     $keysPer = @{}
     foreach ($c in $codes) {
         Hit "/setcfg?lang=$c" | Out-Null
-        Start-Sleep -Milliseconds 300
         $l = Get-Json '/lang'
-        Check "/lang volgt taal $c" ($l.lang -eq $c) "-> kreeg '$($l.lang)'"
+        Check "/lang volgt taal $c meteen (geen race)" ($l.lang -eq $c) "-> kreeg '$($l.lang)'"
         $keysPer[$c] = @($l.s.PSObject.Properties.Name)
     }
 
@@ -151,7 +152,6 @@ try {
     # Een lege vertaling toont een leeg label op het scherm.
     foreach ($c in $codes) {
         Hit "/setcfg?lang=$c" | Out-Null
-        Start-Sleep -Milliseconds 300
         $l = Get-Json '/lang'
         $blank = @($l.s.PSObject.Properties | Where-Object { -not $_.Value })
         Check "$c heeft geen lege teksten" ($blank.Count -eq 0) `

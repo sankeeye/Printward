@@ -63,8 +63,14 @@ static int g_qh = 0, g_qt = 0;
 static SDL_mutex* g_qmtx = nullptr;
 static SDL_mutex* g_ftpmtx = nullptr;   // serialize FTP listings
 
-static void q_push(int kind, int code, float step, const char* arg) {
-    if (!g_qmtx) return;
+// Queued work is FIFO, so counting pushes and completions is enough to tell
+// whether a specific request has been carried out yet - see q_wait().
+static unsigned g_qseq = 0, g_qdone = 0;
+
+// Returns a ticket for q_wait(), or 0 if the queue was full (nothing queued).
+static unsigned q_push(int kind, int code, float step, const char* arg) {
+    if (!g_qmtx) return 0;
+    unsigned seq = 0;
     SDL_LockMutex(g_qmtx);
     int nt = (g_qt + 1) % QCAP;
     if (nt != g_qh) {
@@ -74,8 +80,25 @@ static void q_push(int kind, int code, float step, const char* arg) {
         if (arg) { strncpy(g_q[g_qt].arg, arg, sizeof(g_q[g_qt].arg) - 1); g_q[g_qt].arg[sizeof(g_q[g_qt].arg) - 1] = 0; }
         else g_q[g_qt].arg[0] = 0;
         g_qt = nt;
+        seq = ++g_qseq;
     }
     SDL_UnlockMutex(g_qmtx);
+    return seq;
+}
+
+// Block this HTTP thread until the main thread has actually run the queued item.
+// Normally one frame (~35 ms); the timeout only matters if the UI thread is busy,
+// and then answering late beats answering wrongly.
+static bool q_wait(unsigned seq, int timeout_ms) {
+    if (!seq || !g_qmtx) return false;
+    for (int waited = 0; waited <= timeout_ms; waited += 5) {
+        SDL_LockMutex(g_qmtx);
+        unsigned done = g_qdone;
+        SDL_UnlockMutex(g_qmtx);
+        if (done >= seq) return true;
+        SDL_Delay(5);
+    }
+    return false;
 }
 
 // --- small parsing / encoding helpers ------------------------------------
@@ -376,6 +399,10 @@ void webctl_loop() {
                 break;
             }
         }
+        // One spot, after every case, so q_wait() can see this item is really done.
+        SDL_LockMutex(g_qmtx);
+        g_qdone++;
+        SDL_UnlockMutex(g_qmtx);
     }
 }
 
@@ -692,7 +719,11 @@ static void handle_conn(int fd) {
         return;
     }
     if (!strcmp(path, "/setcfg")) {
-        q_push(Q_CFG, 0, 0, query ? query : "");
+        // Wait for the main thread to apply this before answering. Without it the
+        // page fetched /lang the moment "saved" came back, raced the queue, got the
+        // old table and left the UI unchanged - which felt like "the language switch
+        // needs several clicks". Costs about one frame.
+        q_wait(q_push(Q_CFG, 0, 0, query ? query : ""), 1500);
         send_msg(fd, "200 OK", "saved");
         return;
     }

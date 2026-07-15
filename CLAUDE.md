@@ -71,6 +71,19 @@
     tabellen: `I18N` (rauw, voor data-i18n) en `I18NT` (gedecodeerd, wat `t()` teruggeeft).
   - **Gebruikersdata niet vertalen**: "gebruikt" in de rollenlijst is Arno's eigen notitie
     (`note=`), geen interface-tekst.
+- **De wachtrij is asynchroon** (`q_push` → hoofdthread → `webctl_loop`). Alles wat LVGL of
+  opslag aanraakt moet daar doorheen; rechtstreeks vanaf de HTTP-thread geeft een race met de
+  UI die eruit leest. Gevolg: een endpoint dat meteen antwoordt, is nog **niet uitgevoerd**.
+  Daarom deed `/setcfg?lang=` er een paar klikken over: de pagina haalde `/lang` op vóór de
+  drain. `/setcfg` gebruikt nu `q_wait()` (~1 frame) en is dus wél waar.
+  - De 6 `setTimeout(...,300)` na `/spool_save` en `/empty_save` zijn dezelfde omzeiling.
+    Die werken (300 ms > 1 frame), dus laten staan. De taalwissel was de enige zonder
+    vertraging — daarom brak alléén die.
+  - De webserver is **één thread** die verbindingen serieel afhandelt. Elke `q_wait` blokkeert
+    dus al het webverkeer zolang hij duurt. Bewust alleen op `/setcfg` gezet; zet het er niet
+    zomaar overal bij.
+  - **Zet nooit een `Start-Sleep` in de self-test om iets "stabiel" te krijgen** — dat is hoe
+    deze bug maandenlang onzichtbaar bleef. Een test die wacht, test het wachten.
   - `send_resp()` wil een lengte; met vertaalde tekst klopt een handgeteld getal niet meer.
     Daarom `send_msg()`, die `strlen(T(key))` pakt.
   - Taalbestand: max **320 bytes** per tekst, 400 sleutels. De tablet meldt afkappen in
