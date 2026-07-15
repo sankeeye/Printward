@@ -10,6 +10,7 @@
 #include "storage.h"
 #include "bambu_ftp.h"
 #include "ui_screensaver.h"   // g_screensaver_3d (persisted below)
+#include <ctime>              // fallback seed in webui_pass_ensure()
 #include <WiFi.h>
 #include <Arduino.h>
 #include <cstring>
@@ -34,6 +35,8 @@ char g_printer_access_code[24] = "";
 char g_scale_ip[40] = "192.168.2.60";   // FilaTrack Scale host (scale_ip= in the conf)
 char g_ntfy_topic[64] = "";             // ntfy.sh topic for push notifications
 char g_lang[8] = "en";                  // UI language (lang= in the conf, see lang.h)
+char g_webui_pass[24] = "";             // web password; generated on first run, shown in Settings
+bool g_allow_remote = false;            // refuse anything off the local network unless set
 float g_tray_capacity_g[AMS_MAX_UNITS][AMS_MAX_TRAYS] = {{0}};
 float g_tray_used_g[AMS_MAX_UNITS][AMS_MAX_TRAYS] = {{0}};
 float g_ext_capacity_g = 0;
@@ -69,6 +72,8 @@ void save_settings() {
     fprintf(f, "scale_ip=%s\n", g_scale_ip);
     fprintf(f, "ntfy_topic=%s\n", g_ntfy_topic);
     fprintf(f, "lang=%s\n", g_lang);
+    fprintf(f, "webui_pass=%s\n", g_webui_pass);
+    fprintf(f, "allow_remote=%d\n", g_allow_remote ? 1 : 0);
     if (g_wifi_ssid[0]) fprintf(f, "wifi_ssid=%s\n", g_wifi_ssid);
     fclose(f);
     Serial.println("CONF: saved /sdcard/filatrack.conf");
@@ -108,12 +113,43 @@ void load_settings() {
         else if (!strcmp(key, "scale_ip"))       strncpy(g_scale_ip, val, sizeof(g_scale_ip) - 1);
         else if (!strcmp(key, "ntfy_topic"))     strncpy(g_ntfy_topic, val, sizeof(g_ntfy_topic) - 1);
         else if (!strcmp(key, "lang"))           strncpy(g_lang, val, sizeof(g_lang) - 1);
+        else if (!strcmp(key, "webui_pass"))     strncpy(g_webui_pass, val, sizeof(g_webui_pass) - 1);
+        else if (!strcmp(key, "allow_remote"))   g_allow_remote = (atoi(val) != 0);
     }
     fclose(f);
     // Never log the access code itself - only whether it was provided.
     Serial.printf("CONF: ip=%s serial=%s access_code=%s\n",
                   g_printer_ip, g_printer_serial,
                   g_printer_access_code[0] ? "(set)" : "(MISSING)");
+}
+
+// The web page controls a real printer, so it cannot ship without a password -
+// and a default one is the same as none. Generate a random one the first time and
+// show it on the tablet, the way a TV shows a pairing code: nobody has to invent a
+// password, and nobody ends up running the default.
+//
+// No lookalike characters (0/O, 1/l/I): this gets copied off a screen by hand.
+void webui_pass_ensure() {
+    if (g_webui_pass[0]) return;
+    static const char AB[] = "23456789abcdefghjkmnpqrstuvwxyz";
+    FILE* r = fopen("/dev/urandom", "rb");
+    unsigned char b[10];
+    if (r) { if (fread(b, 1, sizeof(b), r) != sizeof(b)) memset(b, 0, sizeof(b)); fclose(r); }
+    else {
+        // /dev/urandom missing would be very odd; fall back to the clock so we
+        // still get *a* password rather than an empty one, which would mean no auth.
+        unsigned s = (unsigned)time(nullptr);
+        for (size_t i = 0; i < sizeof(b); i++) { s = s * 1103515245u + 12345u; b[i] = (unsigned char)(s >> 16); }
+        Serial.println("AUTH: no /dev/urandom, password is only clock-random");
+    }
+    int n = 0;
+    for (size_t i = 0; i < sizeof(b) && n < 10; i++) {
+        if (n == 4) g_webui_pass[n++] = '-';          // 4 + 5, easier to read out loud
+        g_webui_pass[n++] = AB[b[i] % (sizeof(AB) - 1)];
+    }
+    g_webui_pass[n] = 0;
+    save_settings();
+    Serial.println("AUTH: generated a web password - see Settings on the tablet");
 }
 
 // bambu_ftp_list() is provided by the real bambu_ftp.cpp on the tablet build.

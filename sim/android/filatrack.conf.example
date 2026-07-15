@@ -21,3 +21,14 @@ ntfy_topic=                # ntfy.sh topic for push notifications (empty = off)
 #   /sdcard/filatrack_spools.conf    the spool library
 #   /sdcard/filatrack_empties.conf   empty-spool weight library
 #   /sdcard/filatrack_history.conf   recent-print log
+
+# The web page (http://<tablet>:8080) needs a password. Leave this out and the
+# tablet makes one on first start and shows it under Settings > Web password -
+# there is no default password to forget to change. Clear the line and restart to
+# get a fresh one.
+#webui_pass=
+
+# FilaTrack only answers on your own network (10./172.16-31./192.168./169.254.).
+# That is the backstop for someone forwarding port 8080 on the router. Set this to
+# 1 only if you know exactly what you are exposing, and why.
+#allow_remote=0

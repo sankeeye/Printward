@@ -15,8 +15,10 @@
 #
 #     .\selftest.ps1                       # against the default tablet
 #     .\selftest.ps1 -TabletUrl http://...
+#     .\selftest.ps1 -Pass abcd-efghi      # if adb can't read it off the tablet
 
-param([string]$TabletUrl = "http://192.168.2.110:8080")
+param([string]$TabletUrl = "http://192.168.2.110:8080",
+      [string]$Pass = "")
 
 $ErrorActionPreference = 'Stop'
 $script:fails = 0
@@ -26,8 +28,27 @@ function Check($what, $ok, $detail = '') {
     if ($ok) { Write-Host ("  PASS  {0}" -f $what) -ForegroundColor Green }
     else     { Write-Host ("  FAIL  {0} {1}" -f $what, $detail) -ForegroundColor Red; $script:fails++ }
 }
-function Get-Json($p)  { Invoke-RestMethod "$TabletUrl$p" -TimeoutSec 15 }
-function Hit($p)       { Invoke-WebRequest "$TabletUrl$p" -UseBasicParsing -TimeoutSec 20 }
+# The web UI needs a password now. Read it off the tablet over adb rather than
+# asking for it: this runs against the device anyway, and a test you have to feed a
+# secret by hand is a test nobody runs. Pass -Pass to override (e.g. no adb).
+if (-not $Pass) {
+    $adb = @("adb", "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe") |
+           Where-Object { Get-Command $_ -ErrorAction SilentlyContinue } | Select-Object -First 1
+    if ($adb) {
+        $line = (& $adb shell "grep '^webui_pass=' /sdcard/filatrack.conf" 2>$null)
+        if ($line) { $Pass = $line.Trim().Split("=")[1] }
+    }
+}
+$AuthHdr = @{}
+if ($Pass) {
+    $b = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("filatrack:$Pass"))
+    $AuthHdr = @{ Authorization = "Basic $b" }
+} else {
+    Write-Host "  (geen webui_pass gevonden - draait de tablet nog zonder wachtwoord?)" -ForegroundColor DarkYellow
+}
+
+function Get-Json($p)  { Invoke-RestMethod "$TabletUrl$p" -Headers $AuthHdr -TimeoutSec 15 }
+function Hit($p)       { Invoke-WebRequest "$TabletUrl$p" -Headers $AuthHdr -UseBasicParsing -TimeoutSec 20 }
 function Find-Test     { (Get-Json '/spools') | Where-Object { $_.name -eq $TESTNAME } | Select-Object -First 1 }
 
 Write-Host "FilaTrack self-test -> $TabletUrl`n"
@@ -112,6 +133,38 @@ finally {
         Hit ("/spool_del?idx=" + $t.i) | Out-Null
         Start-Sleep -Milliseconds 500
         Check "testrol opgeruimd" ($null -eq (Find-Test))
+    }
+}
+
+# --- beveiliging: het slot moet dicht zitten ------------------------------
+# Waarom hier: een authenticatie die stilletjes wegvalt (verkeerde header, lege
+# g_webui_pass, een endpoint dat de controle overslaat) merk je NOOIT tijdens
+# normaal gebruik - alles blijft gewoon werken. Alleen een test die er expres
+# zonder sleutel aanklopt ziet dat de deur openstaat.
+Write-Host "beveiliging:"
+if (-not $Pass) {
+    Check "wachtwoord ingesteld op de tablet" $false "-> geen webui_pass gevonden; de webpagina staat open"
+} else {
+    try {
+        Invoke-WebRequest "$TabletUrl/status" -UseBasicParsing -TimeoutSec 10 | Out-Null
+        Check "zonder wachtwoord geweigerd" $false "-> /status gaf gewoon antwoord!"
+    } catch {
+        $code = [int]$_.Exception.Response.StatusCode
+        Check "zonder wachtwoord geweigerd" ($code -eq 401) "-> kreeg $code, verwachtte 401"
+    }
+    $bad = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("filatrack:zeker-niet-het-wachtwoord"))
+    try {
+        Invoke-WebRequest "$TabletUrl/status" -Headers @{Authorization="Basic $bad"} -UseBasicParsing -TimeoutSec 10 | Out-Null
+        Check "fout wachtwoord geweigerd" $false "-> fout wachtwoord werd geaccepteerd!"
+    } catch {
+        Check "fout wachtwoord geweigerd" ([int]$_.Exception.Response.StatusCode -eq 401)
+    }
+    # /backup hangt de hele rollenbibliotheek uit; die mag zeker niet open staan.
+    try {
+        Invoke-WebRequest "$TabletUrl/backup" -UseBasicParsing -TimeoutSec 10 | Out-Null
+        Check "/backup zonder wachtwoord geweigerd" $false "-> back-up was vrij op te halen!"
+    } catch {
+        Check "/backup zonder wachtwoord geweigerd" ([int]$_.Exception.Response.StatusCode -eq 401)
     }
 }
 

@@ -225,6 +225,7 @@ int main(int argc, char **argv) {
     migrate_legacy_data();                   // rename pre-FilaTrack files FIRST,
                                              // or an upgrade would start empty
     load_settings();
+    webui_pass_ensure();                     // first run: invent a web password and save it
     lang_init();                             // UI language; needs g_lang from the conf
     filament_track_init();                   // load persisted spool weights
     spool_db_load();                         // load the spool library

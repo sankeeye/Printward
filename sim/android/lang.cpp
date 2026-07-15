@@ -134,6 +134,12 @@ static const Builtin BUILTIN[] = {
     {"move.preheating",    "Heating to 220\xC2\xB0" "C...", "Opwarmen naar 220\xC2\xB0" "C..."},
 
     // --- tablet screens ---
+    {"set.web_hint",        "Web page: %s - sign in with user \"filatrack\" and the password above. Only reachable from your own network.",
+                            "Webpagina: %s - log in met gebruiker \"filatrack\" en het wachtwoord hierboven. Alleen bereikbaar vanaf je eigen netwerk."},
+
+    {"set.web_address",       "Web page", "Webpagina"},
+    {"set.web_pass",          "Web password", "Webwachtwoord"},
+
     {"dash.left_fmt",       "%dh%02dm left",             "nog %du%02dm"},
 
     {"ss.temps",              "Nozzle %.0f\xC2\xB0   Bed %.0f\xC2\xB0   Chamber %.0f\xC2\xB0", "Nozzle %.0f\xC2\xB0   Bed %.0f\xC2\xB0   Chamber %.0f\xC2\xB0"},

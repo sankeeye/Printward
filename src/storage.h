@@ -20,6 +20,9 @@ extern uint32_t g_bg_color;
 extern char g_printer_ip[40];
 extern char g_printer_serial[32];
 extern char g_printer_access_code[24];
+extern char g_webui_pass[24];    // web UI password (see webui_pass_ensure())
+extern bool g_allow_remote;      // serve clients outside the local network too
+void webui_pass_ensure();        // make one on first run; no-op afterwards
 
 // Manual spool-weight tracking. capacity_g is what the user enters when
 // loading a spool ("this is a fresh 1000g roll"); used_g accumulates grams

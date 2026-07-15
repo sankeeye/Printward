@@ -188,6 +188,55 @@ static int code_from_name(const char* a) {
     return 0;
 }
 
+// --- who is allowed to talk to us -----------------------------------------
+
+// True for the address ranges a home LAN actually uses: 10/8, 172.16/12,
+// 192.168/16, plus loopback and 169.254/16 (link-local, when DHCP failed).
+// Deliberately not "anything that isn't public" - unknown means no.
+static bool addr_is_local(const struct sockaddr_in* a) {
+    uint32_t ip = ntohl(a->sin_addr.s_addr);
+    uint8_t b1 = (uint8_t)(ip >> 24), b2 = (uint8_t)(ip >> 16);
+    if (b1 == 127) return true;                          // 127.0.0.0/8
+    if (b1 == 10) return true;                           // 10.0.0.0/8
+    if (b1 == 192 && b2 == 168) return true;             // 192.168.0.0/16
+    if (b1 == 172 && b2 >= 16 && b2 <= 31) return true;  // 172.16.0.0/12
+    if (b1 == 169 && b2 == 254) return true;             // 169.254.0.0/16
+    return false;
+}
+
+// base64, for building the Basic-auth string we expect. Encoding what we want and
+// comparing strings means we never have to decode attacker-supplied input.
+static void b64(const char* in, char* out, int n) {
+    static const char* T64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    int len = (int)strlen(in), j = 0;
+    for (int i = 0; i < len && j < n - 5; i += 3) {
+        unsigned v = (unsigned char)in[i] << 16;
+        if (i + 1 < len) v |= (unsigned char)in[i + 1] << 8;
+        if (i + 2 < len) v |= (unsigned char)in[i + 2];
+        out[j++] = T64[(v >> 18) & 63];
+        out[j++] = T64[(v >> 12) & 63];
+        out[j++] = (i + 1 < len) ? T64[(v >> 6) & 63] : '=';
+        out[j++] = (i + 2 < len) ? T64[v & 63] : '=';
+    }
+    out[j] = 0;
+}
+
+// Basic auth over plain HTTP: the password crosses your LAN base64-encoded, which
+// is encoding, not encryption. That is a deliberate trade - real TLS on this stack
+// means a self-signed cert and a browser warning every visit. It stops the printer
+// being open to anyone who finds the port; it does not stop someone sniffing your
+// own Wi-Fi. The local-network check above is what makes that trade acceptable.
+static bool authorized(const char* buf) {
+    if (!g_webui_pass[0]) return true;         // no password set -> no gate (see webui_pass_ensure)
+    char want[80], expect[128];
+    snprintf(want, sizeof(want), "filatrack:%s", g_webui_pass);
+    char enc[128];
+    b64(want, enc, sizeof(enc));
+    snprintf(expect, sizeof(expect), "Authorization: Basic %s", enc);
+    // Header names are case-insensitive; browsers all send it exactly like this.
+    return strstr(buf, expect) != nullptr;
+}
+
 // Reply with a one-line message in the UI language. The length has to come from
 // the translation itself - the old hand-counted literals only matched the Dutch.
 static void send_resp(int fd, const char* status, const char* ctype, const char* body, int blen);
@@ -588,6 +637,20 @@ static void handle_conn(int fd) {
     if (r <= 0) return;
     buf[r] = 0;
 
+    // Gate everything, not just the write endpoints: /status alone tells you what
+    // is printing and what it cost, and /backup hands over the whole roll library.
+    if (!authorized(buf)) {
+        const char* body = "FilaTrack: password required. It is on the tablet, under Settings.\n";
+        char hdr[256];
+        int n = snprintf(hdr, sizeof(hdr),
+            "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"FilaTrack\"\r\n"
+            "Content-Type: text/plain; charset=utf-8\r\nContent-Length: %d\r\n"
+            "Cache-Control: no-store\r\nConnection: close\r\n\r\n", (int)strlen(body));
+        send(fd, hdr, n, 0);
+        send(fd, body, (int)strlen(body), 0);
+        return;
+    }
+
     bool is_post = (strncmp(buf, "POST ", 5) == 0);
     if (!is_post && strncmp(buf, "GET ", 4) != 0) { send_resp(fd, "405 Method Not Allowed", "text/plain", "", 0); return; }
     char* path = buf + (is_post ? 5 : 4);
@@ -850,8 +913,23 @@ static int server_thread(void*) {
     listen(ls, 8);
     LOGI("WEBCTL: control page on %s", webctl_url());
     for (;;) {
-        int fd = accept(ls, nullptr, nullptr);
+        struct sockaddr_in peer;
+        socklen_t plen = sizeof(peer);
+        int fd = accept(ls, (struct sockaddr*)&peer, &plen);
         if (fd < 0) continue;
+        // Refuse anything that isn't on the local network. This is the backstop
+        // for the failure that actually happens: someone forwards port 8080 on the
+        // router, or UPnP does it for them, and the printer is on the internet.
+        // A password alone would still leave the whole thing reachable.
+        if (!g_allow_remote && !addr_is_local(&peer)) {
+            char who[INET_ADDRSTRLEN] = "?";
+            inet_ntop(AF_INET, &peer.sin_addr, who, sizeof(who));
+            LOGI("WEBCTL: refused %s - not on the local network (allow_remote=0)", who);
+            const char* body = "FilaTrack only answers on your own network.\n";
+            send_resp(fd, "403 Forbidden", "text/plain; charset=utf-8", body, (int)strlen(body));
+            close(fd);
+            continue;
+        }
         handle_conn(fd);
         close(fd);
     }

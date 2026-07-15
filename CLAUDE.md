@@ -30,6 +30,32 @@
   - Tablet **doost tussen prints**; bij wakker worden faalt de FTP-handshake soms
     (mbedTLS "hs -80"). Daarom retry + herladen bij MQTT-reconnect.
 
+## Beveiliging (afgesproken 15-07)
+
+- **De webpagina heeft een wachtwoord.** De tablet verzint er zelf één bij de eerste
+  start (`webui_pass_ensure()`) en toont het onder **Instellingen > Webwachtwoord** — zoals
+  een tv een koppelcode toont. Dus geen standaardwachtwoord dat iemand vergeet te wijzigen,
+  en geen scherm waar een leek niet uitkomt. Gebruiker is `filatrack`. Weg = nieuw bij herstart.
+- **Alleen het eigen netwerk.** `addr_is_local()` weigert alles buiten 10./172.16-31./
+  192.168./169.254./127. Dit is de vangnet voor de fout die écht gebeurt: iemand zet poort
+  8080 door op de router (of UPnP doet het). `allow_remote=1` zet het uit — bewuste keuze.
+- **Eerlijk over de grens**: dit is HTTP, dus Basic auth gaat base64 over je LAN — dat is
+  codering, geen versleuteling. Het stopt "printer open op internet" en "logé op je WiFi",
+  **niet** iemand die je WiFi afluistert. Echte TLS = zelfondertekend certificaat + browser-
+  waarschuwing bij elk bezoek; die ruil is bewust niet gemaakt. De netwerkcheck maakt het
+  acceptabel. Wil je verder: dat is een nieuw gesprek, geen bugfix.
+- **Wat níét beschermd is en dat ook niet kan**: de toegangscode staat in
+  `/sdcard/filatrack.conf`, en op Android 5.1 kan elke app met opslagrechten dat lezen. Dat is
+  inherent aan `/sdcard`; alleen een andere opslagplek helpt.
+- **De self-test klopt expres zonder sleutel aan** (sectie `beveiliging:`). Een auth die
+  wegvalt merk je nooit tijdens normaal gebruik — alles blijft werken. Alleen een test die
+  het probéért ziet dat de deur openstaat.
+- **Alles wat de API aanroept heeft het wachtwoord nodig**: `selftest.ps1` leest het via adb
+  van de tablet, `backup_pull.ps1` vraagt erom bij `-Install` en zet het in de geplande taak
+  (staat daarmee leesbaar in je takenlijst — bewust, het bewaakt een printer op je eigen LAN).
+- **XSS gedicht 15-07**: namen gingen onbewerkt in `innerHTML`. `esc()` in webctl_page.h; de
+  gevaarlijke bron is `it.name` (bestandsnamen ván de printer — modellen komen van internet).
+
 ## Voortgang / Laatste Stand
 
 - **Datum laatste sessie**: 15-07-2026

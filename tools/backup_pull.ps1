@@ -21,6 +21,7 @@ param(
     [string]$Dest,                 # where to store backups; asked for on -Install
     [int]   $Keep      = 30,       # how many dated copies to keep
     [string]$At        = "20:00",  # daily run time, on -Install
+    [string]$Pass      = "",       # web password (tablet: Instellingen > Webwachtwoord)
     [switch]$Install,
     [switch]$Uninstall
 )
@@ -69,9 +70,23 @@ if ($Install) {
     try { $null = [datetime]::ParseExact($At, 'HH:mm', $null) }
     catch { Write-Host "Ongeldige tijd '$At' - gebruik bv. -At 20:00"; exit 1 }
 
+    # Ask for the password now rather than let the nightly task fail silently at
+    # 20:00 with nobody watching.
+    if (-not $Pass) {
+        Write-Host ""
+        Write-Host "De tablet vraagt om een wachtwoord voor de webpagina."
+        Write-Host "Je vindt het OP DE TABLET: Instellingen > Webwachtwoord."
+        $Pass = Read-Host "Webwachtwoord"
+    }
+    if (-not $Pass) { Write-Host "Zonder wachtwoord kan de back-up niet opgehaald worden - geannuleerd."; exit 1 }
+
     $script = $MyInvocation.MyCommand.Path
+    # NOTE: the password ends up in the scheduled task's arguments, readable by
+    # anyone who can read your task list. It only guards a printer on your own LAN,
+    # and the alternative (a second secret store) buys little here - but it is worth
+    # knowing rather than discovering.
     $action = New-ScheduledTaskAction -Execute 'powershell.exe' `
-        -Argument ('-NoProfile -ExecutionPolicy Bypass -File "{0}" -TabletUrl "{1}" -Dest "{2}" -Keep {3}' -f $script, $TabletUrl, $Dest, $Keep)
+        -Argument ('-NoProfile -ExecutionPolicy Bypass -File "{0}" -TabletUrl "{1}" -Dest "{2}" -Keep {3} -Pass "{4}"' -f $script, $TabletUrl, $Dest, $Keep, $Pass)
     $trigger  = New-ScheduledTaskTrigger -Daily -At $At
     # StartWhenAvailable: catch up if the PC was off at the scheduled moment.
     $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -DontStopIfGoingOnBatteries -AllowStartIfOnBatteries
@@ -96,9 +111,20 @@ if (-not (Test-Path $Dest)) { New-Item -ItemType Directory -Path $Dest -Force | 
 $stamp = Get-Date -Format 'yyyy-MM-dd_HHmm'
 $file  = Join-Path $Dest "filatrack-backup_$stamp.ptb"
 
+# The tablet needs a password now (Instellingen > Webwachtwoord on its screen).
+$hdr = @{}
+if ($Pass) { $hdr = @{ Authorization = "Basic " + [Convert]::ToBase64String(
+                       [Text.Encoding]::ASCII.GetBytes("filatrack:$Pass")) } }
 try {
-    $r = Invoke-WebRequest "$TabletUrl/backup" -UseBasicParsing -TimeoutSec 30
+    $r = Invoke-WebRequest "$TabletUrl/backup" -Headers $hdr -UseBasicParsing -TimeoutSec 30
 } catch {
+    if ($_.Exception.Response -and [int]$_.Exception.Response.StatusCode -eq 401) {
+        Write-Host "MISLUKT: wachtwoord nodig of onjuist."
+        Write-Host "  Kijk op de tablet: Instellingen > Webwachtwoord, en start dit met:"
+        Write-Host "    .\backup_pull.ps1 -Pass <wachtwoord>"
+        Write-Host "  Bij -Install wordt het wachtwoord in de geplande taak meegegeven."
+        exit 1
+    }
     Write-Host "MISLUKT: tablet niet bereikbaar op $TabletUrl - $($_.Exception.Message)"
     exit 1
 }

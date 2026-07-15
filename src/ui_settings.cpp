@@ -1,5 +1,8 @@
 #include "ui_settings.h"
 #include "lang.h"
+#ifdef __ANDROID__
+#include "webctl.h"   // webctl_url(), to show where the web page lives
+#endif
 #include "ui_printer.h"
 #include "ui_wifi.h"
 #include "storage.h"
@@ -126,11 +129,24 @@ void create_settings_ui() {
     add_info_row(root, "Printer serial", String(g_printer_serial));
     add_info_row(root, "Access code", mask_secret(g_printer_access_code));
     add_info_row(root, "Printer connection", bambu_is_connected() ? "Connected" : "Offline");
+#ifdef __ANDROID__
+    // Deliberately NOT masked, unlike the access code above. This screen is the only
+    // place the web password is ever shown - the tablet is the trusted thing you can
+    // walk up to, like a TV showing a pairing code. Hide it here and the web page is
+    // unreachable for good.
+    //
+    // Only ONE row: this screen is not scrollable and is sized to the last few
+    // pixels (see the note above). The address goes in the hint below instead, which
+    // already exists - a second row would push the Back button off the screen.
+    add_info_row(root, T("set.web_pass"), String(g_webui_pass));
+#endif
 
     lv_obj_t* hint = lv_label_create(root);
 #ifdef __ANDROID__
-    // No on-device webserver on the tablet build - settings come from a file.
-    lv_label_set_text(hint, T("set.printer_hint_file"));
+    // Was "edit filatrack.conf and restart", which stopped being true once the
+    // Printer setup button below existed. Now it says where the web page is, next
+    // to the password it needs.
+    lv_label_set_text_fmt(hint, T("set.web_hint"), webctl_url());
 #else
     lv_label_set_text_fmt(hint, T("set.printer_hint_web"), g_ip_addr.c_str());
 #endif
