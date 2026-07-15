@@ -340,6 +340,13 @@ var STATE_KEY={RUNNING:'dash.printing',PAUSE:'dash.paused',FINISH:'dash.finished
 // would show "&hellip;" literally, so keep a decoded copy alongside the raw one:
 // data-i18n uses the raw value, everything else goes through t().
 function deent(s){if(s.indexOf('&')<0)return s;var d=document.createElement('textarea');d.innerHTML=s;return d.value;}
+// Anything below can hold characters that mean something in HTML. File names come
+// from the printer - you download models from the internet, and nothing stops one
+// being called a<img src=x onerror=...>.3mf - and roll names are typed by hand.
+// Pasted into innerHTML raw, that breaks the page at best and runs as script at
+// worst. Quotes are escaped too: several of these land inside an attribute.
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){
+ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function t(k,dflt){var v=I18NT[k];if(v!==undefined)return v;return dflt!==undefined?deent(dflt):k;}
 // The screensaver button carries a 2D/3D suffix, so it cannot be a plain
 // data-i18n element - it is rebuilt whenever the text or the language changes.
@@ -514,10 +521,10 @@ function loadFiles(path){curPath=path;$('fpath').textContent=path;$('flist').inn
   if(!d.ok){$('flist').innerHTML='<div class=muted>'+t('error','fout')+': '+(d.err||'')+'</div>';return;}
   var h='';
   d.items.forEach(function(it){
-   if(it.dir)h+='<div class="fitem" data-dir="'+it.name+'"><b>📁 '+it.name+'</b><span></span></div>';
+   if(it.dir)h+='<div class="fitem" data-dir="'+esc(it.name)+'"><b>📁 '+esc(it.name)+'</b><span></span></div>';
    else {var fp=joinPath(path,it.name);
-    var pv=/\.3mf$/i.test(it.name)?'<button class="fprev" data-p="'+fp+'" '+'title="'+t('files.show_preview','Toon voorbeeld')+'" style="background:#2c3e50;color:#fff;border:0;border-radius:6px;padding:6px 10px;cursor:pointer">Preview</button>':'';
-    h+='<div class="fitem"><input type="checkbox" class="fsel" data-p="'+fp+'" style="width:20px;height:20px;flex:0 0 auto"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">📄 '+it.name+'</span><span class=muted>'+fmtSize(it.size)+'</span>'+pv+'</div>';}
+    var pv=/\.3mf$/i.test(it.name)?'<button class="fprev" data-p="'+esc(fp)+'" '+'title="'+t('files.show_preview','Toon voorbeeld')+'" style="background:#2c3e50;color:#fff;border:0;border-radius:6px;padding:6px 10px;cursor:pointer">Preview</button>':'';
+    h+='<div class="fitem"><input type="checkbox" class="fsel" data-p="'+esc(fp)+'" style="width:20px;height:20px;flex:0 0 auto"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">📄 '+esc(it.name)+'</span><span class=muted>'+fmtSize(it.size)+'</span>'+pv+'</div>';}
   });
   $('flist').innerHTML=h||'<div class=muted>'+t('empty','leeg')+'</div>';
   document.querySelectorAll('.fitem[data-dir]').forEach(function(el){el.onclick=function(){loadFiles(joinPath(path,el.dataset.dir));};});
@@ -569,8 +576,8 @@ function pickRoll(slot){pickSlot=slot;$('rollTitle').textContent=t('spools.pick_
   if(mat)list.sort(function(a,b){return (b.material===mat?1:0)-(a.material===mat?1:0);});
   var h='<div class="fitem rollpick" onclick="clearRoll()"><div style="display:flex;align-items:center;gap:8px"><div class="sw" style="width:26px;height:20px;flex:0 0 auto;background:#555b63;border:1px solid #888"></div><span><b>'+t('spools.empty_slot','Leeg')+'</b> <span class="muted">'+t('spools.no_roll','geen rol in dit slot')+'</span></span></div></div>';
   if(!list.length)h+='<div class="muted">'+t('spools.none_yet','Nog geen rollen — maak ze aan op de Spools-tab.')+'</div>';
-  list.forEach(function(s){var pas=(mat&&s.material===mat)?' <span class="badge" title="Zelfde materiaal als er nu in dit slot zit" style="margin-left:6px;background:#1e5f3a;color:#b9f5cf">'+s.material+' &#10003;</span>':'';
-   h+='<div class="fitem rollpick" onclick="chooseRoll('+s.i+')"><div style="display:flex;align-items:center;gap:8px"><div class="sw" style="width:26px;height:20px;flex:0 0 auto;background:'+s.rgb+'"></div><span><b>'+s.name+'</b> <span class="muted">'+s.material+' · '+s.rem+' g</span>'+pas+'</span></div></div>';});
+  list.forEach(function(s){var pas=(mat&&s.material===mat)?' <span class="badge" title="'+t('spools.same_mat','Zelfde materiaal als er nu in dit slot zit')+'" style="margin-left:6px;background:#1e5f3a;color:#b9f5cf">'+s.material+' &#10003;</span>':'';
+   h+='<div class="fitem rollpick" onclick="chooseRoll('+s.i+')"><div style="display:flex;align-items:center;gap:8px"><div class="sw" style="width:26px;height:20px;flex:0 0 auto;background:'+esc(s.rgb)+'"></div><span><b>'+esc(s.name)+'</b> <span class="muted">'+esc(s.material)+' · '+s.rem+' g</span>'+pas+'</span></div></div>';});
   $('rollList').innerHTML=h;$('rollModal').style.display='flex';
  }).catch(function(){});
 }
@@ -680,8 +687,8 @@ function renderSpList(){
   var low=g<lowG?' <span class="badge" style="background:#5a2020;color:#ffd0d0">'+t('spools.almost_empty','bijna leeg')+'</span>':'';
   h+='<div class="rollcard"><input type="checkbox" '+(spSel[s.i]?'checked':'')+' onchange="selToggle('+s.i+',this.checked)" style="width:20px;height:20px;flex:0 0 auto">'
    +'<div style="width:38px;height:38px;border-radius:8px;flex:0 0 auto;border:1px solid #3a434d;background:'+s.rgb+'"></div>'
-   +'<div style="min-width:0"><div class="name">'+s.name+'<span class="badge">'+s.material+'</span>'+sl+low+'</div>'
-   +(s.note?'<div class="muted" style="font-size:12px">'+s.note+'</div>':'')
+   +'<div style="min-width:0"><div class="name">'+esc(s.name)+'<span class="badge">'+esc(s.material)+'</span>'+sl+low+'</div>'
+   +(s.note?'<div class="muted" style="font-size:12px">'+esc(s.note)+'</div>':'')
    +(s.price>0?'<div class="muted" style="font-size:12px">€ '+s.price.toFixed(2)+'/kg</div>':'')+'</div>'
    +'<div class="grams">'+g+' g<div class="muted" style="font-size:12px;font-weight:400">&asymp; '+Math.round(m)+' m'+(s.price>0?' · € '+(g*s.price/1000).toFixed(2):'')+'</div></div>'
    +'<button class="iconbtn" title="'+t('spools.weigh_roll','Weeg de rol')+'" onclick="spWeigh('+s.i+')">⚖</button>'
@@ -729,10 +736,10 @@ function loadEmpties(){
  fetch('/empties').then(function(r){return r.json();}).then(function(list){
   emCache=list;
   var sel=$('spEmptySel'),cur=sel.value,o='<option value="">'+t('spools.pick_library','— kies uit bibliotheek —')+'</option>';
-  list.forEach(function(e){o+='<option value="'+e.weight+'">'+e.name+' ('+e.weight+' g)</option>';});
+  list.forEach(function(e){o+='<option value="'+e.weight+'">'+esc(e.name)+' ('+e.weight+' g)</option>';});
   sel.innerHTML=o;sel.value=cur;
   var h='';
-  list.forEach(function(e){h+='<div class="chiprow"><span>'+e.name+'</span><span class="badge" style="margin-left:0">'+e.weight+' g</span><button class="iconbtn del" style="margin-left:auto" onclick="emDel('+e.i+')">✕</button></div>';});
+  list.forEach(function(e){h+='<div class="chiprow"><span>'+esc(e.name)+'</span><span class="badge" style="margin-left:0">'+e.weight+' g</span><button class="iconbtn del" style="margin-left:auto" onclick="emDel('+e.i+')">✕</button></div>';});
   $('emList').innerHTML=h||'<div class="muted">'+t('empties.none_yet','Nog geen lege spoelen.')+'</div>';
  }).catch(function(){});
 }
