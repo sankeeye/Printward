@@ -4,7 +4,9 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+#include <ctime>
 #include <sys/stat.h>
+#include <unistd.h>
 
 // The data files we protect. Order is stable so a backup blob is deterministic.
 struct DataFile { const char* tag; const char* path; };
@@ -114,6 +116,92 @@ int backup_apply(const char* data) {
     return restored;
 }
 
+// --- "is your data actually safe?" bookkeeping ----------------------------
+#define BSTATE_PATH "/sdcard/pandatouch_backup_state.conf"
+
+static long bstate_get(const char* key) {
+    FILE* f = fopen(BSTATE_PATH, "r");
+    if (!f) return 0;
+    char line[64];
+    long v = 0;
+    while (fgets(line, sizeof(line), f)) {
+        char* eq = strchr(line, '=');
+        if (!eq) continue;
+        *eq = 0;
+        if (!strcmp(line, key)) { v = atol(eq + 1); break; }
+    }
+    fclose(f);
+    return v;
+}
+
+static void bstate_set(const char* key, long val) {
+    long dl = bstate_get("last_dl"), rm = bstate_get("last_remind");
+    if (!strcmp(key, "last_dl")) dl = val; else rm = val;
+    FILE* f = fopen(BSTATE_PATH, "w");
+    if (!f) return;
+    fprintf(f, "last_dl=%ld\nlast_remind=%ld\n", dl, rm);
+    fclose(f);
+}
+
+void backup_mark_downloaded() { bstate_set("last_dl", (long)time(nullptr)); }
+long backup_last_download()   { return bstate_get("last_dl"); }
+long backup_last_remind()     { return bstate_get("last_remind"); }
+void backup_mark_remind()     { bstate_set("last_remind", (long)time(nullptr)); }
+
+long backup_seconds_since_dl() {
+    long dl = backup_last_download();
+    if (dl <= 0) return -1;
+    long d = (long)time(nullptr) - dl;
+    return d < 0 ? 0 : d;
+}
+
+// --- removable SD copy ----------------------------------------------------
+// mkdir -p
+static bool ensure_dir(const char* path) {
+    char tmp[192];
+    strncpy(tmp, path, sizeof(tmp) - 1); tmp[sizeof(tmp) - 1] = 0;
+    for (char* p = tmp + 1; *p; p++) {
+        if (*p != '/') continue;
+        *p = 0;
+        mkdir(tmp, 0775);
+        *p = '/';
+    }
+    mkdir(tmp, 0775);
+    struct stat st;
+    return stat(path, &st) == 0 && S_ISDIR(st.st_mode);
+}
+
+// Android 5.1 only lets an app write its OWN folder on secondary storage, so we
+// aim at <card>/Android/data/<pkg>/files rather than the card root.
+const char* backup_sd_dir() {
+    static char found[192] = "";
+    static bool probed = false;
+    if (probed) return found;
+    probed = true;
+
+    static const char* roots[] = {
+        "/storage/extSdCard", "/storage/sdcard1", "/storage/external_SD",
+        "/storage/MicroSD", "/mnt/extSdCard",
+    };
+    for (int i = 0; i < (int)(sizeof(roots) / sizeof(roots[0])); i++) {
+        struct stat st;
+        if (stat(roots[i], &st) != 0 || !S_ISDIR(st.st_mode)) continue;   // no card here
+        char dir[192];
+        snprintf(dir, sizeof(dir), "%s/Android/data/org.libsdl.app/files", roots[i]);
+        if (!ensure_dir(dir)) continue;
+        char probe[224];
+        snprintf(probe, sizeof(probe), "%s/.pt_write_test", dir);
+        FILE* f = fopen(probe, "w");
+        if (!f) continue;                     // mounted but not writable -> skip
+        fclose(f);
+        remove(probe);
+        strncpy(found, dir, sizeof(found) - 1); found[sizeof(found) - 1] = 0;
+        Serial.printf("BACKUP: SD copy -> %s\n", found);
+        return found;
+    }
+    return found;   // "" = no usable card
+}
+
 void backup_auto_loop() {
     // Throttle: a filesystem scan every ~15 s is plenty; the data changes slowly.
     static unsigned long next = 0;
@@ -142,4 +230,19 @@ void backup_auto_loop() {
         }
     }
     Serial.println("BACKUP: snapshot -> /sdcard/ptbackup");
+
+    // Also drop a single-file copy on a removable card when one is present. That
+    // copy survives a factory reset and can be pulled out of a dead tablet, which
+    // the /sdcard snapshot cannot.
+    const char* sd = backup_sd_dir();
+    if (sd[0]) {
+        int len = 0;
+        char* blob = backup_build(&len);
+        if (blob && len > 0) {
+            char dst[224];
+            snprintf(dst, sizeof(dst), "%s/pandatouch-backup.ptb", sd);
+            if (write_all(dst, blob, len)) Serial.printf("BACKUP: SD copy written (%d B)\n", len);
+        }
+        free(blob);
+    }
 }

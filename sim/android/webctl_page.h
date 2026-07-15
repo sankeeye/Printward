@@ -233,9 +233,10 @@ section#spools{max-width:1040px}
   <div id="spList" class="muted">…</div>
  </div>
  <div class="card"><h3>Back-up &amp; herstel</h3>
+  <div id="bkStatus" style="border-radius:8px;padding:10px 12px;margin-bottom:10px;display:none"></div>
   <div class="muted" style="font-size:12px;margin-bottom:8px">Alles op de tablet in één bestand: rollen, lege spoelen, gewichten, historie en statistieken. (Printer-IP/serial/toegangscode zitten er <b>niet</b> in.)</div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-   <button class="formbtn sec" onclick="downloadBackup()">⬇ Download back-up</button>
+   <button id="bkDl" class="formbtn sec" onclick="downloadBackup()">⬇ Download back-up</button>
    <label class="formbtn sec" style="cursor:pointer">⬆ Herstel<input type="file" accept=".ptb,.conf,.txt" style="display:none" onchange="importBackup(this.files)"></label>
    <span class="muted" style="font-size:12px">herstel overschrijft de huidige data</span>
   </div>
@@ -527,6 +528,7 @@ function poll(){
   if(!$('rollModal')||$('rollModal').style.display!=='flex'){$('amsStrip').innerHTML=amsHtml(s.ams,s.ext,true);}
   if($('movetemps'))$('movetemps').textContent='nozzle '+s.nozzle+'/'+s.nozzle_t+'° · bed '+s.bed+'/'+s.bed_t+'° · kamer '+s.chamber+'°';
   if(s.prints!==undefined&&$('stPrints')){$('stPrints').textContent=s.prints;$('stUsed').textContent=(s.used>=1000?(s.used/1000).toFixed(2)+' kg':s.used+' g');if($('stCost'))$('stCost').textContent='€ '+(s.cost||0).toFixed(2);}
+  if(s.bkage!==undefined)renderBkStatus(s.bkage);
   if(s.cfg&&s.cfg.scale_ip){scaleHost=s.cfg.scale_ip;var si=$('sIp');if(si&&!si.value)si.value=s.cfg.scale_ip;}
   if(s.cfg&&s.cfg.low)lowG=s.cfg.low;
   if(!cfgFilled&&s.cfg){cfgFilled=true;
@@ -672,6 +674,21 @@ $('emSave').onclick=function(){
 function emDel(i){if(confirm('Verwijderen?'))fetch('/empty_del?idx='+i).then(function(){loadEmpties();});}
 function emWeigh(){if(!scaleHost){alert('Geen schaal-IP bekend — stel het in op de Scale-tab.');return;}
  fetch('http://'+scaleHost+'/weight?t='+Date.now()).then(function(r){return r.json();}).then(function(d){$('emWeight').value=Math.round(d.g);}).catch(function(){alert('Geen verbinding met de schaal.');});}
+// A snapshot on the tablet only survives an app reinstall - not a wipe or a dead
+// tablet. So we track when a backup last actually LEFT the device and say so.
+function renderBkStatus(age){
+ var b=$('bkStatus'),btn=$('bkDl');if(!b)return;
+ b.style.display='block';
+ var d=(age>=0)?Math.floor(age/86400):-1;
+ var overdue=(d<0||d>=14);
+ if(d<0){b.style.background='#5a2020';b.style.color='#ffd0d0';
+  b.innerHTML='&#9888; <b>Nog nooit een back-up gedownload.</b> Je data staat alleen op de tablet.';}
+ else if(overdue){b.style.background='#5a2020';b.style.color='#ffd0d0';
+  b.innerHTML='&#9888; Laatste back-up <b>'+d+' dagen</b> geleden &mdash; tijd voor een nieuwe.';}
+ else{b.style.background='#1e3a28';b.style.color='#b9f5cf';
+  b.innerHTML='&#10003; Laatste back-up '+(d===0?'vandaag':(d+' dag'+(d===1?'':'en')+' geleden'))+'.';}
+ if(btn)btn.className='formbtn '+(overdue?'pri':'sec');
+}
 function downloadBackup(){
  var a=document.createElement('a');a.href='/backup';a.download='pandatouch-backup.ptb';
  document.body.appendChild(a);a.click();a.remove();

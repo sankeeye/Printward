@@ -25,4 +25,22 @@ char* backup_build(int* out_len);
 // reload the in-memory modules afterwards (spool_db_load, history_init, ...).
 int backup_apply(const char* data);
 
+// --- "is your data actually safe?" bookkeeping ----------------------------
+// A snapshot on /sdcard only survives an app reinstall, not a wipe or a dead
+// tablet. What counts as safe is a backup that left the device, so we remember
+// when /backup was last downloaded and nudge when that was too long ago.
+
+void backup_mark_downloaded();   // call when /backup is served
+long backup_last_download();     // epoch of the last download, 0 = never
+long backup_seconds_since_dl();  // seconds since the last download, -1 = never
+
+// Reminder throttle (so the ntfy nudge stays once-a-week, not once-a-loop).
+long backup_last_remind();
+void backup_mark_remind();
+
+// Where the removable-SD copy goes, "" when no usable card is present. The
+// snapshot in backup_auto_loop() writes there too - unlike /sdcard, a card
+// survives a factory reset and can be pulled out of a dead tablet.
+const char* backup_sd_dir();
+
 #endif

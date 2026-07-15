@@ -5,6 +5,9 @@
 #include "notify.h"
 #include "bambu_mqtt.h"
 #include "filament_track.h"
+#include "backup.h"
+#include "spool_db.h"
+#include <ctime>
 #include <SDL.h>
 #include <Arduino.h>
 #include "WiFiClientSecure.h"
@@ -204,4 +207,24 @@ void notify_loop() {
         }
     }
     if (low_changed) lownotify_save();
+
+    // Backup nudge: the /sdcard snapshot dies with the tablet, so remind when no
+    // backup has actually LEFT the device for a fortnight. Once a week at most,
+    // and only when there is something worth losing.
+    if (g_spool_count > 0) {
+        long since = backup_seconds_since_dl();          // -1 = never downloaded
+        if (since < 0 || since > 14L * 86400L) {
+            long last = backup_last_remind(), now_s = (long)time(nullptr);
+            if (last <= 0 || now_s - last > 7L * 86400L) {
+                if (since < 0) {
+                    notify_send("Maak een back-up", "Je hebt nog nooit een back-up gedownload - je rollen en historie staan alleen op de tablet.");
+                } else {
+                    char b[160];
+                    snprintf(b, sizeof(b), "Laatste back-up was %ld dagen geleden. Open de webpagina en download er een.", since / 86400L);
+                    notify_send("Maak een back-up", b);
+                }
+                backup_mark_remind();
+            }
+        }
+    }
 }

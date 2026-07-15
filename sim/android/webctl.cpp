@@ -388,6 +388,9 @@ static void build_status(char* o, int n) {
         filament_shortfall(), g_stat_prints, g_stat_grams, g_hist_total_cost,
         live ? lg : -1.0f, live ? lc : 0.0f, gf);
     p += snprintf(o + p, n - p,
+        "\"bkage\":%ld,",
+        backup_seconds_since_dl());
+    p += snprintf(o + p, n - p,
         "\"cfg\":{\"ip\":\"%s\",\"serial\":\"%s\",\"view3d\":%s,\"bri\":%d,\"code_set\":%s,\"scale_ip\":\"%s\",\"low\":%d,\"ntfy\":\"%s\"},",
         g_printer_ip, g_printer_serial, g_screensaver_3d ? "true" : "false",
         g_brightness, g_printer_access_code[0] ? "true" : "false", g_scale_ip, g_low_threshold_g, g_ntfy_topic);
@@ -424,11 +427,13 @@ static void build_diag(char* o, int n) {
     int p = 0;
     p += snprintf(o + p, n - p,
         "{\"uptime\":%lu,\"mqtt\":%s,\"have_data\":%s,\"age\":%ld,"
-        "\"ip\":\"%s\",\"serial_set\":%s,\"code_set\":%s,\"scale_ip\":\"%s\",\"url\":\"%s\",\"files\":[",
+        "\"ip\":\"%s\",\"serial_set\":%s,\"code_set\":%s,\"scale_ip\":\"%s\",\"url\":\"%s\","
+        "\"bkage\":%ld,\"sd\":\"%s\",\"files\":[",
         now / 1000UL, s.mqtt_connected ? "true" : "false", s.have_data ? "true" : "false",
         s.last_update_ms ? (long)((now - s.last_update_ms) / 1000UL) : -1L,
         g_printer_ip, g_printer_serial[0] ? "true" : "false",
-        g_printer_access_code[0] ? "true" : "false", g_scale_ip, webctl_url());
+        g_printer_access_code[0] ? "true" : "false", g_scale_ip, webctl_url(),
+        backup_seconds_since_dl(), backup_sd_dir());
 
     struct DiagFile { const char* tag; const char* path; };
     static const DiagFile F[] = {
@@ -592,6 +597,7 @@ static void handle_conn(int fd) {
                 "Content-Length: %d\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n", len);
             send(fd, hdr, hn, 0);
             send(fd, blob, len, 0);
+            backup_mark_downloaded();   // a copy just left the device: reset the nudge
         } else {
             send_resp(fd, "500 Error", "text/plain", "", 0);
         }
