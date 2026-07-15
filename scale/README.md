@@ -38,7 +38,7 @@ eigen WiFi en vul het wachtwoord in. Daarna verbindt de schaal automatisch.
 
 ## Kalibreren (één keer)
 
-1. Open in de browser **`http://pandascale.local/`** (of `http://<ip>/`, het IP
+1. Open in de browser **`http://filatrack-scale.local/`** (of `http://<ip>/`, het IP
    staat in de seriële monitor).
 2. Niets op de schaal → tik **Tarra (nulstellen)**.
 3. Zet een **bekend gewicht** erop (bijv. 500 g), vul dat aantal gram in en tik

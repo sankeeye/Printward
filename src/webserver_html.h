@@ -6,7 +6,7 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Panda Touch - Bambu P1S Panel</title>
+<title>FilaTrack - Bambu P1S Panel</title>
 <style>
   body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: #14161a; color: #eee; margin: 0; padding: 20px; }
   .wrap { max-width: 640px; margin: 0 auto; }

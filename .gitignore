@@ -33,10 +33,13 @@ tools/relay_state.json
 tools/*.lnk
 
 # Tablet printer config - contains the LAN access code (secret). Only the
-# .example is tracked; a real pandatouch.conf stays on the device.
+# .example is tracked; a real config stays on the device, never in git.
+# Both names are listed: the file was renamed to filatrack.conf, and an old
+# pandatouch.conf can still be lying around from before the rename.
+filatrack.conf
 pandatouch.conf
-!android/**/pandatouch.conf.example
-!sim/android/pandatouch.conf.example
+!**/filatrack.conf.example
+!**/pandatouch.conf.example
 
 # Android build tree / gradle output (third-party SDL/lvgl/mbedtls + APKs are
 # reconstructed, not committed - see android/README.md)

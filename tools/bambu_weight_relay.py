@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Bambu Cloud -> Panda Touch weight relay
+Bambu Cloud -> FilaTrack weight relay
 ========================================
 
-Why this exists: the Panda Touch's own attempt to log into Bambu Cloud
+Why this exists: the FilaTrack's own attempt to log into Bambu Cloud
 directly (to find out how many grams a finished print used) gets blocked by
 Cloudflare's bot-protection - it flat out returns an HTML challenge page
 instead of ever reaching Bambu's login handler. That's a TLS-fingerprint
@@ -12,7 +12,7 @@ level block that an ESP32 can't get around.
 A normal computer's HTTP client isn't blocked the same way, so this script
 runs here on your PC instead: it logs into Bambu Cloud, periodically checks
 your print history, and whenever it sees a finished print it hasn't reported
-yet, sends the grams used to the Panda Touch over your local network. The
+yet, sends the grams used to the FilaTrack over your local network. The
 device then subtracts that from whichever spool/tray was active for that
 print - same bookkeeping as if it could talk to Bambu Cloud itself.
 
@@ -27,7 +27,7 @@ Setup
        python bambu_weight_relay.py
    Leave it running in the background while you print. It only needs your
    PC on and connected to the internet + your home network; the printer and
-   Panda Touch don't need anything extra.
+   FilaTrack don't need anything extra.
 
 Security note: the Bambu password is stored ENCRYPTED in config.json as
 "bambu_password_enc" (Windows DPAPI, tied to your Windows user account) - run
@@ -40,7 +40,7 @@ Either way, don't share config.json or commit it anywhere.
 
 Keeping the device's own token fresh automatically
 ----------------------------------------------------
-Since 2026-07-04 the Panda Touch can poll Bambu Cloud directly itself (it
+Since 2026-07-04 the FilaTrack can poll Bambu Cloud directly itself (it
 turns out only the device's own *login* is Cloudflare-blocked - a request
 using an already-issued token goes through fine). So this script's other
 job now is to notice whenever the device has lost its token (expired,
@@ -52,7 +52,7 @@ so getting a new one always means a full login - which, once every ~90
 days or so, may require you to type a 6-digit code emailed to you. That one
 step can't be automated away without giving this script access to your
 email inbox, which it deliberately does not do. When it does happen, this
-script asks for the code via the Panda Touch's web dashboard (open
+script asks for the code via the FilaTrack's web dashboard (open
 http://<device_ip>/ in a browser) rather than a terminal, so it still works
 when the relay runs hidden in the background. If the device is unreachable
 it falls back to prompting in the terminal.
@@ -285,7 +285,7 @@ def push_token_to_device(device_ip, token):
 
 
 def device_request_verification_code(device_ip, email):
-    """Tells the Panda Touch to show a 'enter your Bambu code' field in its web
+    """Tells the FilaTrack to show a 'enter your Bambu code' field in its web
     dashboard. Doesn't ask Bambu for anything - bambu_login() already triggered
     the email; this just routes the prompt to a browser instead of a terminal."""
     resp = requests.post(f"http://{device_ip}/api/cloud_need_code", data={"email": email}, timeout=10)
@@ -309,18 +309,18 @@ def device_clear_code(device_ip):
 
 def make_code_prompt(device_ip):
     """Returns a get_code(email) that collects the 6-digit Bambu code via the
-    Panda Touch's web dashboard, so it works even when this relay runs hidden
+    FilaTrack's web dashboard, so it works even when this relay runs hidden
     with no console. Falls back to a terminal prompt if the device can't be
     reached (e.g. it's off, or you started start_relay.bat directly)."""
     def get_code(email):
         try:
             device_request_verification_code(device_ip, email)
         except requests.exceptions.RequestException:
-            print(f"(Couldn't reach the Panda Touch at {device_ip} to ask for the code "
+            print(f"(Couldn't reach the FilaTrack at {device_ip} to ask for the code "
                   f"there - falling back to this terminal.)")
             return input(f"Check {email} for a 6-digit code from Bambu and enter it here: ").strip()
 
-        print(f"Bambu needs a verification code. Open the Panda Touch dashboard at "
+        print(f"Bambu needs a verification code. Open the FilaTrack dashboard at "
               f"http://{device_ip}/ and type the 6-digit code emailed to {email}.")
         deadline = time.time() + 15 * 60  # wait up to 15 min for it to be typed
         while time.time() < deadline:
@@ -337,7 +337,7 @@ def make_code_prompt(device_ip):
 
 
 def ensure_device_has_token(device_ip, token):
-    """Checks whether the Panda Touch currently has a working Bambu Cloud
+    """Checks whether the FilaTrack currently has a working Bambu Cloud
     token and, if not, pushes the one this script is using. Cheap (one GET)
     on the common case where the device is already fine; only writes to the
     device's flash when it's actually needed, so this is safe to call every
@@ -383,7 +383,7 @@ def main():
 
     token = cfg.get("custom_token") or state.get("access_token") or ""
 
-    # Collect any verification code Bambu asks for via the Panda Touch's web
+    # Collect any verification code Bambu asks for via the FilaTrack's web
     # dashboard instead of this terminal, so the relay works while hidden.
     code_prompt = make_code_prompt(cfg["device_ip"])
 
@@ -401,7 +401,7 @@ def main():
         save_state(state)
         print("Logged in.")
 
-    print(f"Bambu weight relay starting. Keeping the Panda Touch at {cfg['device_ip']}'s Bambu Cloud "
+    print(f"Bambu weight relay starting. Keeping the FilaTrack at {cfg['device_ip']}'s Bambu Cloud "
           f"token fresh and reporting any prints it missed, every {cfg['poll_interval_sec']}s. Ctrl+C to stop.")
 
     while True:

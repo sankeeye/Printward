@@ -115,7 +115,7 @@ void create_settings_ui() {
     lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
     lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
 
-    add_info_row(root, "Firmware", PANDA_VERSION);
+    add_info_row(root, "Firmware", FILATRACK_VERSION);
 #ifndef __ANDROID__
     // The tablet's own WiFi/IP is managed by Android, not by this UI.
     add_info_row(root, "WiFi network", String(g_wifi_ssid));

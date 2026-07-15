@@ -41,7 +41,7 @@
 #include <android/log.h>
 
 #define WEBCTL_PORT 8080
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "PANDA", __VA_ARGS__)
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "FILATRACK", __VA_ARGS__)
 
 extern bool g_screensaver_3d;
 

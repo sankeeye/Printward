@@ -226,7 +226,7 @@ void setup() {
     } else {
         Serial.print("FilaTrack Scale klaar. IP: ");
         Serial.println(WiFi.localIP());
-        if (MDNS.begin("pandascale")) MDNS.addService("http", "tcp", 80);
+        if (MDNS.begin("filatrack-scale")) MDNS.addService("http", "tcp", 80);
     }
 
     server.on("/", handleRoot);

@@ -93,7 +93,7 @@ adb push filatrack.conf /sdcard/filatrack.conf
 Restart the app. Watch it connect:
 
 ```powershell
-adb logcat -s PANDA
+adb logcat -s FILATRACK
 # BAMBU: Connecting to 192.168.2.27 ...
 # (wrong code -> "MQTT connect failed, state=5"; correct code -> connected, live data)
 ```

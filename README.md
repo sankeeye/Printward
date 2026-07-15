@@ -6,8 +6,8 @@ tablet or from any browser on your LAN. A companion **FilaTrack Scale** weigh sc
 spool‑weight tracking. See [Hardware](#hardware).
 
 > This is a Bambu‑printer fork of the excellent
-> [FilaTrack StreamDeck by Disttrack](https://github.com/Disttrack/FilaTrack_streamDeck).
-> The original turns the FilaTrack into a Bluetooth StreamDeck; this project started from
+> [PandaTouch StreamDeck by Disttrack](https://github.com/Disttrack/PandaTouch_streamDeck).
+> The original turns the PandaTouch device into a Bluetooth StreamDeck; this project started from
 > its LVGL / web / OTA groundwork and replaced the StreamDeck logic with Bambu printer
 > monitoring and control — now running on an Android tablet. See [Credits](#credits).
 
@@ -61,7 +61,7 @@ The exact same `src/ui_*` code also builds as a **PC simulator** (`sim/`) for de
   LAN access code go in `/sdcard/filatrack.conf` (see `sim/android/filatrack.conf.example`)
   or the on‑screen **Printer setup**.
 - **FilaTrack Scale** — open `scale/` in **VS Code** with the **PlatformIO** extension and flash
-  over **USB‑C** (environment `pandascale`). First‑run WiFi setup and load‑cell calibration
+  over **USB‑C** (environment `filatrack_scale`). First‑run WiFi setup and load‑cell calibration
   are described in `scale/`.
 
 ## Filament‑weight relay (`tools/`)
@@ -91,7 +91,7 @@ Notes:
 
 ## Credits
 
-- Based on **[FilaTrack StreamDeck](https://github.com/Disttrack/FilaTrack_streamDeck)**
+- Based on **[PandaTouch StreamDeck](https://github.com/Disttrack/PandaTouch_streamDeck)**
   by Disttrack (MIT). Huge thanks for the display, web dashboard and OTA groundwork.
 - Built on LVGL, the Arduino‑ESP32 framework, and the open‑source libraries listed in
   `platformio.ini`.

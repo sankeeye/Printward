@@ -438,7 +438,7 @@ void init_webserver() {
 
     server.on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
         String html = FPSTR(INDEX_HTML);
-        html.replace("__VERSION__", PANDA_VERSION);
+        html.replace("__VERSION__", FILATRACK_VERSION);
         AsyncWebServerResponse* response = request->beginResponse(200, "text/html; charset=utf-8", html);
         response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         request->send(response);

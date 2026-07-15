@@ -1,4 +1,4 @@
-# Changelog - FilaTrack StreamDeck (Fork)
+# Changelog - FilaTrack
 
 All improvements and changes made in this enhanced version.
 

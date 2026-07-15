@@ -1,4 +1,4 @@
-' Bambu Cloud Relay - Panda Touch (verborgen starter)
+' Bambu Cloud Relay - FilaTrack (verborgen starter)
 ' =====================================================
 ' Start start_relay.bat volledig onzichtbaar: geen console-venster.
 ' De relay blijft op de achtergrond draaien (met dezelfde auto-herstart

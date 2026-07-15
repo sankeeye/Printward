@@ -4,7 +4,7 @@
 
 #include <stdint.h>
 
-#define PANDA_VERSION "2.0.0-bambu"
+#define FILATRACK_VERSION "2.0.0-bambu"
 
 // Bambu print state values reported in gcode_state
 #define BSTATE_IDLE     "IDLE"
