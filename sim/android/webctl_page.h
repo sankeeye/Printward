@@ -232,15 +232,14 @@ section#spools{max-width:1040px}
   </div>
   <div id="spList" class="muted">…</div>
  </div>
- <div class="card"><h3>Back-up &amp; herstel</h3>
-  <div id="bkStatus" style="border-radius:8px;padding:10px 12px;margin-bottom:10px;display:none"></div>
-  <div class="muted" style="font-size:12px;margin-bottom:8px">Alles op de tablet in één bestand: rollen, lege spoelen, gewichten, historie en statistieken. (Printer-IP/serial/toegangscode zitten er <b>niet</b> in.)</div>
+ <div class="card"><h3>Rollen exporteren / importeren</h3>
+  <div class="muted" style="font-size:12px;margin-bottom:8px">Alleen je <b>rollen + lege spoelen</b>, als los bestand. Handig om te delen of van een andere tablet over te nemen. Importeren <b>voegt toe</b> — het overschrijft niets.</div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-   <button id="bkDl" class="formbtn sec" onclick="downloadBackup()">⬇ Download back-up</button>
-   <label class="formbtn sec" style="cursor:pointer">⬆ Herstel<input type="file" accept=".ptb,.conf,.txt" style="display:none" onchange="importBackup(this.files)"></label>
-   <span class="muted" style="font-size:12px">herstel overschrijft de huidige data</span>
+   <button class="formbtn sec" onclick="exportRolls()">⬇ Exporteer rollen</button>
+   <label class="formbtn sec" style="cursor:pointer">⬆ Importeer rollen<input type="file" accept=".json,application/json" style="display:none" onchange="importRolls(this.files)"></label>
   </div>
-  <div id="bkMsg" class="muted" style="margin-top:8px"></div>
+  <div id="rollExpMsg" class="muted" style="margin-top:8px"></div>
+  <div class="muted" style="font-size:12px;margin-top:8px">Een volledige back-up (incl. historie en statistieken) staat bij <b>Settings</b>.</div>
  </div>
 </section>
 
@@ -265,6 +264,17 @@ section#spools{max-width:1040px}
    <div style="display:flex;gap:8px;align-items:center"><input type="number" id="cLow" min="0" step="10" placeholder="100" style="width:120px"><span class="muted">g</span><button id="cLowSave" class="formbtn sec">Opslaan</button></div></div>
   <div class="muted" style="font-size:12px;margin-top:8px">Installeer de gratis <b>ntfy</b>-app (of ntfy.sh in de browser) en abonneer op dit topic. Je krijgt een melding bij print klaar/mislukt, filament tekort en als een gewogen rol onder de drempel komt.</div>
   <div id="cNtfyMsg" class="muted" style="margin-top:6px"></div>
+ </div>
+ <div class="card"><h3>Back-up &amp; herstel (alles)</h3>
+  <div id="bkStatus" style="border-radius:8px;padding:10px 12px;margin-bottom:10px;display:none"></div>
+  <div class="muted" style="font-size:12px;margin-bottom:8px">Alles op de tablet in één bestand: rollen, lege spoelen, gewichten, historie en statistieken. (Printer-IP/serial/toegangscode zitten er <b>niet</b> in.)</div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+   <button id="bkDl" class="formbtn sec" onclick="downloadBackup()">⬇ Download back-up</button>
+   <label class="formbtn sec" style="cursor:pointer">⬆ Herstel alles<input type="file" accept=".ptb,.conf,.txt" style="display:none" onchange="importBackup(this.files)"></label>
+   <span class="muted" style="font-size:12px">herstel <b>overschrijft</b> je huidige rollen, historie en statistieken</span>
+  </div>
+  <div id="bkMsg" class="muted" style="margin-top:8px"></div>
+  <div class="muted" style="font-size:12px;margin-top:8px">Alleen je rollen delen/overnemen? Dat staat bij <b>Spools</b>.</div>
  </div>
  <div class="card"><h3>Diagnose</h3>
   <div id="diagBox" class="muted">…</div>
@@ -694,9 +704,39 @@ function downloadBackup(){
  document.body.appendChild(a);a.click();a.remove();
  if($('bkMsg'))$('bkMsg').textContent='back-up gedownload';
 }
+// Rolls-only export/import: just the spool library, as a shareable JSON file.
+// Import ADDS rolls (no wipe) - that is the whole point of keeping it separate
+// from the full backup, which does overwrite everything.
+function exportRolls(){
+ var m=$('rollExpMsg');
+ Promise.all([fetch('/spools').then(function(r){return r.json();}),fetch('/empties').then(function(r){return r.json();})]).then(function(a){
+  var blob=new Blob([JSON.stringify({spools:a[0],empties:a[1]},null,1)],{type:'application/json'});
+  var url=URL.createObjectURL(blob),link=document.createElement('a');
+  link.href=url;link.download='pandatouch_rollen.json';link.click();URL.revokeObjectURL(url);
+  if(m)m.textContent=(a[0]||[]).length+' rollen geexporteerd';
+ }).catch(function(){if(m)m.textContent='geen verbinding';});
+}
+function importRolls(files){
+ if(!files||!files.length)return;
+ var m=$('rollExpMsg');
+ var rd=new FileReader();
+ rd.onload=function(){
+  var d;
+  try{ d=JSON.parse(rd.result); }catch(e){ if(m)m.textContent='Ongeldig bestand.'; return; }
+  if(!d.spools&&!d.empties){ if(m)m.textContent='Geen rollen in dit bestand.'; return; }
+  var ns=(d.spools||[]).length;
+  if(!confirm(ns+' rol(len) toevoegen aan je bibliotheek? Bestaande rollen blijven staan.'))return;
+  var chain=Promise.resolve();
+  (d.empties||[]).forEach(function(e){chain=chain.then(function(){return fetch('/empty_save?idx=&name='+encodeURIComponent(e.name)+'&weight='+e.weight);});});
+  (d.spools||[]).forEach(function(s){chain=chain.then(function(){return fetch('/spool_save?idx=&name='+encodeURIComponent(s.name)+'&material='+encodeURIComponent(s.material)+'&color='+encodeURIComponent(s.rgb)+'&rem='+(s.rem||0)+'&empty='+(s.empty||0)+'&nmin='+(s.nmin||0)+'&nmax='+(s.nmax||0)+'&code='+encodeURIComponent(s.code||'')+'&note='+encodeURIComponent(s.note||'')+'&price='+(s.price||0));});});
+  chain.then(function(){if(m)m.textContent=ns+' rollen toegevoegd.';loadSpools();loadEmpties();})
+       .catch(function(){if(m)m.textContent='importeren mislukt';});
+ };
+ rd.readAsText(files[0]);
+}
 function importBackup(files){
  if(!files||!files.length)return;
- if(!confirm('Back-up terugzetten? Dit overschrijft de huidige rollen, gewichten, historie en statistieken op de tablet.'))return;
+ if(!confirm('Volledige back-up terugzetten? Dit OVERSCHRIJFT je huidige rollen, gewichten, historie en statistieken op de tablet.'))return;
  var rd=new FileReader();
  rd.onload=function(){
   fetch('/restore',{method:'POST',body:rd.result}).then(function(r){return r.text();}).then(function(t){
