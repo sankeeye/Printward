@@ -13,8 +13,16 @@
 - **Bekende Issues / valkuilen**:
   - **Firmware 1.08 in cloud-modus blokkeert** temperatuur (M104/M140) en print-start.
     Jog, M106 (fan), M18, G1 E (extrude) en posities werken wél. Niet opnieuw proberen.
-  - **LVGL montserrat heeft alleen ASCII** — `·`, `€`, `✓` worden tofu op de tablet.
-    Gebruik "EUR", `\xC2\xB0` voor °, gewone koppeltekens. In de WEB-HTML mag alles wél.
+  - ~~LVGL montserrat heeft alleen ASCII~~ — **opgelost 15-07**. We bouwen montserrat nu zelf
+    (`sim/android/fonts/`, 9 maten) mét Latin-1 `0xA0-0xFF`, plus `…` en `€`. Dus **ü ö ä ß é
+    ñ å ø ç · ° € werken op de tablet**; bewezen met "Düse 255/255°C" op het scherm.
+    Alleen `✓` blijft tofu: dat teken zit niet in Montserrat zelf.
+    - Aanpassen? `python tools/gen_fonts.py && python tools/fix_font_guards.py`. Die tweede is
+      **niet optioneel** — lv_font_conv zet er `#if LV_FONT_MONTSERRAT_<n>` omheen, precies de
+      schakelaar die `lv_conf.h` op 0 zet om LVGL's eigen font te lozen. Zonder die hernoeming
+      compileert ons font ook weg en heb je een interface zonder letters.
+    - `lv_conf.h` en `Android.mk` worden **niet gesynct** naar `C:\pt_android` — met de hand
+      kopiëren. Pools/Tsjechisch (ł ą ř ě) vragen later nog Latin Extended-A (`0x100-0x17F`).
   - **Tablet-dashboard is verticaal vol** (~476 van 480 designpixels). Een rij toevoegen
     duwt de helderheidsschuif eraf. Gebruik lege ruimte in een bestaande rij.
   - **Geen overlays over de headerknoppen** — dat maakte ze onbereikbaar (zie git 20b54e8).

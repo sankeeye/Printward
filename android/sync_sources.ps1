@@ -27,6 +27,8 @@ robocopy "$repo\sim"         "$src\ourui" main.cpp @flags | Out-Null
 robocopy "$repo\sim\android" "$src\ourui" android_glue.cpp @flags | Out-Null
 # 3b. Android-only screens (printer setup + idle screensaver) -> next to ui_*
 robocopy "$repo\sim\android" "$src\ourui\src" ui_tablet_setup.cpp ui_tablet_setup.h ui_screensaver.cpp ui_screensaver.h gcode_view.cpp gcode_view.h webctl.cpp webctl.h webctl_page.h ui_weigh.cpp ui_weigh.h scale_client.cpp scale_client.h filament_track.cpp filament_track.h spool_db.cpp spool_db.h ui_spools.cpp ui_spools.h notify.cpp notify.h stats.cpp stats.h history.cpp history.h thumb.cpp thumb.h backup.cpp backup.h lang.cpp lang.h @flags | Out-Null
+# 3c. our own Montserrat build (Latin-1, so umlauts/accents are not tofu boxes)
+robocopy "$repo\sim\android\fonts" "$src\ourui\fonts" /E @flags | Out-Null
 # 4. PubSubClient (compiled) + ArduinoJson (header-only) from PlatformIO libdeps
 robocopy "$repo\.pio\libdeps\pandatouch\PubSubClient\src" "$src\pubsubclient" /E @flags | Out-Null
 robocopy "$repo\.pio\libdeps\pandatouch\ArduinoJson\src"  "$src\arduinojson"  /E @flags | Out-Null

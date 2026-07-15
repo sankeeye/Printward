@@ -1,4 +1,5 @@
 #include "ui_printer.h"
+#include "lang.h"
 #include <cstdio>
 #include <cstring>
 #include <ctime>
@@ -679,9 +680,9 @@ void update_printer_ui() {
         lv_label_set_text(g_remain_label, rt);
     }
 
-    lv_label_set_text_fmt(g_nozzle_label, "Nozzle %.0f/%.0f\xC2\xB0" "C", s.nozzle_temp, s.nozzle_target);
-    lv_label_set_text_fmt(g_bed_label, "Bed %.0f/%.0f\xC2\xB0" "C", s.bed_temp, s.bed_target);
-    lv_label_set_text_fmt(g_chamber_label, "Chamber %.0f\xC2\xB0" "C", s.chamber_temp);
+    lv_label_set_text_fmt(g_nozzle_label, "%s %.0f/%.0f\xC2\xB0" "C", T("dash.nozzle"), s.nozzle_temp, s.nozzle_target);
+    lv_label_set_text_fmt(g_bed_label, "%s %.0f/%.0f\xC2\xB0" "C", T("dash.bed"), s.bed_temp, s.bed_target);
+    lv_label_set_text_fmt(g_chamber_label, "%s %.0f\xC2\xB0" "C", T("dash.chamber"), s.chamber_temp);
 
     for (int u = 0; u < AMS_MAX_UNITS; u++) {
         AmsUnit& unit = s.ams[u];

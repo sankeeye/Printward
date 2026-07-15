@@ -586,28 +586,43 @@
  *===================*/
 
 /* Montserrat fonts with ASCII range and some symbols using bpp = 4
- * https://fonts.google.com/specimen/Montserrat */
+ * https://fonts.google.com/specimen/Montserrat
+ *
+ * ALL OFF ON PURPOSE. LVGL's built-in Montserrat is built with -r 0x20-0x7F,0xB0,
+ * 0x2022 - ASCII plus a degree sign and a bullet. That makes every accented letter
+ * a tofu box, so German (48 of its 274 strings have an umlaut), French, Spanish and
+ * the Nordic languages are unreadable on the tablet. The web page has no such limit,
+ * which is why this only ever showed up on the device.
+ *
+ * We ship our own build of the same font instead - same sizes, same 61 FontAwesome
+ * icons, same name - with 0xA0-0xFF added (and ellipsis + euro). See
+ * sim/android/fonts/, regenerate with tools/gen_fonts.py.
+ *
+ * Switching these to 0 drops LVGL's copy (its .c is guarded by the same macro) and
+ * removes its declaration from lv_font.h; LV_FONT_CUSTOM_DECLARE below puts the
+ * declaration back, so the ~131 &lv_font_montserrat_N references keep working
+ * untouched. Our files use their own FILATRACK_FONT_N guard so they still build. */
 #define LV_FONT_MONTSERRAT_8  0
 #define LV_FONT_MONTSERRAT_10 0
-#define LV_FONT_MONTSERRAT_12 1
-#define LV_FONT_MONTSERRAT_14 1
+#define LV_FONT_MONTSERRAT_12 0
+#define LV_FONT_MONTSERRAT_14 0
 #define LV_FONT_MONTSERRAT_16 0
-#define LV_FONT_MONTSERRAT_18 1
-#define LV_FONT_MONTSERRAT_20 1
-#define LV_FONT_MONTSERRAT_22 1
-#define LV_FONT_MONTSERRAT_24 1
+#define LV_FONT_MONTSERRAT_18 0
+#define LV_FONT_MONTSERRAT_20 0
+#define LV_FONT_MONTSERRAT_22 0
+#define LV_FONT_MONTSERRAT_24 0
 #define LV_FONT_MONTSERRAT_26 0
-#define LV_FONT_MONTSERRAT_28 1
+#define LV_FONT_MONTSERRAT_28 0
 #define LV_FONT_MONTSERRAT_30 0
 #define LV_FONT_MONTSERRAT_32 0
 #define LV_FONT_MONTSERRAT_34 0
 #define LV_FONT_MONTSERRAT_36 0
-#define LV_FONT_MONTSERRAT_38 1
+#define LV_FONT_MONTSERRAT_38 0
 #define LV_FONT_MONTSERRAT_40 0
 #define LV_FONT_MONTSERRAT_42 0
 #define LV_FONT_MONTSERRAT_44 0
 #define LV_FONT_MONTSERRAT_46 0
-#define LV_FONT_MONTSERRAT_48 1
+#define LV_FONT_MONTSERRAT_48 0
 
 /* Demonstrate special features */
 #define LV_FONT_MONTSERRAT_28_COMPRESSED    0  /**< bpp = 3 */
@@ -630,7 +645,18 @@
  *  #define LV_FONT_CUSTOM_DECLARE   LV_FONT_DECLARE(my_font_1) LV_FONT_DECLARE(my_font_2)
  *  @endcode
  */
-#define LV_FONT_CUSTOM_DECLARE
+/* Our own Latin-1 build of Montserrat (see the block above). Same names as LVGL's,
+ * so nothing that references them has to change. */
+#define LV_FONT_CUSTOM_DECLARE \
+    LV_FONT_DECLARE(lv_font_montserrat_12) \
+    LV_FONT_DECLARE(lv_font_montserrat_14) \
+    LV_FONT_DECLARE(lv_font_montserrat_18) \
+    LV_FONT_DECLARE(lv_font_montserrat_20) \
+    LV_FONT_DECLARE(lv_font_montserrat_22) \
+    LV_FONT_DECLARE(lv_font_montserrat_24) \
+    LV_FONT_DECLARE(lv_font_montserrat_28) \
+    LV_FONT_DECLARE(lv_font_montserrat_38) \
+    LV_FONT_DECLARE(lv_font_montserrat_48)
 
 /** Always set a default font */
 #define LV_FONT_DEFAULT &lv_font_montserrat_14

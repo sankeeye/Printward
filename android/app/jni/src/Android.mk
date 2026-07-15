@@ -49,7 +49,16 @@ LOCAL_SRC_FILES := \
     ourui/src/thumb.cpp \
     ourui/src/backup.cpp \
     ourui/src/lang.cpp \
-    ourui/src/webctl.cpp
+    ourui/src/webctl.cpp \
+    ourui/fonts/lv_font_montserrat_12.c \
+    ourui/fonts/lv_font_montserrat_14.c \
+    ourui/fonts/lv_font_montserrat_18.c \
+    ourui/fonts/lv_font_montserrat_20.c \
+    ourui/fonts/lv_font_montserrat_22.c \
+    ourui/fonts/lv_font_montserrat_24.c \
+    ourui/fonts/lv_font_montserrat_28.c \
+    ourui/fonts/lv_font_montserrat_38.c \
+    ourui/fonts/lv_font_montserrat_48.c
 
 LOCAL_CFLAGS := -DLV_CONF_INCLUDE_SIMPLE -DARDUINOJSON_ENABLE_ARDUINO_STRING=1 -w
 

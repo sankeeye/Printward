@@ -1,0 +1,172 @@
+=== TABLET UI - INVENTARIS ===
+
+totaal teksten      : 156
+  al een sleutel    : 24  (hergebruiken, web deelt ze)
+  nieuw nodig       : 132  (115 unieke)
+  dubbel in de code : 17
+  met niet-ASCII    : 3  <- wordt een blokje op de tablet
+
+--- NIET-ASCII (de LVGL-valkuil) ---
+  ui_weigh.cpp          :186  verbinden met schaal?                     tekens: ?
+  ui_weigh.cpp          :202  netwerk: ?                                tekens: ?
+  ui_weigh.cpp          :240  ?meten                                    tekens: ?
+
+--- HERGEBRUIK (tekst matcht een bestaande sleutel) ---
+  ui_screensaver.cpp    :241  Externe spoel                      -> spools.external
+  ui_screensaver.cpp    :245  Geen verbinding                    -> no_conn
+  ui_spools.cpp         :199  Historie / kosten                  -> hist.title
+  ui_spools.cpp         :280  Nog geen prints in het logboek.    -> hist.log_empty
+  ui_spools.cpp         :485  Nieuwe rol                         -> spools.new_roll
+  ui_spools.cpp         :485  Rol bewerken                       -> spools.edit_roll
+  ui_spools.cpp         :502  Materiaal                          -> spools.material
+  ui_spools.cpp         :576  Kleur                              -> spools.colour
+  ui_spools.cpp         :633  Lege spoelen                       -> spools.empty_spools
+  ui_weigh.cpp          :240  stabiel                            -> scale.stable
+  ui_weigh.cpp          :240  geen verbinding met schaal         -> scale.no_conn
+  ui_filament.cpp       :72   Nog geen rollen - maak ze aan op d -> spools.none_yet
+  ui_filament.cpp       :136  Kies rol                           -> spools.pick_roll
+  ui_move.cpp           :143  Motoren uit                        -> move.motors_off
+  ui_move.cpp           :147  Naar midden                        -> move.center
+  ui_move.cpp           :148  Bed naar voren                     -> move.bed_front
+  ui_move.cpp           :149  Z omhoog                           -> move.z_up
+  ui_move.cpp           :266  Terug                              -> back
+  ui_move.cpp           :328  Stap:                              -> move.step
+  ui_printer.cpp        :113  Print stoppen?                     -> dash.stop_confirm_t
+  ui_printer.cpp        :142  Annuleren                          -> cancel
+  ui_printer.cpp        :604  Printer: offline                   -> dash.offline
+  ui_printer.cpp        :803  Filament bijna op                  -> dash.warn_low
+  ui_settings.cpp       :190  Schaal beheren                     -> set.manage_scale
+
+--- NIEUW (sleutel verzinnen) ---
+  ui_screensaver.cpp    :233  Printing
+  ui_screensaver.cpp    :237  Laag %d / %d
+  ui_screensaver.cpp    :238  Nog %du %02dm
+  ui_screensaver.cpp    :240  AMS-slot: -
+  ui_screensaver.cpp    :242  AMS %d - slot %d
+  ui_screensaver.cpp    :245  Printer klaar / idle
+  ui_screensaver.cpp    :252  Nozzle %.0f\xC2\xB0   Bed %.0f\xC2\xB0   Chamber %.0
+  ui_screensaver.cpp    :255   Filament tekort: ~%.0f g te kort
+  ui_screensaver.cpp    :271  Model laden...
+  ui_spools.cpp         :129  '%s' gewogen: %.0f g resterend
+  ui_spools.cpp         :337  Spools
+  ui_spools.cpp         :374  Nog geen rollen - tik 'Nieuwe rol'.
+  ui_spools.cpp         :535  Leeg spoel (kies of gram)
+  ui_tablet_setup.cpp   :45   Saving...
+  ui_tablet_setup.cpp   :91   Printer setup
+  ui_tablet_setup.cpp   :99   Back
+  ui_tablet_setup.cpp   :114  Save & connect
+  ui_weigh.cpp          :77   geef een WiFi-naam
+  ui_weigh.cpp          :93   Scale-IP opgeslagen
+  ui_weigh.cpp          :170  Scale
+  ui_weigh.cpp          :176  Back  [dubbel van ui_tablet_setup.cpp:99]
+  ui_weigh.cpp          :186  verbinden met schaal?
+  ui_weigh.cpp          :202  netwerk: ?
+  ui_weigh.cpp          :240  ?meten
+  ui_weigh.cpp          :253  netwerk: %s \xE2\x80\xA2 %s \xE2\x80\xA2 %ddBm%s
+  ui_weigh.cpp          :253   \xE2\x80\xA2 vast IP
+  ui_filament.cpp       :44   Kies rol voor de externe spoel
+  ui_filament.cpp       :45   Kies rol voor AMS%d T%d
+  ui_filament.cpp       :66   Leeg - geen rol in dit slot
+  ui_filament.cpp       :142  Sluit
+  ui_files.cpp          :131  Use AMS: On
+  ui_files.cpp          :131  Use AMS: Off (external spool)
+  ui_files.cpp          :224  [DIR]  %s
+  ui_files.cpp          :231  Page %d/%d - %d item(s)
+  ui_files.cpp          :240  Loading...
+  ui_files.cpp          :255  Printen gaat via Bambu Studio/Handy (firmware blokke
+  ui_files.cpp          :311  Files
+  ui_files.cpp          :319  Back  [dubbel van ui_tablet_setup.cpp:99]
+  ui_files.cpp          :361  Refresh
+  ui_files.cpp          :394  < Prev
+  ui_files.cpp          :408  Next >
+  ui_files.cpp          :444  Use AMS: Off
+  ui_files.cpp          :460  Color %d:
+  ui_files.cpp          :468  Skip
+  ui_files.cpp          :490  Cancel
+  ui_files.cpp          :498  Print
+  ui_move.cpp           :89   Homing...
+  ui_move.cpp           :94   Extruderen...
+  ui_move.cpp           :100  Terugtrekken...
+  ui_move.cpp           :107  Opwarmen naar 220\xC2\xB0
+  ui_move.cpp           :112  Nozzle uit
+  ui_move.cpp           :117  Bed opwarmen...
+  ui_move.cpp           :117  Bed heat
+  ui_move.cpp           :120  Bed uit
+  ui_move.cpp           :120  Bed cool
+  ui_move.cpp           :124  Nozzle ingesteld
+  ui_move.cpp           :124  Nozzle set
+  ui_move.cpp           :129  Bed ingesteld
+  ui_move.cpp           :129  Bed set
+  ui_move.cpp           :131  PLA voorverwarmen
+  ui_move.cpp           :131  PLA
+  ui_move.cpp           :132  PETG voorverwarmen
+  ui_move.cpp           :132  PETG
+  ui_move.cpp           :133  ABS voorverwarmen
+  ui_move.cpp           :133  ABS
+  ui_move.cpp           :134  TPU voorverwarmen
+  ui_move.cpp           :134  TPU
+  ui_move.cpp           :140  Fan ingesteld
+  ui_move.cpp           :140  Fan
+  ui_move.cpp           :143  Motors off
+  ui_move.cpp           :144  Home X...
+  ui_move.cpp           :144  Home X
+  ui_move.cpp           :145  Home Y...
+  ui_move.cpp           :145  Home Y
+  ui_move.cpp           :146  Home Z...
+  ui_move.cpp           :146  Home Z
+  ui_move.cpp           :147  Center
+  ui_move.cpp           :148  Front
+  ui_move.cpp           :259  Regelen
+  ui_move.cpp           :323  Move
+  ui_move.cpp           :354  Regelen  [dubbel van ui_move.cpp:259]
+  ui_move.cpp           :365  Back  [dubbel van ui_tablet_setup.cpp:99]
+  ui_move.cpp           :426  Extrude 10mm
+  ui_move.cpp           :432  Retract 10mm
+  ui_move.cpp           :451  Nozzle %.0f/%.0f\xC2\xB0
+  ui_printer.cpp        :118  Weet je zeker dat je de print wilt afbreken?\n
+  ui_printer.cpp        :152  Stoppen
+  ui_printer.cpp        :289  Move  [dubbel van ui_move.cpp:323]
+  ui_printer.cpp        :299  Spools  [dubbel van ui_spools.cpp:337]
+  ui_printer.cpp        :309  Files  [dubbel van ui_files.cpp:311]
+  ui_printer.cpp        :318  Settings
+  ui_printer.cpp        :337  Connecting...
+  ui_printer.cpp        :434  AMS %d
+  ui_printer.cpp        :516  External spool:
+  ui_printer.cpp        :561  Silent\nStandard\nSport\nLudicrous
+  ui_printer.cpp        :577  Brightness
+  ui_printer.cpp        :601  Printer: connected
+  ui_printer.cpp        :645  Waiting for data...
+  ui_printer.cpp        :645  Connecting...  [dubbel van ui_printer.cpp:337]
+  ui_printer.cpp        :702  Vocht: %s
+  ui_printer.cpp        :771  Resume
+  ui_printer.cpp        :771  Pause
+  ui_printer.cpp        :782  Light: On
+  ui_printer.cpp        :782  Light: Off
+  ui_printer.cpp        :785  Fan %d%%
+  ui_printer.cpp        :800  Filament tekort: ~%.0f g
+  ui_printer.cpp        :845  Updating System...
+  ui_settings.cpp       :36   Screensaver: 3D
+  ui_settings.cpp       :36   Screensaver: 2D
+  ui_settings.cpp       :114  Settings  [dubbel van ui_printer.cpp:318]
+  ui_settings.cpp       :132  To change printer settings, edit /sdcard/filatrack.c
+  ui_settings.cpp       :134  To change printer settings, open http://%s/ in a bro
+  ui_settings.cpp       :147  WiFi Setup
+  ui_settings.cpp       :160  Printer setup  [dubbel van ui_tablet_setup.cpp:91]
+  ui_settings.cpp       :180  Screensaver: 3D  [dubbel van ui_settings.cpp:36]
+  ui_settings.cpp       :180  Screensaver: 2D  [dubbel van ui_settings.cpp:36]
+  ui_settings.cpp       :207  Brightness  [dubbel van ui_printer.cpp:577]
+  ui_settings.cpp       :221  Back  [dubbel van ui_tablet_setup.cpp:99]
+  ui_wifi.cpp           :45   Selected: %s
+  ui_wifi.cpp           :63   Scanning...
+  ui_wifi.cpp           :89   Pick a network above first
+  ui_wifi.cpp           :102  Connecting...  [dubbel van ui_printer.cpp:337]
+  ui_wifi.cpp           :138  WiFi Setup  [dubbel van ui_settings.cpp:147]
+  ui_wifi.cpp           :146  Back  [dubbel van ui_tablet_setup.cpp:99]
+  ui_wifi.cpp           :166  Scan for WiFi
+  ui_wifi.cpp           :177  Selected: none
+  ui_wifi.cpp           :189  Password
+  ui_wifi.cpp           :206  Connect & Save
+  ui_wifi.cpp           :255  Connected! IP %s
+  ui_wifi.cpp           :260  Couldn't connect - check password and try again
+  ui_wifi.cpp           :273  Scan failed, try again
+  ui_wifi.cpp           :318  No networks found
