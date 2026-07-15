@@ -1,4 +1,5 @@
 #include "ui_filament.h"
+#include "lang.h"
 #include "ui_printer.h"
 #include "bambu_mqtt.h"
 #include "storage.h"
@@ -41,8 +42,8 @@ static void spool_close_cb(lv_event_t*) { picker_hide(); }
 static void open_spool_modal(int slot) {
     if (!g_spool_modal || !g_spool_backdrop) return;
     g_pick_slot = slot;
-    if (slot == EXT_SLOT) lv_label_set_text(g_spool_title, "Kies rol voor de externe spoel");
-    else lv_label_set_text_fmt(g_spool_title, "Kies rol voor AMS%d T%d",
+    if (slot == EXT_SLOT) lv_label_set_text(g_spool_title, T("spools.pick_ext"));
+    else lv_label_set_text_fmt(g_spool_title, T("spools.pick_ams"),
                                slot / AMS_MAX_TRAYS + 1, slot % AMS_MAX_TRAYS + 1);
 
     lv_obj_clean(g_spool_list);
@@ -63,13 +64,13 @@ static void open_spool_modal(int slot) {
         lv_obj_set_style_border_color(sw, lv_color_hex(0x888888), LV_PART_MAIN);
         lv_obj_clear_flag(sw, LV_OBJ_FLAG_CLICKABLE);
         lv_obj_t* l = lv_label_create(b);
-        lv_label_set_text(l, "Leeg - geen rol in dit slot");
+        lv_label_set_text(l, T("spools.empty_no_roll"));
         lv_obj_set_style_text_font(l, &lv_font_montserrat_14, 0);
         lv_obj_add_event_cb(b, spool_clear_cb, LV_EVENT_CLICKED, NULL);
     }
     if (g_spool_count == 0) {
         lv_obj_t* l = lv_label_create(g_spool_list);
-        lv_label_set_text(l, "Nog geen rollen - maak ze aan op de Spools-tab.");
+        lv_label_set_text(l, T("spools.none_yet"));
         lv_obj_set_style_text_font(l, &lv_font_montserrat_14, 0);
         lv_obj_set_style_text_color(l, lv_color_hex(0x999999), 0);
     }
@@ -133,13 +134,13 @@ void filament_roll_picker_init() {
     lv_obj_set_flex_align(sm_head, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_clear_flag(sm_head, LV_OBJ_FLAG_SCROLLABLE);
     g_spool_title = lv_label_create(sm_head);
-    lv_label_set_text(g_spool_title, "Kies rol");
+    lv_label_set_text(g_spool_title, T("spools.pick_roll"));
     lv_obj_set_style_text_font(g_spool_title, &lv_font_montserrat_18, 0);
     lv_obj_set_style_text_color(g_spool_title, lv_color_hex(0xFFFFFF), 0);
     lv_obj_t* sm_close = lv_btn_create(sm_head);
     lv_obj_set_size(sm_close, PT_SZ(90), PT_SZ(34));
     lv_obj_set_style_bg_color(sm_close, lv_color_hex(0x555555), LV_PART_MAIN);
-    lv_obj_t* sm_cl = lv_label_create(sm_close); lv_label_set_text(sm_cl, "Sluit");
+    lv_obj_t* sm_cl = lv_label_create(sm_close); lv_label_set_text(sm_cl, T("close"));
     lv_obj_set_style_text_font(sm_cl, &lv_font_montserrat_14, 0); lv_obj_center(sm_cl);
     lv_obj_add_event_cb(sm_close, spool_close_cb, LV_EVENT_CLICKED, NULL);
 

@@ -3,6 +3,7 @@
 // on the tablet. All scale I/O goes through scale_client (a background thread);
 // this file only builds the LVGL UI and reads/queues via that client.
 #include "ui_weigh.h"
+#include "lang.h"
 #include "ui_printer.h"
 #include "ui_settings.h"   // return to Settings on Back (the scale opens from there)
 #include "scale_client.h"
@@ -74,7 +75,7 @@ static void cal_cb(lv_event_t*) {
 static void wifi_cb(lv_event_t*) {
     const char* ssid = lv_textarea_get_text(g_ta_ssid);
     const char* pass = lv_textarea_get_text(g_ta_pass);
-    if (!ssid || !ssid[0]) { if (g_msg) lv_label_set_text(g_msg, "geef een WiFi-naam"); return; }
+    if (!ssid || !ssid[0]) { if (g_msg) lv_label_set_text(g_msg, T("scale.need_ssid")); return; }
     char es[96], ep[96], path[256];
     urlenc(ssid, es, sizeof(es));
     urlenc(pass ? pass : "", ep, sizeof(ep));
@@ -90,7 +91,7 @@ static void ip_save_cb(lv_event_t*) {
     strncpy(g_scale_ip, ip, sizeof(g_scale_ip) - 1);
     g_scale_ip[sizeof(g_scale_ip) - 1] = 0;
     save_settings();
-    if (g_msg) lv_label_set_text(g_msg, "Scale-IP opgeslagen");
+    if (g_msg) lv_label_set_text(g_msg, T("scale.ip_saved"));
     kb_hide();
 }
 
@@ -167,13 +168,13 @@ void create_weigh_ui() {
     lv_obj_set_flex_align(header, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_set_width(header, lv_pct(100));
     lv_obj_t* title = lv_label_create(header);
-    lv_label_set_text(title, "Scale");
+    lv_label_set_text(title, T("nav.scale"));
     lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
     lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
     lv_obj_t* back = lv_btn_create(header);
     lv_obj_set_size(back, PT_SZ(80), PT_SZ(34));
     lv_obj_set_style_bg_color(back, lv_color_hex(0x333333), LV_PART_MAIN);
-    lv_obj_t* bl = lv_label_create(back); lv_label_set_text(bl, "Back");
+    lv_obj_t* bl = lv_label_create(back); lv_label_set_text(bl, T("back"));
     lv_obj_set_style_text_font(bl, &lv_font_montserrat_14, 0); lv_obj_center(bl);
     lv_obj_add_event_cb(back, back_cb, LV_EVENT_CLICKED, nullptr);
 
@@ -183,7 +184,7 @@ void create_weigh_ui() {
     lv_obj_set_style_text_font(g_weight, &lv_font_montserrat_48, 0);
     lv_obj_set_style_text_color(g_weight, lv_color_hex(0xFFFFFF), 0);
     g_sub = lv_label_create(root);
-    lv_label_set_text(g_sub, "verbinden met schaal…");
+    lv_label_set_text(g_sub, T("scale.connecting"));
     lv_obj_set_style_text_font(g_sub, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(g_sub, lv_color_hex(0x999999), 0);
 
@@ -199,7 +200,7 @@ void create_weigh_ui() {
 
     // Network info
     g_infolbl = lv_label_create(root);
-    lv_label_set_text(g_infolbl, "netwerk: …");
+    lv_label_set_text(g_infolbl, T("scale.net_wait"));
     lv_obj_set_style_text_font(g_infolbl, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(g_infolbl, lv_color_hex(0x93a0ad), 0);
 
@@ -237,7 +238,7 @@ void update_weigh_ui() {
     bool on = scale_online();
     if (on) lv_label_set_text_fmt(g_weight, "%.0f g", scale_grams());
     else lv_label_set_text(g_weight, "- g");
-    lv_label_set_text(g_sub, on ? (scale_stable() ? "stabiel" : "…meten") : "geen verbinding met schaal");
+    lv_label_set_text(g_sub, on ? (scale_stable() ? T("scale.stable") : T("scale.measuring")) : T("scale.no_conn"));
     lv_obj_set_style_text_color(g_sub, lv_color_hex(on ? 0x2ecc71 : 0xe74c3c), 0);
 
     char info[256];
@@ -250,7 +251,7 @@ void update_weigh_ui() {
         if ((p = strstr(info, "\"ssid\":\""))) sscanf(p + 8, "%47[^\"]", ssid);
         if ((p = strstr(info, "\"rssi\":"))) rssi = atoi(p + 7);
         bool st = strstr(info, "\"static\":true") != nullptr;
-        lv_label_set_text_fmt(g_infolbl, "netwerk: %s \xE2\x80\xA2 %s \xE2\x80\xA2 %ddBm%s", ip, ssid, rssi, st ? " \xE2\x80\xA2 vast IP" : "");
+        lv_label_set_text_fmt(g_infolbl, T("scale.net_fmt"), ip, ssid, rssi, st ? T("scale.static_suffix") : "");
     }
 
     char msg[128];

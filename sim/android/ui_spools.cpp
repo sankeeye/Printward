@@ -2,6 +2,7 @@
 // add/edit form for a roll, and an empty-spool library editor. Everything the
 // web Spools tab can do, on the tablet itself.
 #include "ui_spools.h"
+#include "lang.h"
 #include "ui_printer.h"
 #include "spool_db.h"
 #include "history.h"        // print log + cost per print
@@ -126,7 +127,7 @@ static void rowweigh_cb(lv_event_t* e) {
     s.remaining_g = rem;
     spool_upsert(i, s);
     create_spools_ui();
-    if (g_msg) lv_label_set_text_fmt(g_msg, "'%s' gewogen: %.0f g resterend", s.name, rem);
+    if (g_msg) lv_label_set_text_fmt(g_msg, T("spools.weighed_fmt"), s.name, rem);
 }
 static void empties_cb(lv_event_t*) { create_empties_ui(); }
 static void edit_cb(lv_event_t* e) { create_spool_edit((int)(intptr_t)lv_event_get_user_data(e)); }
@@ -196,7 +197,7 @@ void create_history_ui() {
     lv_obj_set_flex_align(header, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_clear_flag(header, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_t* title = lv_label_create(header);
-    lv_label_set_text(title, "Historie / kosten");
+    lv_label_set_text(title, T("hist.title"));
     lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
     lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
     lv_obj_set_flex_grow(title, 1);
@@ -277,7 +278,7 @@ void create_history_ui() {
 
     if (g_hist_count == 0) {
         lv_obj_t* e = lv_label_create(list);
-        lv_label_set_text(e, "Nog geen prints in het logboek.");
+        lv_label_set_text(e, T("hist.log_empty"));
         lv_obj_set_style_text_color(e, lv_color_hex(0x777777), 0);
     }
     for (int i = 0; i < g_hist_count; i++) {
@@ -334,7 +335,7 @@ void create_spools_ui() {
     lv_obj_set_flex_align(header, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_clear_flag(header, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_t* title = lv_label_create(header);
-    lv_label_set_text(title, "Spools");
+    lv_label_set_text(title, T("nav.spools"));
     lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
     lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
     lv_obj_set_flex_grow(title, 1);
@@ -371,7 +372,7 @@ void create_spools_ui() {
 
     if (g_spool_count == 0) {
         lv_obj_t* empty = lv_label_create(list);
-        lv_label_set_text(empty, "Nog geen rollen - tik 'Nieuwe rol'.");
+        lv_label_set_text(empty, T("spools.none_tap_new"));
         lv_obj_set_style_text_color(empty, lv_color_hex(0x777777), 0);
     }
     g_row_n = 0;
@@ -482,7 +483,7 @@ static void create_spool_edit(int idx) {
 
     lv_obj_t* header = form_row(root);
     lv_obj_t* title = lv_label_create(header);
-    lv_label_set_text(title, idx < 0 ? "Nieuwe rol" : "Rol bewerken");
+    lv_label_set_text(title, idx < 0 ? T("spools.new_roll") : T("spools.edit_roll"));
     lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
     lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
     lv_obj_set_flex_grow(title, 1);
@@ -499,7 +500,7 @@ static void create_spool_edit(int idx) {
     lv_obj_set_style_pad_all(mbox, 0, LV_PART_MAIN);
     lv_obj_set_flex_flow(mbox, LV_FLEX_FLOW_COLUMN);
     lv_obj_clear_flag(mbox, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_t* ml = lv_label_create(mbox); lv_label_set_text(ml, "Materiaal");
+    lv_obj_t* ml = lv_label_create(mbox); lv_label_set_text(ml, T("spools.material"));
     lv_obj_set_style_text_font(ml, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(ml, lv_color_hex(0x93a0ad), 0);
     g_e_mat = lv_dropdown_create(mbox);
@@ -532,7 +533,7 @@ static void create_spool_edit(int idx) {
     lv_obj_set_style_pad_gap(ebox, PT_SZ(4), LV_PART_MAIN);
     lv_obj_set_flex_flow(ebox, LV_FLEX_FLOW_COLUMN);
     lv_obj_clear_flag(ebox, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_t* el = lv_label_create(ebox); lv_label_set_text(el, "Leeg spoel (kies of gram)");
+    lv_obj_t* el = lv_label_create(ebox); lv_label_set_text(el, T("spools.empty_pick"));
     lv_obj_set_style_text_font(el, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(el, lv_color_hex(0x93a0ad), 0);
     lv_obj_t* erow = lv_obj_create(ebox);
@@ -573,7 +574,7 @@ static void create_spool_edit(int idx) {
     if (cur.price_kg > 0) { char b[16]; snprintf(b, sizeof(b), "%.2f", cur.price_kg); lv_textarea_set_text(g_e_price, b); }
 
     // colour palette
-    lv_obj_t* cl = lv_label_create(root); lv_label_set_text(cl, "Kleur");
+    lv_obj_t* cl = lv_label_create(root); lv_label_set_text(cl, T("spools.colour"));
     lv_obj_set_style_text_font(cl, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(cl, lv_color_hex(0x93a0ad), 0);
     lv_obj_t* pal = form_row(root);
@@ -630,7 +631,7 @@ static void create_empties_ui() {
 
     lv_obj_t* header = form_row(root);
     lv_obj_t* title = lv_label_create(header);
-    lv_label_set_text(title, "Lege spoelen");
+    lv_label_set_text(title, T("spools.empty_spools"));
     lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
     lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
     lv_obj_set_flex_grow(title, 1);

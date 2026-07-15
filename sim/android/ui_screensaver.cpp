@@ -4,6 +4,7 @@
 // and (2) a live top-down G-code build-up drawn up to the current layer. Any tap
 // hides it.
 #include "ui_screensaver.h"
+#include "lang.h"
 #include "bambu_mqtt.h"
 #include "gcode_view.h"
 #include "filament_track.h"   // filament_shortfall() for the low-filament warning
@@ -230,37 +231,43 @@ static void update_dashboard() {
     }
     bool active = (strcmp(s.gcode_state, "RUNNING") == 0 || strcmp(s.gcode_state, "PAUSE") == 0);
     if (active) {
-        lv_label_set_text(g_name, s.task_name[0] ? s.task_name : "Printing");
+        lv_label_set_text(g_name, s.task_name[0] ? s.task_name : T("dash.printing"));
         lv_label_set_text_fmt(g_pct, "%d%%", s.progress_pct);
         lv_bar_set_value(g_bar, s.progress_pct, LV_ANIM_OFF);
         lv_obj_clear_flag(g_bar, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text_fmt(g_layers, "Laag %d / %d", s.layer_num, s.total_layers);
-        lv_label_set_text_fmt(g_time, "Nog %du %02dm", s.remaining_min / 60, s.remaining_min % 60);
+        lv_label_set_text_fmt(g_layers, T("ss.layer"), s.layer_num, s.total_layers);
+        lv_label_set_text_fmt(g_time, T("ss.left"), s.remaining_min / 60, s.remaining_min % 60);
         int tn = s.active_tray_now;
-        if (tn < 0)         lv_label_set_text(g_ams, "AMS-slot: -");
-        else if (tn == 254) lv_label_set_text(g_ams, "Externe spoel");
-        else                lv_label_set_text_fmt(g_ams, "AMS %d - slot %d",
+        if (tn < 0)         lv_label_set_text(g_ams, T("ss.ams_none"));
+        else if (tn == 254) lv_label_set_text(g_ams, T("spools.external"));
+        else                lv_label_set_text_fmt(g_ams, T("ss.ams_slot"),
                                                   tn / AMS_MAX_TRAYS + 1, tn % AMS_MAX_TRAYS + 1);
     } else {
-        lv_label_set_text(g_name, s.mqtt_connected ? "Printer klaar / idle" : "Geen verbinding");
+        lv_label_set_text(g_name, s.mqtt_connected ? "Printer klaar / idle" : T("no_conn"));
         lv_label_set_text(g_pct, "");
         lv_obj_add_flag(g_bar, LV_OBJ_FLAG_HIDDEN);
         lv_label_set_text(g_layers, "");
         lv_label_set_text(g_time, "");
         lv_label_set_text(g_ams, "");
     }
-    lv_label_set_text_fmt(g_temps, "Nozzle %.0f\xC2\xB0   Bed %.0f\xC2\xB0   Chamber %.0f\xC2\xB0",
+    lv_label_set_text_fmt(g_temps, T("ss.temps"),
                           s.nozzle_temp, s.bed_temp, s.chamber_temp);
     float sh = filament_shortfall();
-    if (sh > 0) lv_label_set_text_fmt(g_warn, LV_SYMBOL_WARNING " Filament tekort: ~%.0f g te kort", sh);
+    if (sh > 0) if (true) {
+        // The warning icon is a font glyph, not text, so it cannot live in the
+        // translation: format the sentence first, then prefix the symbol.
+        char b[96];
+        snprintf(b, sizeof(b), T("ss.short_fmt"), sh);
+        lv_label_set_text_fmt(g_warn, LV_SYMBOL_WARNING " %s", b);
+    }
     else lv_label_set_text(g_warn, "");
 }
 
 static void update_gcode_page() {
     PrinterStatus& s = g_printer_status;
     if (gcode_view_ready()) {
-        lv_label_set_text_fmt(g_ghdr, "%s    laag %d/%d    %d%%",
-                              s.task_name, s.layer_num, s.total_layers, s.progress_pct);
+        lv_label_set_text_fmt(g_ghdr, "%s    %s %d/%d    %d%%",
+                              s.task_name, T("dash.layer"), s.layer_num, s.total_layers, s.progress_pct);
         int ml = gcode_view_max_layer();
         bool active = (strcmp(s.gcode_state, "RUNNING") == 0 || strcmp(s.gcode_state, "PAUSE") == 0);
         int cur = active ? s.layer_num : ml;   // finished/idle -> show the whole model
@@ -268,7 +275,7 @@ static void update_gcode_page() {
         if (cur < 0) cur = 0;
         if (cur != g_rendered_layer) render_gcode(cur);
     } else {
-        lv_label_set_text(g_ghdr, "Model laden...");
+        lv_label_set_text(g_ghdr, T("ss.loading_model"));
         if (g_rendered_layer != -1) render_gcode(-1);   // clear once
     }
 }

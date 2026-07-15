@@ -41,9 +41,10 @@
   (incl. datamigratie) · package `nl.filatrack.app` · ESP32-firmware verwijderd (2097 regels) ·
   **web volledig meertalig** (EN/NL/DE, incl. serverantwoorden) + `tools/i18n_audit.py` ·
   race in `/setcfg` weg (taal wisselt in één klik).
-- **Waar we gebleven zijn**: **de web-interface is helemaal vertaald en door Arno afgetekend**
-  (EN/NL/DE compleet, 274 sleutels, taal wisselt in één klik). De tablet-UI staat nog volledig
-  in het Nederlands — dat is de volgende stap.
+- **Waar we gebleven zijn**: **web én tablet zijn vertaald** (EN/NL/DE compleet, 350 sleutels).
+  De taal wisselt live, zonder herstart, op beide. Eén taalbestand bedient allebei.
+  Nog te doen: door Arno laten nakijken op de tablet, en de losse schermen (Files, Move,
+  Spools, Scale, Settings) in het Duits doorlopen — die heb ik alleen gebouwd, niet gezien.
 - **Ontwerp i18n** (afgesproken 15-07): teksten krijgen een **sleutel** (`dash.printing`);
   **EN + NL zitten ingebouwd** zodat het out-of-the-box werkt zonder bestanden; daarnaast
   laadt de app **losse taalbestanden** `/sdcard/filatrack_lang_<code>.conf` (`sleutel=vertaling`,
@@ -51,10 +52,24 @@
   nieuwe taal toevoegen — **een taal erbij = een bestand neerzetten, geen hercompilatie**.
   Eén set bestanden bedient zowel tablet als web (web haalt ze via `/lang`), dus vertalingen
   hoeven maar één keer. `lang=` in filatrack.conf, `/setcfg?lang=`, keuze in Settings.
-- **Volgende stap**: de **tablet-UI** omzetten naar `T("sleutel")` (~10 bestanden in `src/`
-  en `sim/android/`). Let op de LVGL-ASCII-valkuil hierboven: in de *ingebouwde* tabel geen
-  `€`/`·`/`✓`. Zet daarna nieuwe sleutels ook in `lang/filatrack_lang_de.conf` — de self-test
-  faalt als een taal niet compleet is.
+- **Volgende stap**: Arno laat de tablet in het Duits nakijken (de losse schermen zag ik niet),
+  daarna eventueel Frans/Spaans — dat is nu alleen nog een `.conf` neerzetten, geen code.
+- **Tablet-i18n, wat je moet weten**:
+  - **Labels nemen hun tekst bij het opbouwen van het scherm.** Alleen daarom leek een
+    taalwissel "niets te doen": alles wat per statusupdate hertekent (Düse/Bett/Lüfter) volgde
+    wél, de rest bleef staan tot een herstart. `/setcfg?lang=` roept nu `create_printer_ui()`
+    aan (main thread, `lv_obj_clean` + herbouw — dat is waar dat scherm op gebouwd is).
+    Sub-schermen pakken de taal op zodra je ze opnieuw opent.
+  - **Sleutels met opmaak** (`"Schicht %d / %d"`) gaan rechtstreeks naar `snprintf`. Een
+    vertaler die een `%d` laat vallen krijgt geen scheve tekst maar een **crash**. Daarom
+    `python tools/check_formats.py` — die vergelijkt elke vertaling met het Engelse origineel
+    en faalt hard. Draai hem bij elke nieuwe taal.
+  - `python tools/tablet_inventory.py` telt wat er nog niet door `T()` gaat. Blijft op **3**
+    staan en dat hoort: `[DIR] %s`, `AMS %d` en Bambu's eigen Silent/Standard/Sport/Ludicrous.
+  - Zoekt op `lv_label_set_text` en vrienden — **niet** op `snprintf` of `hl = "droog"`. Zo
+    ontsnapten "laag %d/%d", "klaar om", "redelijk" en `friendly_state()` de eerste ronde.
+  - **Geen HTML-entiteiten meer in de tabel** (op de web-only sleutels na): de tablet toont
+    die letterlijk. `&hellip;` is nu een echte `…` (zit in ons font), `&amp;` gewoon `&`.
 - **Drie plekken met tekst, niet één** (dit kostte twee ronden "toch niet alles Engels"):
   1. `webctl_page.h` JS → `t('sleutel','fallback')`
   2. `webctl_page.h` statische HTML → `data-i18n=` / `data-i18n-ph=` op het element

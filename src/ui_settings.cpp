@@ -1,4 +1,5 @@
 #include "ui_settings.h"
+#include "lang.h"
 #include "ui_printer.h"
 #include "ui_wifi.h"
 #include "storage.h"
@@ -33,7 +34,7 @@ static void view_toggle_cb(lv_event_t* e) {
     (void)e;
     g_screensaver_3d = !g_screensaver_3d;
     if (g_view_btn_label)
-        lv_label_set_text(g_view_btn_label, g_screensaver_3d ? "Screensaver: 3D" : "Screensaver: 2D");
+        lv_label_set_text(g_view_btn_label, g_screensaver_3d ? T("set.saver_3d") : T("set.saver_2d"));
     save_settings();
     screensaver_view_changed();
 }
@@ -111,7 +112,7 @@ void create_settings_ui() {
     lv_obj_clear_flag(root, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t* title = lv_label_create(root);
-    lv_label_set_text(title, "Settings");
+    lv_label_set_text(title, T("nav.settings"));
     lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
     lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
 
@@ -129,9 +130,9 @@ void create_settings_ui() {
     lv_obj_t* hint = lv_label_create(root);
 #ifdef __ANDROID__
     // No on-device webserver on the tablet build - settings come from a file.
-    lv_label_set_text(hint, "To change printer settings, edit /sdcard/filatrack.conf and restart the app");
+    lv_label_set_text(hint, T("set.printer_hint_file"));
 #else
-    lv_label_set_text_fmt(hint, "To change printer settings, open http://%s/ in a browser", g_ip_addr.c_str());
+    lv_label_set_text_fmt(hint, T("set.printer_hint_web"), g_ip_addr.c_str());
 #endif
     lv_obj_set_style_text_font(hint, &lv_font_montserrat_12, 0);
     lv_obj_set_style_text_color(hint, lv_color_hex(0x777777), 0);
@@ -144,7 +145,7 @@ void create_settings_ui() {
     lv_obj_set_size(wifi_btn, lv_pct(100), PT_SZ(44));
     lv_obj_set_style_bg_color(wifi_btn, lv_color_hex(0x555555), LV_PART_MAIN);
     lv_obj_t* wifi_btn_label = lv_label_create(wifi_btn);
-    lv_label_set_text(wifi_btn_label, "WiFi Setup");
+    lv_label_set_text(wifi_btn_label, T("set.wifi_setup"));
     lv_obj_set_style_text_font(wifi_btn_label, &lv_font_montserrat_14, 0);
     lv_obj_center(wifi_btn_label);
     lv_obj_add_event_cb(wifi_btn, wifi_setup_btn_cb, LV_EVENT_CLICKED, NULL);
@@ -157,7 +158,7 @@ void create_settings_ui() {
     lv_obj_set_size(setup_btn, lv_pct(100), PT_SZ(44));
     lv_obj_set_style_bg_color(setup_btn, lv_color_hex(0x3465a4), LV_PART_MAIN);
     lv_obj_t* setup_btn_label = lv_label_create(setup_btn);
-    lv_label_set_text(setup_btn_label, "Printer setup");
+    lv_label_set_text(setup_btn_label, T("set.printer_setup"));
     lv_obj_set_style_text_font(setup_btn_label, &lv_font_montserrat_14, 0);
     lv_obj_center(setup_btn_label);
     lv_obj_add_event_cb(setup_btn, printer_setup_btn_cb, LV_EVENT_CLICKED, NULL);
@@ -177,7 +178,7 @@ void create_settings_ui() {
     lv_obj_set_height(view_btn, lv_pct(100));
     lv_obj_set_style_bg_color(view_btn, lv_color_hex(0x555555), LV_PART_MAIN);
     g_view_btn_label = lv_label_create(view_btn);
-    lv_label_set_text(g_view_btn_label, g_screensaver_3d ? "Screensaver: 3D" : "Screensaver: 2D");
+    lv_label_set_text(g_view_btn_label, g_screensaver_3d ? T("set.saver_3d") : T("set.saver_2d"));
     lv_obj_set_style_text_font(g_view_btn_label, &lv_font_montserrat_14, 0);
     lv_obj_center(g_view_btn_label);
     lv_obj_add_event_cb(view_btn, view_toggle_cb, LV_EVENT_CLICKED, NULL);
@@ -187,7 +188,7 @@ void create_settings_ui() {
     lv_obj_set_height(scale_btn, lv_pct(100));
     lv_obj_set_style_bg_color(scale_btn, lv_color_hex(0x8e44ad), LV_PART_MAIN);
     lv_obj_t* scale_lbl = lv_label_create(scale_btn);
-    lv_label_set_text(scale_lbl, "Schaal beheren");
+    lv_label_set_text(scale_lbl, T("set.manage_scale"));
     lv_obj_set_style_text_font(scale_lbl, &lv_font_montserrat_14, 0);
     lv_obj_center(scale_lbl);
     lv_obj_add_event_cb(scale_btn, scale_open_cb, LV_EVENT_CLICKED, NULL);
@@ -204,7 +205,7 @@ void create_settings_ui() {
     lv_obj_clear_flag(bright_row, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t* bl = lv_label_create(bright_row);
-    lv_label_set_text(bl, "Brightness");
+    lv_label_set_text(bl, T("dash.brightness"));
     lv_obj_set_style_text_font(bl, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(bl, lv_color_hex(0x999999), 0);
 
@@ -218,7 +219,7 @@ void create_settings_ui() {
     lv_obj_set_size(back_btn, lv_pct(100), PT_SZ(46));
     lv_obj_set_style_bg_color(back_btn, lv_color_hex(0x3465a4), LV_PART_MAIN);
     lv_obj_t* back_label = lv_label_create(back_btn);
-    lv_label_set_text(back_label, "Back");
+    lv_label_set_text(back_label, T("back"));
     lv_obj_set_style_text_font(back_label, &lv_font_montserrat_18, 0);
     lv_obj_center(back_label);
     lv_obj_add_event_cb(back_btn, back_btn_cb, LV_EVENT_CLICKED, NULL);

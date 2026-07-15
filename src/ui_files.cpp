@@ -1,4 +1,5 @@
 #include "ui_files.h"
+#include "lang.h"
 #include "ui_printer.h"
 #include "bambu_ftp.h"
 #include "bambu_mqtt.h"
@@ -128,7 +129,7 @@ static void update_ams_rows_visibility() {
         if (g_ams_enabled) lv_obj_clear_flag(g_color_rows[i], LV_OBJ_FLAG_HIDDEN);
         else lv_obj_add_flag(g_color_rows[i], LV_OBJ_FLAG_HIDDEN);
     }
-    lv_label_set_text(g_ams_toggle_label, g_ams_enabled ? "Use AMS: On" : "Use AMS: Off (external spool)");
+    lv_label_set_text(g_ams_toggle_label, g_ams_enabled ? T("files.ams_on") : T("files.ams_off_ext"));
 }
 
 static void ams_toggle_cb(lv_event_t* e) {
@@ -228,7 +229,7 @@ static void render_page() {
         lv_obj_set_user_data(g_row_btns[i], (void*)(uintptr_t)idx);
     }
 
-    lv_label_set_text_fmt(g_page_label, "Page %d/%d - %d item(s)", g_page + 1, total_pages, g_entry_count);
+    lv_label_set_text_fmt(g_page_label, T("files.page"), g_page + 1, total_pages, g_entry_count);
     lv_label_set_text(g_path_label, g_current_path.c_str());
     if (g_current_path == "/") lv_obj_add_state(g_up_btn, LV_STATE_DISABLED);
     else lv_obj_clear_state(g_up_btn, LV_STATE_DISABLED);
@@ -237,7 +238,7 @@ static void render_page() {
 // Only queues the request - see g_list_requested above for why the actual
 // bambu_ftp_list() call must not happen here.
 static void request_list_refresh() {
-    lv_label_set_text(g_status_label, "Loading...");
+    lv_label_set_text(g_status_label, T("loading"));
     g_list_requested = true;
 }
 
@@ -252,7 +253,7 @@ static void row_click_cb(lv_event_t* e) {
     } else {
         // Starting a print is blocked by Bambu firmware >= 01.08 from third-party
         // tools, so this is browse-only; start prints from Studio/Handy.
-        lv_label_set_text(g_status_label, "Printen gaat via Bambu Studio/Handy (firmware blokkeert start van derden).");
+        lv_label_set_text(g_status_label, T("files.print_blocked"));
     }
 }
 
@@ -308,7 +309,7 @@ void create_files_ui() {
     lv_obj_clear_flag(header, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t* title = lv_label_create(header);
-    lv_label_set_text(title, "Files");
+    lv_label_set_text(title, T("nav.files"));
     lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
     lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
 
@@ -316,7 +317,7 @@ void create_files_ui() {
     lv_obj_set_size(back_btn, PT_SZ(80), PT_SZ(30));
     lv_obj_set_style_bg_color(back_btn, lv_color_hex(0x333333), LV_PART_MAIN);
     lv_obj_t* back_label = lv_label_create(back_btn);
-    lv_label_set_text(back_label, "Back");
+    lv_label_set_text(back_label, T("back"));
     lv_obj_set_style_text_font(back_label, &lv_font_montserrat_14, 0);
     lv_obj_center(back_label);
     lv_obj_add_event_cb(back_btn, back_btn_cb, LV_EVENT_CLICKED, NULL);
@@ -358,7 +359,7 @@ void create_files_ui() {
     lv_obj_set_size(refresh_btn, PT_SZ(90), PT_SZ(30));
     lv_obj_set_style_bg_color(refresh_btn, lv_color_hex(0x333333), LV_PART_MAIN);
     lv_obj_t* refresh_label = lv_label_create(refresh_btn);
-    lv_label_set_text(refresh_label, "Refresh");
+    lv_label_set_text(refresh_label, T("refresh"));
     lv_obj_set_style_text_font(refresh_label, &lv_font_montserrat_14, 0);
     lv_obj_center(refresh_label);
     lv_obj_add_event_cb(refresh_btn, refresh_btn_cb, LV_EVENT_CLICKED, NULL);
@@ -391,7 +392,7 @@ void create_files_ui() {
     lv_obj_set_size(prev_btn, PT_SZ(70), PT_SZ(28));
     lv_obj_set_style_bg_color(prev_btn, lv_color_hex(0x333333), LV_PART_MAIN);
     lv_obj_t* prev_label = lv_label_create(prev_btn);
-    lv_label_set_text(prev_label, "< Prev");
+    lv_label_set_text(prev_label, T("files.prev"));
     lv_obj_set_style_text_font(prev_label, &lv_font_montserrat_12, 0);
     lv_obj_center(prev_label);
     lv_obj_add_event_cb(prev_btn, page_prev_cb, LV_EVENT_CLICKED, NULL);
@@ -405,7 +406,7 @@ void create_files_ui() {
     lv_obj_set_size(next_btn, PT_SZ(70), PT_SZ(28));
     lv_obj_set_style_bg_color(next_btn, lv_color_hex(0x333333), LV_PART_MAIN);
     lv_obj_t* next_label = lv_label_create(next_btn);
-    lv_label_set_text(next_label, "Next >");
+    lv_label_set_text(next_label, T("files.next"));
     lv_obj_set_style_text_font(next_label, &lv_font_montserrat_12, 0);
     lv_obj_center(next_label);
     lv_obj_add_event_cb(next_btn, page_next_cb, LV_EVENT_CLICKED, NULL);
@@ -441,7 +442,7 @@ void create_files_ui() {
     lv_obj_set_size(g_ams_toggle_btn, lv_pct(100), PT_SZ(34));
     lv_obj_set_style_bg_color(g_ams_toggle_btn, lv_color_hex(0x333333), LV_PART_MAIN);
     g_ams_toggle_label = lv_label_create(g_ams_toggle_btn);
-    lv_label_set_text(g_ams_toggle_label, "Use AMS: Off");
+    lv_label_set_text(g_ams_toggle_label, T("files.ams_off"));
     lv_obj_set_style_text_font(g_ams_toggle_label, &lv_font_montserrat_14, 0);
     lv_obj_center(g_ams_toggle_label);
     lv_obj_add_event_cb(g_ams_toggle_btn, ams_toggle_cb, LV_EVENT_CLICKED, NULL);
@@ -457,7 +458,7 @@ void create_files_ui() {
         lv_obj_clear_flag(row, LV_OBJ_FLAG_SCROLLABLE);
 
         lv_obj_t* lbl = lv_label_create(row);
-        lv_label_set_text_fmt(lbl, "Color %d:", i + 1);
+        lv_label_set_text_fmt(lbl, T("files.color"), i + 1);
         lv_obj_set_style_text_font(lbl, &lv_font_montserrat_14, 0);
         lv_obj_set_style_text_color(lbl, lv_color_hex(0xAAAAAA), 0);
 
@@ -465,7 +466,7 @@ void create_files_ui() {
         lv_obj_set_size(cyc_btn, PT_SZ(160), PT_SZ(28));
         lv_obj_set_style_bg_color(cyc_btn, lv_color_hex(0x333333), LV_PART_MAIN);
         lv_obj_t* cyc_label = lv_label_create(cyc_btn);
-        lv_label_set_text(cyc_label, "Skip");
+        lv_label_set_text(cyc_label, T("files.skip"));
         lv_obj_set_style_text_font(cyc_label, &lv_font_montserrat_14, 0);
         lv_obj_center(cyc_label);
         lv_obj_add_event_cb(cyc_btn, color_cycle_cb, LV_EVENT_CLICKED, (void*)(uintptr_t)i);
@@ -487,7 +488,7 @@ void create_files_ui() {
     lv_obj_set_size(cancel_btn, PT_SZ(120), PT_SZ(40));
     lv_obj_set_style_bg_color(cancel_btn, lv_color_hex(0x555555), LV_PART_MAIN);
     lv_obj_t* cancel_label = lv_label_create(cancel_btn);
-    lv_label_set_text(cancel_label, "Cancel");
+    lv_label_set_text(cancel_label, T("cancel"));
     lv_obj_center(cancel_label);
     lv_obj_add_event_cb(cancel_btn, confirm_cancel_cb, LV_EVENT_CLICKED, NULL);
 
@@ -495,7 +496,7 @@ void create_files_ui() {
     lv_obj_set_size(print_btn, PT_SZ(160), PT_SZ(40));
     lv_obj_set_style_bg_color(print_btn, lv_color_hex(0x2ecc71), LV_PART_MAIN);
     lv_obj_t* print_label = lv_label_create(print_btn);
-    lv_label_set_text(print_label, "Print");
+    lv_label_set_text(print_label, T("files.print"));
     lv_obj_set_style_text_font(print_label, &lv_font_montserrat_14, 0);
     lv_obj_center(print_label);
     lv_obj_add_event_cb(print_btn, confirm_print_cb, LV_EVENT_CLICKED, NULL);

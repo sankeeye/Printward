@@ -2,6 +2,7 @@
 // tap a field -> on-screen keyboard; "Save" defers the slow work (file write +
 // MQTT reconnect) to tablet_setup_loop() so it never runs inside a click cb.
 #include "ui_tablet_setup.h"
+#include "lang.h"
 #include "ui_printer.h"
 #include "ui_settings.h"
 #include "storage.h"
@@ -42,7 +43,7 @@ static void kb_event_cb(lv_event_t* e) {
 static void save_btn_cb(lv_event_t* e) {
     (void)e;
     g_save_requested = true;
-    if (g_status_label) lv_label_set_text(g_status_label, "Saving...");
+    if (g_status_label) lv_label_set_text(g_status_label, T("saving"));
 }
 
 static lv_obj_t* add_field(lv_obj_t* parent, const char* label, const char* value) {
@@ -88,7 +89,7 @@ void create_tablet_setup_ui() {
     lv_obj_clear_flag(header, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t* title = lv_label_create(header);
-    lv_label_set_text(title, "Printer setup");
+    lv_label_set_text(title, T("set.printer_setup"));
     lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
     lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
 
@@ -96,7 +97,7 @@ void create_tablet_setup_ui() {
     lv_obj_set_size(back_btn, PT_SZ(80), PT_SZ(30));
     lv_obj_set_style_bg_color(back_btn, lv_color_hex(0x333333), LV_PART_MAIN);
     lv_obj_t* back_label = lv_label_create(back_btn);
-    lv_label_set_text(back_label, "Back");
+    lv_label_set_text(back_label, T("back"));
     lv_obj_set_style_text_font(back_label, &lv_font_montserrat_14, 0);
     lv_obj_center(back_label);
     lv_obj_add_event_cb(back_btn, back_btn_cb, LV_EVENT_CLICKED, NULL);
@@ -111,7 +112,7 @@ void create_tablet_setup_ui() {
     lv_obj_set_size(save_btn, lv_pct(100), PT_SZ(44));
     lv_obj_set_style_bg_color(save_btn, lv_color_hex(0x2ecc71), LV_PART_MAIN);
     lv_obj_t* save_label = lv_label_create(save_btn);
-    lv_label_set_text(save_label, "Save & connect");
+    lv_label_set_text(save_label, T("set.save_connect"));
     lv_obj_set_style_text_font(save_label, &lv_font_montserrat_14, 0);
     lv_obj_center(save_label);
     lv_obj_add_event_cb(save_btn, save_btn_cb, LV_EVENT_CLICKED, NULL);

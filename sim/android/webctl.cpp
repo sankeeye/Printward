@@ -11,6 +11,7 @@
 // MAIN thread, keeping PubSubClient single-threaded (it is not thread-safe).
 #include "webctl.h"
 #include "ui_move.h"
+#include "ui_printer.h"    // create_printer_ui(): rebuild the screen on a language change
 #include "scale_client.h"     // g_scale_ip (exposed to the web Scale tab)
 #include "filament_track.h"   // filament_remaining(), g_low_threshold_g
 #include "spool_db.h"         // spool library + load-to-AMS
@@ -268,7 +269,15 @@ void webctl_loop() {
                     if (lw != g_low_threshold_g) { g_low_threshold_g = lw; filament_save(); }
                 }
                 if (parse_query(c.arg, "lang", v, sizeof(v)) && v[0]) {
-                    if (strcmp(v, g_lang)) lang_set(v);   // persists + reloads the table
+                    if (strcmp(v, g_lang)) {
+                        lang_set(v);   // persists + reloads the table
+                        // A label takes its text when the screen is built, so the
+                        // running UI would sit in the old language until a restart -
+                        // switching did nothing you could see. Rebuild it here, on the
+                        // main thread, where touching LVGL is safe. Sub-screens pick
+                        // the new language up when they are next opened.
+                        if (g_main_screen) create_printer_ui();
+                    }
                 }
                 save_settings();
                 if (viewchg) screensaver_view_changed();

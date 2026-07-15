@@ -86,67 +86,67 @@ const char* move_perform(int code, float step) {
         case MOVE_ZM: send_axis('Z', -step, 600);  set_hint("Z-", 0xFFFFFF); return "Z-";
         case MOVE_HOME:
             bambu_cmd_gcode("G28");
-            set_hint("Homing...", 0x2ecc71);
-            return "Homing";
+            set_hint(T("move.homing"), 0x2ecc71);
+            return T("move.homing");
         case MOVE_EEXT: {
             float len = step > 0 ? step : EXTRUDE_MM;
             send_axis('E', len, EXTRUDE_FEED);
-            set_hint("Extruderen...", 0x27ae60);
-            return "Extrude";
+            set_hint(T("move.extruding"), 0x27ae60);
+            return T("move.extruding");
         }
         case MOVE_ERET: {
             float len = step > 0 ? step : EXTRUDE_MM;
             send_axis('E', -len, EXTRUDE_FEED);
-            set_hint("Terugtrekken...", 0x27ae60);
-            return "Retract";
+            set_hint(T("move.retracting"), 0x27ae60);
+            return T("move.retracting");
         }
         case MOVE_PREHEAT: {
             char buf[24];
             snprintf(buf, sizeof(buf), "M104 S%d", PREHEAT_TEMP);
             bambu_cmd_gcode(buf);
-            set_hint("Opwarmen naar 220\xC2\xB0" "C...", 0xe67e22);
-            return "Preheat";
+            set_hint(T("move.preheating"), 0xe67e22);
+            return T("move.preheating");
         }
         case MOVE_COOL:
             bambu_cmd_gcode("M104 S0");
-            set_hint("Nozzle uit", 0x2980b9);
-            return "Cooldown";
+            set_hint(T("move.nozzle_off"), 0x2980b9);
+            return T("move.nozzle_off");
         case MOVE_BED_HEAT: {
             int t = (int)step; if (t <= 0) t = 60;
             char buf[24]; snprintf(buf, sizeof(buf), "M140 S%d", t);
-            bambu_cmd_gcode(buf); set_hint("Bed opwarmen...", 0xe67e22); return "Bed heat";
+            bambu_cmd_gcode(buf); set_hint(T("move.bed_heating"), 0xe67e22); return T("move.bed_heating");
         }
         case MOVE_BED_COOL:
-            bambu_cmd_gcode("M140 S0"); set_hint("Bed uit", 0x2980b9); return "Bed cool";
+            bambu_cmd_gcode("M140 S0"); set_hint(T("move.bed_off"), 0x2980b9); return T("move.bed_off");
         case MOVE_SET_NOZZLE: {
             int t = (int)step; if (t < 0) t = 0;
             char buf[24]; snprintf(buf, sizeof(buf), "M104 S%d", t);
-            bambu_cmd_gcode(buf); set_hint("Nozzle ingesteld", 0xe67e22); return "Nozzle set";
+            bambu_cmd_gcode(buf); set_hint(T("move.nozzle_set"), 0xe67e22); return T("move.nozzle_set");
         }
         case MOVE_SET_BED: {
             int t = (int)step; if (t < 0) t = 0;
             char buf[24]; snprintf(buf, sizeof(buf), "M140 S%d", t);
-            bambu_cmd_gcode(buf); set_hint("Bed ingesteld", 0xe67e22); return "Bed set";
+            bambu_cmd_gcode(buf); set_hint(T("move.bed_set"), 0xe67e22); return T("move.bed_set");
         }
-        case MOVE_PLA:  bambu_cmd_gcode("M104 S220\nM140 S60"); set_hint("PLA voorverwarmen", 0xe67e22); return "PLA";
-        case MOVE_PETG: bambu_cmd_gcode("M104 S245\nM140 S70"); set_hint("PETG voorverwarmen", 0xe67e22); return "PETG";
-        case MOVE_ABS:  bambu_cmd_gcode("M104 S260\nM140 S90"); set_hint("ABS voorverwarmen", 0xe67e22); return "ABS";
-        case MOVE_TPU:  bambu_cmd_gcode("M104 S230\nM140 S35"); set_hint("TPU voorverwarmen", 0xe67e22); return "TPU";
+        case MOVE_PLA:  bambu_cmd_gcode("M104 S220\nM140 S60"); set_hint(T("move.preheat_pla"), 0xe67e22); return T("move.preheat_pla");
+        case MOVE_PETG: bambu_cmd_gcode("M104 S245\nM140 S70"); set_hint(T("move.preheat_petg"), 0xe67e22); return T("move.preheat_petg");
+        case MOVE_ABS:  bambu_cmd_gcode("M104 S260\nM140 S90"); set_hint(T("move.preheat_abs"), 0xe67e22); return T("move.preheat_abs");
+        case MOVE_TPU:  bambu_cmd_gcode("M104 S230\nM140 S35"); set_hint(T("move.preheat_tpu"), 0xe67e22); return T("move.preheat_tpu");
         case MOVE_FAN: {
             int pct = (int)step; if (pct < 0) pct = 0; if (pct > 100) pct = 100;
             char buf[24];
             if (pct <= 0) snprintf(buf, sizeof(buf), "M107");
             else          snprintf(buf, sizeof(buf), "M106 S%d", (pct * 255) / 100);
-            bambu_cmd_gcode(buf); set_hint("Fan ingesteld", 0x2980b9); return "Fan";
+            bambu_cmd_gcode(buf); set_hint(T("move.fan_set"), 0x2980b9); return T("move.fan_set");
         }
         case MOVE_MOTORS_OFF:
-            bambu_cmd_gcode("M18"); set_hint("Motoren uit", 0x2980b9); return "Motors off";
-        case MOVE_HOME_X: bambu_cmd_gcode("G28 X"); set_hint("Home X...", 0x2ecc71); return "Home X";
-        case MOVE_HOME_Y: bambu_cmd_gcode("G28 Y"); set_hint("Home Y...", 0x2ecc71); return "Home Y";
-        case MOVE_HOME_Z: bambu_cmd_gcode("G28 Z"); set_hint("Home Z...", 0x2ecc71); return "Home Z";
-        case MOVE_CENTER: bambu_cmd_gcode("G90\nG1 X128 Y128 F6000"); set_hint("Naar midden", 0xFFFFFF); return "Center";
-        case MOVE_FRONT:  bambu_cmd_gcode("G90\nG1 Y250 F6000"); set_hint("Bed naar voren", 0xFFFFFF); return "Front";
-        case MOVE_ZUP:    bambu_cmd_gcode("G91\nG1 Z30 F600\nG90"); set_hint("Z omhoog", 0xFFFFFF); return "Z up";
+            bambu_cmd_gcode("M18"); set_hint(T("move.motors_off"), 0x2980b9); return T("move.motors_off");
+        case MOVE_HOME_X: bambu_cmd_gcode("G28 X"); set_hint(T("move.homing_x"), 0x2ecc71); return T("move.homing_x");
+        case MOVE_HOME_Y: bambu_cmd_gcode("G28 Y"); set_hint(T("move.homing_y"), 0x2ecc71); return T("move.homing_y");
+        case MOVE_HOME_Z: bambu_cmd_gcode("G28 Z"); set_hint(T("move.homing_z"), 0x2ecc71); return T("move.homing_z");
+        case MOVE_CENTER: bambu_cmd_gcode("G90\nG1 X128 Y128 F6000"); set_hint(T("move.center"), 0xFFFFFF); return T("move.center");
+        case MOVE_FRONT:  bambu_cmd_gcode("G90\nG1 Y250 F6000"); set_hint(T("move.bed_front"), 0xFFFFFF); return T("move.bed_front");
+        case MOVE_ZUP:    bambu_cmd_gcode("G91\nG1 Z30 F600\nG90"); set_hint(T("move.z_up"), 0xFFFFFF); return T("move.z_up");
     }
     return "";
 }
@@ -256,14 +256,14 @@ static void create_move_extra_ui() {
 
     lv_obj_t* header = mk_wrap_row(root);
     lv_obj_t* title = lv_label_create(header);
-    lv_label_set_text(title, "Regelen");
+    lv_label_set_text(title, T("move.controls"));
     lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
     lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
     lv_obj_set_flex_grow(title, 1);
     lv_obj_t* bb = lv_btn_create(header);
     lv_obj_set_size(bb, PT_SZ(90), PT_SZ(40));
     lv_obj_set_style_bg_color(bb, lv_color_hex(0x333333), LV_PART_MAIN);
-    lv_obj_t* bl = lv_label_create(bb); lv_label_set_text(bl, "Terug");
+    lv_obj_t* bl = lv_label_create(bb); lv_label_set_text(bl, T("back"));
     lv_obj_set_style_text_font(bl, &lv_font_montserrat_14, 0); lv_obj_center(bl);
     lv_obj_add_event_cb(bb, extra_back_cb, LV_EVENT_CLICKED, NULL);
 
@@ -320,12 +320,12 @@ void create_move_ui() {
     lv_obj_clear_flag(header, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t* title = lv_label_create(header);
-    lv_label_set_text(title, "Move");
+    lv_label_set_text(title, T("nav.move"));
     lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
     lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
 
     lv_obj_t* step_lbl = lv_label_create(header);
-    lv_label_set_text(step_lbl, "Stap:");
+    lv_label_set_text(step_lbl, T("move.step"));
     lv_obj_set_style_text_font(step_lbl, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(step_lbl, lv_color_hex(0x999999), 0);
     lv_obj_set_style_pad_left(step_lbl, PT_SZ(16), 0);
@@ -351,7 +351,7 @@ void create_move_ui() {
     lv_obj_set_size(reg_btn, PT_SZ(110), PT_SZ(34));
     lv_obj_set_style_bg_color(reg_btn, lv_color_hex(0x8e44ad), LV_PART_MAIN);
     lv_obj_t* reg_lbl = lv_label_create(reg_btn);
-    lv_label_set_text(reg_lbl, "Regelen");
+    lv_label_set_text(reg_lbl, T("move.controls"));
     lv_obj_set_style_text_font(reg_lbl, &lv_font_montserrat_14, 0);
     lv_obj_center(reg_lbl);
     lv_obj_add_event_cb(reg_btn, regelen_cb, LV_EVENT_CLICKED, NULL);
@@ -362,7 +362,7 @@ void create_move_ui() {
     lv_obj_add_flag(back_btn, LV_OBJ_FLAG_FLOATING);        // pin to the right edge
     lv_obj_align(back_btn, LV_ALIGN_RIGHT_MID, 0, 0);
     lv_obj_t* back_label = lv_label_create(back_btn);
-    lv_label_set_text(back_label, "Back");
+    lv_label_set_text(back_label, T("back"));
     lv_obj_set_style_text_font(back_label, &lv_font_montserrat_14, 0);
     lv_obj_center(back_label);
     lv_obj_add_event_cb(back_btn, back_btn_cb, LV_EVENT_CLICKED, NULL);
@@ -423,13 +423,13 @@ void create_move_ui() {
     lv_obj_t* ext = lv_btn_create(ecol);
     lv_obj_set_size(ext, lv_pct(100), PT_SZ(62));
     lv_obj_set_style_bg_color(ext, lv_color_hex(0x27ae60), LV_PART_MAIN);
-    { lv_obj_t* l = lv_label_create(ext); lv_label_set_text(l, "Extrude 10mm");
+    { lv_obj_t* l = lv_label_create(ext); lv_label_set_text(l, T("move.extrude_10"));
       lv_obj_set_style_text_font(l, &lv_font_montserrat_18, 0); lv_obj_center(l); }
     lv_obj_add_event_cb(ext, extrude_cb, LV_EVENT_CLICKED, (void*)(intptr_t)MOVE_EEXT);
     lv_obj_t* ret = lv_btn_create(ecol);
     lv_obj_set_size(ret, lv_pct(100), PT_SZ(62));
     lv_obj_set_style_bg_color(ret, lv_color_hex(0xd35400), LV_PART_MAIN);
-    { lv_obj_t* l = lv_label_create(ret); lv_label_set_text(l, "Retract 10mm");
+    { lv_obj_t* l = lv_label_create(ret); lv_label_set_text(l, T("move.retract_10"));
       lv_obj_set_style_text_font(l, &lv_font_montserrat_18, 0); lv_obj_center(l); }
     lv_obj_add_event_cb(ret, extrude_cb, LV_EVENT_CLICKED, (void*)(intptr_t)MOVE_ERET);
 
@@ -448,6 +448,6 @@ void create_move_ui() {
 
 void update_move_ui() {
     if (!g_move_screen || !g_noz_label) return;
-    lv_label_set_text_fmt(g_noz_label, "Nozzle %.0f/%.0f\xC2\xB0" "C",
+    lv_label_set_text_fmt(g_noz_label, T("move.nozzle_fmt"),
                           g_printer_status.nozzle_temp, g_printer_status.nozzle_target);
 }

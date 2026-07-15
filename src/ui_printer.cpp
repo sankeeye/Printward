@@ -110,13 +110,12 @@ static void show_stop_confirm() {
     lv_obj_clear_flag(box, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t* title = lv_label_create(box);
-    lv_label_set_text(title, "Print stoppen?");
+    lv_label_set_text(title, T("dash.stop_confirm_t"));
     lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
     lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
 
     lv_obj_t* txt = lv_label_create(box);
-    lv_label_set_text(txt, "Weet je zeker dat je de print wilt afbreken?\n"
-                           "Dit kan niet ongedaan worden gemaakt.");
+    lv_label_set_text(txt, T("dash.stop_confirm_b"));
     lv_obj_set_style_text_font(txt, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(txt, lv_color_hex(0xAAAAAA), 0);
     lv_obj_set_width(txt, lv_pct(100));
@@ -139,7 +138,7 @@ static void show_stop_confirm() {
     lv_obj_set_height(cancel, 56);
     lv_obj_set_style_bg_color(cancel, lv_color_hex(0x555555), LV_PART_MAIN);
     lv_obj_t* cl = lv_label_create(cancel);
-    lv_label_set_text(cl, "Annuleren");
+    lv_label_set_text(cl, T("cancel"));
     lv_obj_set_style_text_font(cl, &lv_font_montserrat_18, 0);
     lv_obj_center(cl);
     lv_obj_add_event_cb(cancel, stop_confirm_no_cb, LV_EVENT_CLICKED, NULL);
@@ -149,7 +148,7 @@ static void show_stop_confirm() {
     lv_obj_set_height(confirm, 56);
     lv_obj_set_style_bg_color(confirm, lv_color_hex(0xa40000), LV_PART_MAIN);
     lv_obj_t* cf = lv_label_create(confirm);
-    lv_label_set_text(cf, "Stoppen");
+    lv_label_set_text(cf, T("dash.stop_yes"));
     lv_obj_set_style_text_font(cf, &lv_font_montserrat_18, 0);
     lv_obj_center(cf);
     lv_obj_add_event_cb(confirm, stop_confirm_yes_cb, LV_EVENT_CLICKED, NULL);
@@ -286,7 +285,7 @@ void create_printer_ui() {
     lv_obj_set_size(move_btn, PT_SZ(74), PT_SZ(26));
     lv_obj_set_style_bg_color(move_btn, lv_color_hex(0x333333), LV_PART_MAIN);
     lv_obj_t* move_label = lv_label_create(move_btn);
-    lv_label_set_text(move_label, "Move");
+    lv_label_set_text(move_label, T("nav.move"));
     lv_obj_set_style_text_font(move_label, &lv_font_montserrat_12, 0);
     lv_obj_center(move_label);
     lv_obj_add_event_cb(move_btn, move_btn_cb, LV_EVENT_CLICKED, NULL);
@@ -296,7 +295,7 @@ void create_printer_ui() {
     lv_obj_set_size(spools_btn, PT_SZ(78), PT_SZ(26));
     lv_obj_set_style_bg_color(spools_btn, lv_color_hex(0x333333), LV_PART_MAIN);
     lv_obj_t* spools_label = lv_label_create(spools_btn);
-    lv_label_set_text(spools_label, "Spools");
+    lv_label_set_text(spools_label, T("nav.spools"));
     lv_obj_set_style_text_font(spools_label, &lv_font_montserrat_12, 0);
     lv_obj_center(spools_label);
     lv_obj_add_event_cb(spools_btn, spools_btn_cb, LV_EVENT_CLICKED, NULL);
@@ -306,7 +305,7 @@ void create_printer_ui() {
     lv_obj_set_size(files_btn, PT_SZ(80), PT_SZ(26));
     lv_obj_set_style_bg_color(files_btn, lv_color_hex(0x333333), LV_PART_MAIN);
     lv_obj_t* files_label = lv_label_create(files_btn);
-    lv_label_set_text(files_label, "Files");
+    lv_label_set_text(files_label, T("nav.files"));
     lv_obj_set_style_text_font(files_label, &lv_font_montserrat_12, 0);
     lv_obj_center(files_label);
     lv_obj_add_event_cb(files_btn, files_btn_cb, LV_EVENT_CLICKED, NULL);
@@ -315,7 +314,7 @@ void create_printer_ui() {
     lv_obj_set_size(settings_btn, PT_SZ(90), PT_SZ(26));
     lv_obj_set_style_bg_color(settings_btn, lv_color_hex(0x333333), LV_PART_MAIN);
     lv_obj_t* settings_label = lv_label_create(settings_btn);
-    lv_label_set_text(settings_label, "Settings");
+    lv_label_set_text(settings_label, T("nav.settings"));
     lv_obj_set_style_text_font(settings_label, &lv_font_montserrat_12, 0);
     lv_obj_center(settings_label);
     lv_obj_add_event_cb(settings_btn, settings_btn_cb, LV_EVENT_CLICKED, NULL);
@@ -334,7 +333,7 @@ void create_printer_ui() {
     lv_obj_clear_flag(state_col, LV_OBJ_FLAG_SCROLLABLE);
 
     g_state_label = lv_label_create(state_col);
-    lv_label_set_text(g_state_label, "Connecting...");
+    lv_label_set_text(g_state_label, T("dash.connecting"));
     lv_obj_set_style_text_font(g_state_label, &lv_font_montserrat_24, 0);
     lv_obj_set_style_text_color(g_state_label, lv_color_hex(0xFFFFFF), 0);
 
@@ -513,7 +512,7 @@ void create_printer_ui() {
     lv_obj_set_flex_align(g_ext_row, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_set_style_pad_gap(g_ext_row, 10, LV_PART_MAIN);
     lv_obj_t* ext_caption = lv_label_create(g_ext_row);
-    lv_label_set_text(ext_caption, "External spool:");
+    lv_label_set_text(ext_caption, T("dash.external_spool"));
     lv_obj_set_style_text_font(ext_caption, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(ext_caption, lv_color_hex(0x999999), 0);
 
@@ -574,7 +573,7 @@ void create_printer_ui() {
     // --- Brightness ---
     lv_obj_t* bright_row = make_row(root, 36);
     lv_obj_t* bl = lv_label_create(bright_row);
-    lv_label_set_text(bl, "Brightness");
+    lv_label_set_text(bl, T("dash.brightness"));
     lv_obj_set_style_text_font(bl, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(bl, lv_color_hex(0x999999), 0);
     lv_obj_set_style_pad_right(bl, 10, 0);
@@ -598,23 +597,25 @@ void update_status_label() {
         lv_obj_set_style_bg_color(g_conn_dot, lv_color_hex(connected ? 0x2ecc71 : 0xe74c3c), 0);
     if (g_conn_label) {
         if (connected) {
-            lv_label_set_text(g_conn_label, "Printer: connected");
+            lv_label_set_text(g_conn_label, T("dash.connected"));
             lv_obj_set_style_text_color(g_conn_label, lv_color_hex(0x2ecc71), 0);
         } else {
-            lv_label_set_text(g_conn_label, "Printer: offline");
+            lv_label_set_text(g_conn_label, T("dash.offline"));
             lv_obj_set_style_text_color(g_conn_label, lv_color_hex(0xe74c3c), 0);
         }
     }
 }
 
+// Bambu's gcode_state -> our key. The raw value is protocol, never shown as-is
+// unless it is a state we don't know about.
 static const char* friendly_state(const char* raw) {
-    if (strcmp(raw, "RUNNING") == 0) return "Printing";
-    if (strcmp(raw, "PAUSE") == 0) return "Paused";
-    if (strcmp(raw, "FINISH") == 0) return "Finished";
-    if (strcmp(raw, "FAILED") == 0) return "Failed";
-    if (strcmp(raw, "PREPARE") == 0) return "Preparing";
-    if (strcmp(raw, "IDLE") == 0) return "Idle";
-    return raw[0] ? raw : "Unknown";
+    if (strcmp(raw, "RUNNING") == 0) return T("dash.printing");
+    if (strcmp(raw, "PAUSE") == 0) return T("dash.paused");
+    if (strcmp(raw, "FINISH") == 0) return T("dash.finished");
+    if (strcmp(raw, "FAILED") == 0) return T("dash.failed");
+    if (strcmp(raw, "PREPARE") == 0) return T("dash.preparing");
+    if (strcmp(raw, "IDLE") == 0) return T("dash.idle");
+    return raw[0] ? raw : T("unknown");
 }
 
 static const char* speed_name(int level) {
@@ -642,7 +643,7 @@ void update_printer_ui() {
     PrinterStatus& s = g_printer_status;
 
     if (!s.have_data) {
-        lv_label_set_text(g_state_label, bambu_is_connected() ? "Waiting for data..." : "Connecting...");
+        lv_label_set_text(g_state_label, bambu_is_connected() ? T("dash.waiting") : T("dash.connecting"));
         lv_label_set_text(g_task_label, "");
         return;
     }
@@ -662,13 +663,17 @@ void update_printer_ui() {
     {
         char rt[128] = ""; int rp = 0;
         if (s.remaining_min > 0) {
-            rp += snprintf(rt + rp, sizeof(rt) - rp, "%dh%02dm left", s.remaining_min / 60, s.remaining_min % 60);
+            rp += snprintf(rt + rp, sizeof(rt) - rp, T("dash.left_fmt"), s.remaining_min / 60, s.remaining_min % 60);
             time_t fin = time(nullptr) + (time_t)s.remaining_min * 60;
             struct tm* ft = localtime(&fin);
-            if (ft) { char eta[8]; strftime(eta, sizeof(eta), "%H:%M", ft); rp += snprintf(rt + rp, sizeof(rt) - rp, "   klaar %s", eta); }
+            if (ft) {
+                char eta[8]; strftime(eta, sizeof(eta), "%H:%M", ft);
+                rp += snprintf(rt + rp, sizeof(rt) - rp, "   %s %s", T("dash.eta"), eta);
+            }
         }
         if (s.total_layers > 0)
-            rp += snprintf(rt + rp, sizeof(rt) - rp, "%slaag %d/%d", rp ? "   " : "", s.layer_num, s.total_layers);
+            rp += snprintf(rt + rp, sizeof(rt) - rp, "%s%s %d/%d", rp ? "   " : "",
+                           T("dash.layer"), s.layer_num, s.total_layers);
 #ifdef __ANDROID__
         // Append the running print's live filament use + cost when known.
         float lg = 0, lc = 0;
@@ -696,10 +701,10 @@ void update_printer_ui() {
             int hu = unit.humidity;
             if (hu >= 1) {
                 const char* hl; uint32_t hc;
-                if (hu <= 2)      { hl = "droog";    hc = 0x2ecc71; }
-                else if (hu == 3) { hl = "redelijk"; hc = 0xf39c12; }
-                else              { hl = "vochtig";  hc = 0xe74c3c; }
-                lv_label_set_text_fmt(g_ams_humidity_labels[u], "Vocht: %s", hl);
+                if (hu <= 2)      { hl = T("dash.hum_dry"); hc = 0x2ecc71; }
+                else if (hu == 3) { hl = T("dash.hum_ok");  hc = 0xf39c12; }
+                else              { hl = T("dash.hum_wet"); hc = 0xe74c3c; }
+                lv_label_set_text_fmt(g_ams_humidity_labels[u], T("dash.humidity_fmt"), hl);
                 lv_obj_set_style_text_color(g_ams_humidity_labels[u], lv_color_hex(hc), 0);
             } else {
                 lv_label_set_text(g_ams_humidity_labels[u], "");
@@ -768,7 +773,7 @@ void update_printer_ui() {
 
     bool is_paused = (strcmp(s.gcode_state, "PAUSE") == 0);
     bool is_running = (strcmp(s.gcode_state, "RUNNING") == 0);
-    if (g_pause_btn_label) lv_label_set_text(g_pause_btn_label, is_paused ? "Resume" : "Pause");
+    if (g_pause_btn_label) lv_label_set_text(g_pause_btn_label, is_paused ? T("dash.resume") : T("dash.pause"));
     lv_obj_set_style_bg_color(g_pause_btn, lv_color_hex(is_paused ? 0x2ecc71 : 0x3465a4), LV_PART_MAIN);
     // Pause/resume/stop only make sense while a job is active.
     if (is_running || is_paused) {
@@ -779,10 +784,10 @@ void update_printer_ui() {
         lv_obj_add_state(g_stop_btn, LV_STATE_DISABLED);
     }
 
-    if (g_light_btn_label) lv_label_set_text(g_light_btn_label, s.light_on ? "Light: On" : "Light: Off");
+    if (g_light_btn_label) lv_label_set_text(g_light_btn_label, s.light_on ? T("dash.light_on") : T("dash.light_off"));
     lv_obj_set_style_bg_color(g_light_btn, lv_color_hex(s.light_on ? 0xf1c40f : 0x555555), LV_PART_MAIN);
 
-    if (g_fan_btn_label) lv_label_set_text_fmt(g_fan_btn_label, "Fan %d%%", s.fan_speed_pct);
+    if (g_fan_btn_label) lv_label_set_text_fmt(g_fan_btn_label, T("dash.fan_pct"), s.fan_speed_pct);
 
     // Reflect the printer's current speed in the dropdown, but don't fight the
     // user while they have the list open.
@@ -797,10 +802,10 @@ void update_printer_ui() {
     if (g_warn_banner && g_warn_label) {
         float sh = filament_shortfall();
         if (sh > 0) {
-            lv_label_set_text_fmt(g_warn_label, "Filament tekort: ~%.0f g", sh);
+            lv_label_set_text_fmt(g_warn_label, T("dash.short_fmt"), sh);
             lv_obj_clear_flag(g_warn_banner, LV_OBJ_FLAG_HIDDEN);
         } else if (filament_any_low()) {
-            lv_label_set_text(g_warn_label, "Filament bijna op");
+            lv_label_set_text(g_warn_label, T("dash.warn_low"));
             lv_obj_clear_flag(g_warn_banner, LV_OBJ_FLAG_HIDDEN);
         } else {
             lv_obj_add_flag(g_warn_banner, LV_OBJ_FLAG_HIDDEN);
@@ -842,7 +847,7 @@ void show_update_screen() {
     lv_obj_set_style_radius(cont, 10, LV_PART_MAIN);
 
     g_update_label = lv_label_create(cont);
-    lv_label_set_text(g_update_label, "Updating System...");
+    lv_label_set_text(g_update_label, T("sys.updating"));
     lv_obj_set_style_text_color(g_update_label, lv_color_hex(0xffffff), LV_PART_MAIN);
     lv_obj_set_style_text_align(g_update_label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_obj_align(g_update_label, LV_ALIGN_TOP_MID, 0, 20);

@@ -1,4 +1,5 @@
 #include "ui_wifi.h"
+#include "lang.h"
 #include "ui_printer.h"
 #include "ui_settings.h"
 #include "storage.h"
@@ -42,7 +43,7 @@ static void back_btn_cb(lv_event_t* e) {
 static void select_ssid(const char* ssid) {
     strncpy(g_selected_ssid, ssid, 31);
     g_selected_ssid[31] = '\0';
-    lv_label_set_text_fmt(g_selected_label, "Selected: %s", g_selected_ssid);
+    lv_label_set_text_fmt(g_selected_label, T("wifi.selected"), g_selected_ssid);
     // Not auto-focusing the password field here: this UI has no keyboard/
     // group-based input, only the touchscreen, and LVGL's FOCUSED event
     // (which shows the on-screen keyboard, see pass_ta_event_cb) is driven
@@ -60,7 +61,7 @@ static void list_item_cb(lv_event_t* e) {
 static void scan_btn_cb(lv_event_t* e) {
     if (g_scanning) return;
     lv_obj_clean(g_wifi_list);
-    lv_label_set_text(g_scan_status_label, "Scanning...");
+    lv_label_set_text(g_scan_status_label, T("wifi.scanning"));
     // Async - returns immediately, doesn't block lv_task_handler(). Actual
     // results are picked up by wifi_ui_loop() polling WiFi.scanComplete().
     WiFi.scanNetworks(true);
@@ -86,7 +87,7 @@ static void keyboard_event_cb(lv_event_t* e) {
 
 static void connect_btn_cb(lv_event_t* e) {
     if (g_selected_ssid[0] == '\0') {
-        lv_label_set_text(g_connect_msg_label, "Pick a network above first");
+        lv_label_set_text(g_connect_msg_label, T("wifi.pick_first"));
         return;
     }
 
@@ -99,7 +100,7 @@ static void connect_btn_cb(lv_event_t* e) {
     // comment: WiFi.disconnect()/begin() and save_settings() are slow enough
     // to tear the frame if run straight from this click callback.
     g_connect_requested = true;
-    lv_label_set_text(g_connect_msg_label, "Connecting...");
+    lv_label_set_text(g_connect_msg_label, T("dash.connecting"));
 }
 
 void create_wifi_ui() {
@@ -135,7 +136,7 @@ void create_wifi_ui() {
     lv_obj_clear_flag(header, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t* title = lv_label_create(header);
-    lv_label_set_text(title, "WiFi Setup");
+    lv_label_set_text(title, T("set.wifi_setup"));
     lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
     lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
 
@@ -143,7 +144,7 @@ void create_wifi_ui() {
     lv_obj_set_size(back_btn, 80, 30);
     lv_obj_set_style_bg_color(back_btn, lv_color_hex(0x333333), LV_PART_MAIN);
     lv_obj_t* back_label = lv_label_create(back_btn);
-    lv_label_set_text(back_label, "Back");
+    lv_label_set_text(back_label, T("back"));
     lv_obj_set_style_text_font(back_label, &lv_font_montserrat_14, 0);
     lv_obj_center(back_label);
     lv_obj_add_event_cb(back_btn, back_btn_cb, LV_EVENT_CLICKED, NULL);
@@ -163,7 +164,7 @@ void create_wifi_ui() {
     lv_obj_set_size(g_scan_btn, 160, 40);
     lv_obj_set_style_bg_color(g_scan_btn, lv_color_hex(0x3465a4), LV_PART_MAIN);
     lv_obj_t* scan_label = lv_label_create(g_scan_btn);
-    lv_label_set_text(scan_label, "Scan for WiFi");
+    lv_label_set_text(scan_label, T("wifi.scan"));
     lv_obj_set_style_text_font(scan_label, &lv_font_montserrat_14, 0);
     lv_obj_center(scan_label);
     lv_obj_add_event_cb(g_scan_btn, scan_btn_cb, LV_EVENT_CLICKED, NULL);
@@ -174,7 +175,7 @@ void create_wifi_ui() {
     lv_obj_set_style_text_color(g_scan_status_label, lv_color_hex(0x999999), 0);
 
     g_selected_label = lv_label_create(root);
-    lv_label_set_text(g_selected_label, "Selected: none");
+    lv_label_set_text(g_selected_label, T("wifi.selected_none"));
     lv_obj_set_style_text_font(g_selected_label, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(g_selected_label, lv_color_hex(0xFFFFFF), 0);
 
@@ -186,7 +187,7 @@ void create_wifi_ui() {
     lv_obj_set_size(g_pass_ta, lv_pct(100), 40);
     lv_textarea_set_password_mode(g_pass_ta, true);
     lv_textarea_set_one_line(g_pass_ta, true);
-    lv_textarea_set_placeholder_text(g_pass_ta, "Password");
+    lv_textarea_set_placeholder_text(g_pass_ta, T("scale.password"));
     lv_obj_add_event_cb(g_pass_ta, pass_ta_event_cb, LV_EVENT_CLICKED, NULL);
 
     lv_obj_t* connect_row = lv_obj_create(root);
@@ -203,7 +204,7 @@ void create_wifi_ui() {
     lv_obj_set_size(connect_btn, 160, 44);
     lv_obj_set_style_bg_color(connect_btn, lv_color_hex(0x2ecc71), LV_PART_MAIN);
     lv_obj_t* connect_label = lv_label_create(connect_btn);
-    lv_label_set_text(connect_label, "Connect & Save");
+    lv_label_set_text(connect_label, T("wifi.connect_save"));
     lv_obj_set_style_text_font(connect_label, &lv_font_montserrat_14, 0);
     lv_obj_center(connect_label);
     lv_obj_add_event_cb(connect_btn, connect_btn_cb, LV_EVENT_CLICKED, NULL);
@@ -252,12 +253,12 @@ void wifi_ui_loop() {
         if (st == WL_CONNECTED) {
             g_connecting = false;
             if (g_connect_msg_label) {
-                lv_label_set_text_fmt(g_connect_msg_label, "Connected! IP %s", WiFi.localIP().toString().c_str());
+                lv_label_set_text_fmt(g_connect_msg_label, T("wifi.connected"), WiFi.localIP().toString().c_str());
             }
         } else if (millis() - g_connect_started_ms > 15000) {
             g_connecting = false;
             if (g_connect_msg_label) {
-                lv_label_set_text(g_connect_msg_label, "Couldn't connect - check password and try again");
+                lv_label_set_text(g_connect_msg_label, T("wifi.failed"));
             }
         }
     }
@@ -270,7 +271,7 @@ void wifi_ui_loop() {
     g_scanning = false;
 
     if (n == WIFI_SCAN_FAILED || n < 0) {
-        lv_label_set_text(g_scan_status_label, "Scan failed, try again");
+        lv_label_set_text(g_scan_status_label, T("wifi.scan_failed"));
         return;
     }
 
@@ -315,7 +316,7 @@ void wifi_ui_loop() {
     lv_obj_clean(g_wifi_list);
 
     if (found_count == 0) {
-        lv_label_set_text(g_scan_status_label, "No networks found");
+        lv_label_set_text(g_scan_status_label, T("wifi.none_found"));
         return;
     }
 

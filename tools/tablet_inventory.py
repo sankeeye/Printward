@@ -17,14 +17,18 @@ import io, os, re, glob, json, unicodedata
 
 ROOT = "X:/projects/panda/FilaTrack/"
 
-# --- what keys already exist, and what Dutch text they hold -----------------
+# --- what keys already exist, and what text they hold ----------------------
 lang = io.open(ROOT + "sim/android/lang.cpp", encoding="utf-8", errors="surrogateescape").read()
 tbl = lang.split("BUILTIN[]")[1].split("\n};")[0]
 rows = re.findall(r'\{"([\w.]+)",\s*"((?:[^"\\]|\\.)*)"(?:\s*"(?:[^"\\]|\\.)*")*\s*,\s*"((?:[^"\\]|\\.)*)"',
                   tbl, re.S)
+# Match on BOTH columns. The tablet is a mix of English and Dutch - "Brightness" and
+# "Helderheid" are the same key. Matching Dutch only reported every English label as
+# new work, and would have had us invent a second key for text that already had one.
 by_nl = {}
 for k, en, nl in rows:
     by_nl.setdefault(nl.strip().lower(), k)
+    by_nl.setdefault(en.strip().lower(), k)
 print("existing keys: %d" % len(rows))
 
 
