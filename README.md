@@ -5,12 +5,6 @@ A standalone **control panel and monitor for a Bambu Lab P1S** 3D printer that r
 tablet or from any browser on your LAN. A companion **FilaTrack Scale** weigh scale adds real
 spool‑weight tracking. See [Hardware](#hardware).
 
-> This is a Bambu‑printer fork of the excellent
-> [PandaTouch StreamDeck by Disttrack](https://github.com/Disttrack/PandaTouch_streamDeck).
-> The original turns the PandaTouch device into a Bluetooth StreamDeck; this project started from
-> its LVGL / web / OTA groundwork and replaced the StreamDeck logic with Bambu printer
-> monitoring and control — now running on an Android tablet. See [Credits](#credits).
-
 ## Features
 
 - **Live printer status & control** over the printer's **local MQTT** feed (the broker
@@ -91,10 +85,12 @@ Notes:
 
 ## Credits
 
-- Based on **[PandaTouch StreamDeck](https://github.com/Disttrack/PandaTouch_streamDeck)**
-  by Disttrack (MIT). Huge thanks for the display, web dashboard and OTA groundwork.
-- Built on LVGL, the Arduino‑ESP32 framework, and the open‑source libraries listed in
-  `platformio.ini`.
+- FilaTrack started out in 2026 as an experiment on ESP32 handheld hardware, briefly
+  building on [Disttrack's PandaTouch StreamDeck](https://github.com/Disttrack/PandaTouch_streamDeck)
+  (MIT). None of that firmware — or its code — is part of FilaTrack any more: the app
+  was rewritten for Android tablets and the ESP32 firmware has been removed. Thanks to
+  Disttrack all the same for the early groundwork.
+- Built on LVGL and SDL, plus the open‑source libraries listed in `platformio.ini`.
 
 ## License
 
