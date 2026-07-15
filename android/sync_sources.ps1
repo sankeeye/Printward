@@ -11,7 +11,7 @@ param(
     [Parameter(Mandatory = $true)] [string]$Jni
 )
 
-$repo = Split-Path -Parent $PSScriptRoot   # ...\PandaTouch_streamDeck_src
+$repo = Split-Path -Parent $PSScriptRoot   # ...\FilaTrack_streamDeck_src
 $src  = Join-Path $Jni "src"
 $flags = "/NFL /NDL /NJH /NJS /NP".Split(" ")
 

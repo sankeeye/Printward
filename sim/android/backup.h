@@ -7,13 +7,18 @@
 // lifetime statistics. These live only on /sdcard, so a factory reset / app
 // reinstall would otherwise lose everything.
 //
-// The printer config (pandatouch.conf) is intentionally NOT included: it holds
+// The printer config (filatrack.conf) is intentionally NOT included: it holds
 // the printer access code (a secret) and is trivially re-entered on the setup
 // screen, so it never lands in a downloadable/importable file.
 
+// One-time rename of the pre-FilaTrack (PandaTouch) data files. MUST run once at
+// startup BEFORE anything loads, otherwise an existing install would silently
+// come up empty and its rolls/weights/history/stats would look lost.
+void migrate_legacy_data();
+
 // Periodic on-device snapshot: when any data file changed, copy them all to
-// /sdcard/ptbackup/ (a rolling local safety net). Call from the main loop;
-// internally throttled, so calling every iteration is cheap.
+// /sdcard/filatrack_backup/ (a rolling local safety net). Call from the main
+// loop; internally throttled, so calling every iteration is cheap.
 void backup_auto_loop();
 
 // Build one combined backup blob of all data files. malloc'd, NUL-terminated,

@@ -122,7 +122,7 @@ static void notify_send_thumb(const char* title, const char* msg, const char* pa
 
 // Persisted "already warned this slot is low" state, so a low roll pings once
 // and then stays quiet across app restarts (re-arms when refilled/cleared).
-#define LOWNOTIFY_PATH "/sdcard/pandatouch_lownotify.conf"
+#define LOWNOTIFY_PATH "/sdcard/filatrack_lownotify.conf"
 static bool g_low_notified[AMS_MAX_UNITS * AMS_MAX_TRAYS + 1] = {false};
 static bool g_low_loaded = false;
 

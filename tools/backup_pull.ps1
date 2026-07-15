@@ -1,6 +1,6 @@
-# Pulls the PandaTouch tablet's data backup to a safe, OFF-DEVICE location.
+# Pulls the FilaTrack tablet's data backup to a safe, OFF-DEVICE location.
 #
-# The tablet already keeps a rolling snapshot in /sdcard/ptbackup, but that lives
+# The tablet already keeps a rolling snapshot in /sdcard/filatrack_backup, but that lives
 # on the very device it is meant to protect against. This script fetches the same
 # data over the LAN (GET /backup) and writes a dated copy somewhere else, so a
 # dead/wiped tablet doesn't take the spool library and the whole cost history
@@ -26,15 +26,15 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$taskName    = 'PandaTouch backup pull'
-$defaultDest = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'PandaTouch_backups'
+$taskName    = 'FilaTrack backup pull'
+$defaultDest = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'FilaTrack_backups'
 
 function Pick-Folder($startAt) {
     # Graphical folder picker; falls back to a typed path if there's no GUI.
     try {
         Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop
         $dlg = New-Object System.Windows.Forms.FolderBrowserDialog
-        $dlg.Description         = 'Kies waar de PandaTouch back-ups moeten komen'
+        $dlg.Description         = 'Kies waar de FilaTrack back-ups moeten komen'
         $dlg.ShowNewFolderButton = $true
         if ($startAt -and (Test-Path $startAt)) { $dlg.SelectedPath = $startAt }
         if ($dlg.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { return $dlg.SelectedPath }
@@ -94,7 +94,7 @@ if (-not $Dest) { $Dest = $defaultDest }
 if (-not (Test-Path $Dest)) { New-Item -ItemType Directory -Path $Dest -Force | Out-Null }
 
 $stamp = Get-Date -Format 'yyyy-MM-dd_HHmm'
-$file  = Join-Path $Dest "pandatouch-backup_$stamp.ptb"
+$file  = Join-Path $Dest "filatrack-backup_$stamp.ptb"
 
 try {
     $r = Invoke-WebRequest "$TabletUrl/backup" -UseBasicParsing -TimeoutSec 30
@@ -107,7 +107,7 @@ try {
 # so a captive-portal/error page never overwrites a good backup rotation.
 $text = [System.Text.Encoding]::UTF8.GetString($r.Content)
 if ($text -notmatch '^#PTBACKUP1' -or $text -notmatch '@@spools') {
-    Write-Host "MISLUKT: onverwacht antwoord (geen PandaTouch back-up) - niets weggeschreven."
+    Write-Host "MISLUKT: onverwacht antwoord (geen FilaTrack back-up) - niets weggeschreven."
     exit 1
 }
 
@@ -115,5 +115,5 @@ if ($text -notmatch '^#PTBACKUP1' -or $text -notmatch '@@spools') {
 Write-Host ("OK: {0} ({1:N0} bytes)" -f $file, $r.Content.Length)
 
 # Keep only the newest $Keep copies.
-$old = Get-ChildItem $Dest -Filter 'pandatouch-backup_*.ptb' | Sort-Object LastWriteTime -Descending | Select-Object -Skip $Keep
+$old = Get-ChildItem $Dest -Filter 'filatrack-backup_*.ptb' | Sort-Object LastWriteTime -Descending | Select-Object -Skip $Keep
 foreach ($f in $old) { Remove-Item $f.FullName -Force; Write-Host "  opgeruimd: $($f.Name)" }

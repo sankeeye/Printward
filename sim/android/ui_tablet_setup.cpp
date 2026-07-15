@@ -143,7 +143,7 @@ void tablet_setup_loop() {
     strncpy(g_printer_access_code, lv_textarea_get_text(g_code_ta), sizeof(g_printer_access_code) - 1);
     g_printer_access_code[sizeof(g_printer_access_code) - 1] = '\0';
 
-    save_settings();               // persist to /sdcard/pandatouch.conf
+    save_settings();               // persist to /sdcard/filatrack.conf
     bambu_mqtt_settings_changed();  // rebuild topics + reconnect with new creds
 
     lv_scr_load(g_main_screen);     // back to the printer screen

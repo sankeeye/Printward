@@ -4,7 +4,7 @@
 
 // Recent print log: one record per finished/failed print (date, name, filament
 // grams, cost, result), newest first. Persisted to
-// /sdcard/pandatouch_history.conf. Cost uses the active slot's EUR/kg.
+// /sdcard/filatrack_history.conf. Cost uses the active slot's EUR/kg.
 
 #define HIST_MAX 100
 

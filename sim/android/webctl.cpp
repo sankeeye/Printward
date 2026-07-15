@@ -343,7 +343,7 @@ void webctl_loop() {
             case Q_RESTORE: {
                 // The web thread wrote the uploaded backup to a temp file; apply it
                 // here (main thread) and reload every module from the fresh files.
-                FILE* f = fopen("/sdcard/ptrestore.tmp", "rb");
+                FILE* f = fopen("/sdcard/filatrack_restore.tmp", "rb");
                 if (f) {
                     fseek(f, 0, SEEK_END); long n = ftell(f); fseek(f, 0, SEEK_SET);
                     if (n < 0) n = 0;
@@ -360,7 +360,7 @@ void webctl_loop() {
                     }
                     fclose(f);
                 }
-                remove("/sdcard/ptrestore.tmp");
+                remove("/sdcard/filatrack_restore.tmp");
                 break;
             }
         }
@@ -437,12 +437,12 @@ static void build_diag(char* o, int n) {
 
     struct DiagFile { const char* tag; const char* path; };
     static const DiagFile F[] = {
-        {"rollen",     "/sdcard/pandatouch_spools.conf"},
-        {"lege spoel", "/sdcard/pandatouch_empties.conf"},
-        {"gewichten",  "/sdcard/pandatouch_weights.conf"},
-        {"historie",   "/sdcard/pandatouch_history.conf"},
-        {"statistiek", "/sdcard/pandatouch_stats.conf"},
-        {"snapshot",   "/sdcard/ptbackup/spools.conf"},
+        {"rollen",     "/sdcard/filatrack_spools.conf"},
+        {"lege spoel", "/sdcard/filatrack_empties.conf"},
+        {"gewichten",  "/sdcard/filatrack_weights.conf"},
+        {"historie",   "/sdcard/filatrack_history.conf"},
+        {"statistiek", "/sdcard/filatrack_stats.conf"},
+        {"snapshot",   "/sdcard/filatrack_backup/spools.conf"},
     };
     time_t tnow = time(nullptr);
     for (int i = 0; i < (int)(sizeof(F) / sizeof(F[0])); i++) {
@@ -569,7 +569,7 @@ static void handle_conn(int fd) {
             have += k;
         }
         body[have] = 0;
-        FILE* tf = fopen("/sdcard/ptrestore.tmp", "wb");
+        FILE* tf = fopen("/sdcard/filatrack_restore.tmp", "wb");
         if (tf) {
             fwrite(body, 1, have, tf);
             fclose(tf);
@@ -593,7 +593,7 @@ static void handle_conn(int fd) {
             char hdr[256];
             int hn = snprintf(hdr, sizeof(hdr),
                 "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\n"
-                "Content-Disposition: attachment; filename=\"pandatouch-backup.ptb\"\r\n"
+                "Content-Disposition: attachment; filename=\"filatrack-backup.ptb\"\r\n"
                 "Content-Length: %d\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n", len);
             send(fd, hdr, hn, 0);
             send(fd, blob, len, 0);
@@ -745,7 +745,7 @@ static void handle_conn(int fd) {
         return;
     }
     if (!strcmp(path, "/notify_test")) {
-        notify_send("PandaTouch", "Test melding - het werkt!");
+        notify_send("FilaTrack", "Test melding - het werkt!");
         send_resp(fd, "200 OK", "text/plain; charset=utf-8", "testmelding verstuurd", 21);
         return;
     }

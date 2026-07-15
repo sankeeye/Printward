@@ -1,4 +1,4 @@
-// PandaTouch UI simulator entry point.
+// FilaTrack UI simulator entry point.
 // Runs the real UI screens (from ../src) in an 800x480 SDL window, fed with the
 // mock data from mocks.cpp. Mouse = touch. Lets us iterate on the UI on the PC
 // without flashing the device.
@@ -21,7 +21,7 @@
 #include "ui_screensaver.h"    // idle print dashboard (tablet only)
 #include "ui_move.h"           // manual motion screen (live nozzle temp refresh)
 #include "ui_weigh.h"          // Scale screen (live weight refresh)
-#include "scale_client.h"      // background HTTP client to the PandaScale
+#include "scale_client.h"      // background HTTP client to the FilaTrack Scale
 #include "filament_track.h"    // scale-fed remaining-filament tracking
 #include "spool_db.h"          // spool library + load-to-AMS
 #include "notify.h"            // ntfy.sh push notifications
@@ -219,8 +219,10 @@ int main(int argc, char **argv) {
     SDL_DisableScreenSaver(); // keep the display on - it's a printer monitor
 
 #ifdef __ANDROID__
-    // On the tablet: read the real printer settings from /sdcard/pandatouch.conf
+    // On the tablet: read the real printer settings from /sdcard/filatrack.conf
     // and open a real MQTT session to the printer (see android_glue.cpp).
+    migrate_legacy_data();                   // rename pre-FilaTrack files FIRST,
+                                             // or an upgrade would start empty
     load_settings();
     filament_track_init();                   // load persisted spool weights
     spool_db_load();                         // load the spool library
@@ -229,7 +231,7 @@ int main(int argc, char **argv) {
     history_init();                          // load the recent-print log
     bambu_mqtt_setup();
     webctl_start();                          // LAN control page (http://<ip>:8080)
-    scale_client_start();                    // background poller for the PandaScale
+    scale_client_start();                    // background poller for the FilaTrack Scale
     create_screensaver();                    // idle dashboard (top layer, hidden)
     filament_roll_picker_init();             // roll picker on the top layer (opened from the Dashboard AMS slots)
     pt_set_backlight(g_brightness, false);   // dim overlay sits above the screensaver
@@ -266,7 +268,7 @@ int main(int argc, char **argv) {
         notify_loop();       // push ntfy on print done/failed / filament short
         stats_loop();        // count finished prints + filament used
         history_loop();      // log each finished/failed print + cost
-        backup_auto_loop();  // snapshot all data files to /sdcard/ptbackup on change
+        backup_auto_loop();  // snapshot all data files to /sdcard/filatrack_backup on change
         webctl_loop();       // apply moves queued by the web control page
 #endif
         drain_pending_action();

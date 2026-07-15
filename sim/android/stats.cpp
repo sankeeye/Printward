@@ -10,7 +10,7 @@
 int   g_stat_prints = 0;
 float g_stat_grams = 0;
 
-#define STATS_PATH "/sdcard/pandatouch_stats.conf"
+#define STATS_PATH "/sdcard/filatrack_stats.conf"
 
 static void stats_save() {
     FILE* f = fopen(STATS_PATH, "w");

@@ -1,6 +1,6 @@
-// PandaScale - firmware for the (SpoolEase) load-cell scale hardware.
+// FilaTrack Scale - firmware for the (SpoolEase) load-cell scale hardware.
 //
-// An ESP32-S3 + HX711 that reports the weight on the platform to the PandaTouch
+// An ESP32-S3 + HX711 that reports the weight on the platform to the FilaTrack
 // tablet over plain LAN HTTP, and is fully manageable from the tablet: set a
 // fixed IP, change WiFi, tare and calibrate - all over HTTP. The tablet is the
 // "brain"; this is a dumb sensor with a small web API.
@@ -16,7 +16,7 @@
 //                      current DHCP lease); ?dhcp=1 reverts to DHCP. Reboots.
 //
 // WiFi credentials are the ones already stored in the ESP (survive a reflash);
-// if it can't connect it falls back to an open AP "PandaScale-setup" so it's
+// if it can't connect it falls back to an open AP "FilaTrack Scale-setup" so it's
 // never lost. Calibration, tare and the static-IP config persist in NVS.
 #include <Arduino.h>
 #include <WiFi.h>
@@ -159,14 +159,14 @@ static void handleSetIp() {
 }
 
 static const char PAGE[] = R"HTML(<!doctype html><html lang="nl"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>PandaScale</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>FilaTrack Scale</title>
 <style>body{margin:0;background:#0e1216;color:#eceff2;font-family:system-ui,Arial,sans-serif;text-align:center}
 h1{font-size:20px;padding:14px;margin:0;border-bottom:1px solid #262c33}h3{color:#93a0ad;margin:22px 0 8px}
 #w{font-size:60px;font-weight:700;margin:24px 0 4px}#s{color:#93a0ad;margin-bottom:18px}
 button{background:#2c3e50;color:#fff;border:0;border-radius:10px;font-size:16px;padding:12px 18px;margin:5px;cursor:pointer}
 input{padding:11px;border-radius:8px;border:1px solid #333b44;background:#161b21;color:#fff;font-size:15px;width:150px;margin:3px}
 .m{color:#93a0ad;font-size:13px;min-height:18px;margin:8px}.box{max-width:420px;margin:0 auto;padding:0 12px}</style></head><body>
-<h1>PandaScale</h1><div class="box">
+<h1>FilaTrack Scale</h1><div class="box">
 <div id="w">- g</div><div id="s">…</div>
 <button onclick="go('/tare')">Tarra (nulstellen)</button>
 <div><input id="k" type="number" placeholder="gram" value="500"><button onclick="go('/cal?known='+val('k'))">Kalibreer</button></div>
@@ -220,11 +220,11 @@ void setup() {
     if (WiFi.status() != WL_CONNECTED) {
         g_ap_mode = true;
         WiFi.mode(WIFI_AP);
-        WiFi.softAP("PandaScale-setup");
-        Serial.print("PandaScale AP-modus: http://");
+        WiFi.softAP("FilaTrack Scale-setup");
+        Serial.print("FilaTrack Scale AP-modus: http://");
         Serial.println(WiFi.softAPIP());
     } else {
-        Serial.print("PandaScale klaar. IP: ");
+        Serial.print("FilaTrack Scale klaar. IP: ");
         Serial.println(WiFi.localIP());
         if (MDNS.begin("pandascale")) MDNS.addService("http", "tcp", 80);
     }

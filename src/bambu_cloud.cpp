@@ -52,7 +52,7 @@ CloudLoginResult bambu_cloud_login(const String& email, const String& password) 
     http.addHeader("Content-Type", "application/json");
     // Some cloud APIs quietly reject requests with no recognizable client -
     // a plain User-Agent costs nothing to add and rules that out.
-    http.addHeader("User-Agent", "PandaTouchBambuPanel/1.0");
+    http.addHeader("User-Agent", "FilaTrackBambuPanel/1.0");
 
     JsonDocument body;
     body["account"] = email;

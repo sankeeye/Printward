@@ -5,7 +5,7 @@
 // Scale-fed filament tracking (Android/tablet). A weighed spool sets a slot's
 // capacity (filament grams); while a print runs, the active slot's used grams
 // are estimated from the gcode's filament total x progress, so the remaining
-// weight ticks down live. Values persist to /sdcard/pandatouch_weights.conf.
+// weight ticks down live. Values persist to /sdcard/filatrack_weights.conf.
 //
 // Slot encoding matches Bambu's tray_now: 254 = external spool, otherwise
 // unit*AMS_MAX_TRAYS + tray. capacity/used live in the existing storage globals

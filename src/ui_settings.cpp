@@ -10,7 +10,7 @@
 #ifdef __ANDROID__
 #include "ui_tablet_setup.h"   // on-screen printer config (tablet only)
 #include "ui_screensaver.h"    // g_screensaver_3d toggle
-#include "ui_weigh.h"          // PandaScale management screen (tablet only)
+#include "ui_weigh.h"          // FilaTrack Scale management screen (tablet only)
 #endif
 
 static lv_obj_t* g_settings_screen = nullptr;
@@ -129,7 +129,7 @@ void create_settings_ui() {
     lv_obj_t* hint = lv_label_create(root);
 #ifdef __ANDROID__
     // No on-device webserver on the tablet build - settings come from a file.
-    lv_label_set_text(hint, "To change printer settings, edit /sdcard/pandatouch.conf and restart the app");
+    lv_label_set_text(hint, "To change printer settings, edit /sdcard/filatrack.conf and restart the app");
 #else
     lv_label_set_text_fmt(hint, "To change printer settings, open http://%s/ in a browser", g_ip_addr.c_str());
 #endif
@@ -162,7 +162,7 @@ void create_settings_ui() {
     lv_obj_center(setup_btn_label);
     lv_obj_add_event_cb(setup_btn, printer_setup_btn_cb, LV_EVENT_CLICKED, NULL);
 
-    // Row: screensaver 2D/3D toggle + open the PandaScale (scale) screen.
+    // Row: screensaver 2D/3D toggle + open the FilaTrack Scale (scale) screen.
     lv_obj_t* row2 = lv_obj_create(root);
     lv_obj_set_size(row2, lv_pct(100), PT_SZ(44));
     lv_obj_set_style_bg_opa(row2, LV_OPA_TRANSP, LV_PART_MAIN);

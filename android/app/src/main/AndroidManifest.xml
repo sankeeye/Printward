@@ -51,7 +51,7 @@
     <!-- Talk to the Bambu printer over the LAN (MQTT/TLS) -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <!-- Read /sdcard/pandatouch.conf (printer IP/serial/access code).
+    <!-- Read /sdcard/filatrack.conf (printer IP/serial/access code).
          On Android 5.1 (API 22) this is granted at install time. -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="22" />

@@ -11,7 +11,7 @@
 
 int g_low_threshold_g = 100;
 
-#define WEIGHTS_PATH "/sdcard/pandatouch_weights.conf"
+#define WEIGHTS_PATH "/sdcard/filatrack_weights.conf"
 #define EXT_SLOT 254
 
 static float g_tray_price[AMS_MAX_UNITS][AMS_MAX_TRAYS] = {{0}};   // EUR/kg per slot

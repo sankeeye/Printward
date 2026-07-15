@@ -1,4 +1,4 @@
-# Regression self-test for the PandaTouch tablet, over its LAN HTTP API.
+# Regression self-test for the FilaTrack tablet, over its LAN HTTP API.
 #
 # Why an integration test and not unit tests: the data modules (history, backup,
 # spool_db, filament_track) read/write fixed /sdcard paths, so unit-testing them
@@ -30,7 +30,7 @@ function Get-Json($p)  { Invoke-RestMethod "$TabletUrl$p" -TimeoutSec 15 }
 function Hit($p)       { Invoke-WebRequest "$TabletUrl$p" -UseBasicParsing -TimeoutSec 20 }
 function Find-Test     { (Get-Json '/spools') | Where-Object { $_.name -eq $TESTNAME } | Select-Object -First 1 }
 
-Write-Host "PandaTouch self-test -> $TabletUrl`n"
+Write-Host "FilaTrack self-test -> $TabletUrl`n"
 
 # --- 1. status ------------------------------------------------------------
 Write-Host "status:"
@@ -61,7 +61,7 @@ try {
         Check "sectie @@$sec" ($txt -match ("(?m)^@@" + $sec + "$"))
     }
     Check "GEEN toegangscode/secret in de back-up" (-not ($txt -match 'access|serial=|code='))
-    Check "download-header" ($r.Headers['Content-Disposition'] -match 'pandatouch-backup')
+    Check "download-header" ($r.Headers['Content-Disposition'] -match 'filatrack-backup')
 } catch { Check "bereikbaar" $false $_.Exception.Message }
 
 # --- 4. history / spools JSON contract ------------------------------------

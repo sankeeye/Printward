@@ -1,4 +1,4 @@
-# PandaTouch on an Android tablet
+# FilaTrack on an Android tablet
 
 Runs the **same LVGL UI** as the ESP32-S3 firmware (and the PC simulator in
 [`../sim`](../sim)) on an Android tablet, as a dedicated Bambu-printer monitor.
@@ -19,7 +19,7 @@ The device firmware, the PC sim and this Android app all compile the same
 | MQTT transport     | `WiFiClientSecure`     | `sim/shim/WiFiClientSecure.h` (mbedTLS-backed)   |
 | MQTT client        | PubSubClient           | same PubSubClient (from `.pio/libdeps`)          |
 | Storage / settings | LittleFS + NVS         | `sim/android/android_glue.cpp` reads a conf file |
-| Printer IP/serial/code | webserver + NVS    | `/sdcard/pandatouch.conf` (see below)            |
+| Printer IP/serial/code | webserver + NVS    | `/sdcard/filatrack.conf` (see below)            |
 
 `bambu_mqtt.cpp`, `PubSubClient.cpp` and `ArduinoJson` are compiled **unchanged**;
 the Arduino `Print`/`Stream`/`Client`/`IPAddress` base classes and a real
@@ -74,7 +74,7 @@ adb install -r app\build\outputs\apk\debug\app-debug.apk
 **On-screen (normal way):** the app opens a **Printer setup** form on first boot
 (and any time the access code is missing), and it's always reachable via
 **Settings → Printer setup**. Type the printer IP, serial and access code on the
-on-screen keyboard, tap **Save & connect**. It writes `/sdcard/pandatouch.conf`
+on-screen keyboard, tap **Save & connect**. It writes `/sdcard/filatrack.conf`
 and reconnects immediately. The access code (printer screen: Settings > WLAN >
 Access Code) is a secret — it lives only on the tablet, never in git.
 
@@ -87,7 +87,7 @@ access_code=xxxxxxxx
 ```
 
 ```powershell
-adb push pandatouch.conf /sdcard/pandatouch.conf
+adb push filatrack.conf /sdcard/filatrack.conf
 ```
 
 Restart the app. Watch it connect:

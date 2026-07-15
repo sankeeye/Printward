@@ -1,6 +1,6 @@
 // Minimal Arduino compatibility shim for the PC simulator.
 // Provides just enough of the Arduino core (String, Serial, millis, pin stubs)
-// for the PandaTouch UI sources to compile and run natively. NOT a full
+// for the FilaTrack UI sources to compile and run natively. NOT a full
 // Arduino implementation - only what the UI/display code touches.
 #pragma once
 #ifndef SIM_ARDUINO_H

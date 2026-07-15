@@ -13,7 +13,7 @@ void setup()
 
   Serial.begin(115200);
   delay(200);
-  Serial.println("\n\n=== PandaTouch Bambu P1S Panel Starting ===");
+  Serial.println("\n\n=== FilaTrack Bambu P1S Panel Starting ===");
 
   // PARTIAL_2_PSRAM only redraws the small dirty region on each update
   // (e.g. just the button that was pressed) instead of the whole screen,

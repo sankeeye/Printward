@@ -1,4 +1,4 @@
-# Changelog - PandaTouch StreamDeck (Fork)
+# Changelog - FilaTrack StreamDeck (Fork)
 
 All improvements and changes made in this enhanced version.
 

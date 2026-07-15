@@ -198,7 +198,7 @@ static bool try_connect() {
     g_mqtt.setSocketTimeout(5);
     g_mqtt.setKeepAlive(20);
 
-    String client_id = String("PandaTouchBambu-") + String((uint32_t)ESP.getEfuseMac(), HEX);
+    String client_id = String("FilaTrackBambu-") + String((uint32_t)ESP.getEfuseMac(), HEX);
     Serial.printf("BAMBU: Connecting to %s as client %s...\n", g_printer_ip, client_id.c_str());
 
     bool ok = g_mqtt.connect(client_id.c_str(), "bblp", g_printer_access_code);

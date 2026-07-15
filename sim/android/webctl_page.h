@@ -5,7 +5,7 @@
 R"PAGE(<!doctype html>
 <html lang="nl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PandaTouch</title>
+<title>FilaTrack</title>
 <style>
 :root{--bg:#0e1216;--panel:#1c2229;--panel2:#161b21;--btn:#2c3e50;--txt:#eceff2;--muted:#93a0ad;--accent:#3465a4}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -95,7 +95,7 @@ h3{margin:0 0 10px;font-size:15px;color:var(--muted);font-weight:600}
 .sprow .card{margin-bottom:0}
 section#spools{max-width:1040px}
 </style></head><body>
-<header><div class="t">PandaTouch</div><div style="display:flex;gap:14px;align-items:center"><span id="clock" class="muted"></span><span id="conn" class="muted">verbinden…</span></div></header>
+<header><div class="t">FilaTrack</div><div style="display:flex;gap:14px;align-items:center"><span id="clock" class="muted"></span><span id="conn" class="muted">verbinden…</span></div></header>
 <nav>
  <button data-tab="dash" class="on">Dashboard</button>
  <button data-tab="files">Files</button>
@@ -244,7 +244,7 @@ section#spools{max-width:1040px}
 </section>
 
 <section id="set">
- <div class="card"><h3>PandaScale (weegschaal)</h3>
+ <div class="card"><h3>FilaTrack Scale (weegschaal)</h3>
   <div class="muted" style="margin-bottom:8px">Gewicht, tarra, kalibreren en WiFi/IP van de schaal.</div>
   <button onclick="tab('scale')" class="formbtn pri">Schaal beheren</button>
  </div>
@@ -258,7 +258,7 @@ section#spools{max-width:1040px}
   <div id="cMsg"></div>
  </div>
  <div class="card"><h3>Meldingen (ntfy)</h3>
-  <div class="frow"><label class="muted">ntfy topic (leeg = uit)</label><input type="text" id="cNtfy" placeholder="bv. pandatouch-geheim-x9k2"></div>
+  <div class="frow"><label class="muted">ntfy topic (leeg = uit)</label><input type="text" id="cNtfy" placeholder="bv. filatrack-geheim-x9k2"></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button id="cNtfySave" class="formbtn pri">Opslaan</button><button id="cNtfyTest" class="formbtn sec">Test</button></div>
   <div class="frow" style="margin-top:14px"><label class="muted">Waarschuwen als een rol onder dit aantal gram komt</label>
    <div style="display:flex;gap:8px;align-items:center"><input type="number" id="cLow" min="0" step="10" placeholder="100" style="width:120px"><span class="muted">g</span><button id="cLowSave" class="formbtn sec">Opslaan</button></div></div>
@@ -420,7 +420,7 @@ function exportCsv(){
  var rows=[['datum','naam','materiaal','grammen','kosten_eur','duur_min','resultaat']];
  histCache.forEach(function(r){rows.push([r.when,'"'+(r.name||'').replace(/"/g,'""')+'"',r.mat||'',r.grams||0,(r.cost||0).toFixed(2),r.mins||0,r.ok?'gelukt':'mislukt']);});
  var csv=rows.map(function(x){return x.join(',');}).join('\r\n');
- var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='pandatouch-historie.csv';a.click();URL.revokeObjectURL(a.href);
+ var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='filatrack-historie.csv';a.click();URL.revokeObjectURL(a.href);
 }
 function hSelIds(){var a=[];document.querySelectorAll('.hsel:checked').forEach(function(el){a.push(el.dataset.i);});return a;}
 function hSelUpd(){var n=hSelIds().length;var showArch=$('hArch')&&$('hArch').checked;
@@ -700,7 +700,7 @@ function renderBkStatus(age){
  if(btn)btn.className='formbtn '+(overdue?'pri':'sec');
 }
 function downloadBackup(){
- var a=document.createElement('a');a.href='/backup';a.download='pandatouch-backup.ptb';
+ var a=document.createElement('a');a.href='/backup';a.download='filatrack-backup.ptb';
  document.body.appendChild(a);a.click();a.remove();
  if($('bkMsg'))$('bkMsg').textContent='back-up gedownload';
 }
@@ -712,7 +712,7 @@ function exportRolls(){
  Promise.all([fetch('/spools').then(function(r){return r.json();}),fetch('/empties').then(function(r){return r.json();})]).then(function(a){
   var blob=new Blob([JSON.stringify({spools:a[0],empties:a[1]},null,1)],{type:'application/json'});
   var url=URL.createObjectURL(blob),link=document.createElement('a');
-  link.href=url;link.download='pandatouch_rollen.json';link.click();URL.revokeObjectURL(url);
+  link.href=url;link.download='filatrack_rollen.json';link.click();URL.revokeObjectURL(url);
   if(m)m.textContent=(a[0]||[]).length+' rollen geexporteerd';
  }).catch(function(){if(m)m.textContent='geen verbinding';});
 }

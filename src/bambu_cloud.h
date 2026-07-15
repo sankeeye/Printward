@@ -52,7 +52,7 @@ void bambu_cloud_loop();
 // internally.
 void bambu_report_print_weight(float weight_g, const String& task_key);
 
-// Experimental: BTT's own PandaTouch firmware apparently supports Bambu Cloud
+// Experimental: BTT's own FilaTrack firmware apparently supports Bambu Cloud
 // "cloud mode" via an access code, which suggests it may skip the device-side
 // /login POST (the part Cloudflare blocks) entirely and instead use a token
 // obtained elsewhere. These let the dashboard paste in a token (e.g. one your

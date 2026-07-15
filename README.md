@@ -1,13 +1,13 @@
-# PandaTouch for Bambu Lab P1S
+# FilaTrack for Bambu Lab P1S
 
 A standalone **control panel and monitor for a Bambu Lab P1S** 3D printer that runs on an
 **Android tablet** — with a full web interface as well, so you can drive the printer from the
-tablet or from any browser on your LAN. A companion **PandaScale** weigh scale adds real
+tablet or from any browser on your LAN. A companion **FilaTrack Scale** weigh scale adds real
 spool‑weight tracking. See [Hardware](#hardware).
 
 > This is a Bambu‑printer fork of the excellent
-> [PandaTouch StreamDeck by Disttrack](https://github.com/Disttrack/PandaTouch_streamDeck).
-> The original turns the PandaTouch into a Bluetooth StreamDeck; this project started from
+> [FilaTrack StreamDeck by Disttrack](https://github.com/Disttrack/FilaTrack_streamDeck).
+> The original turns the FilaTrack into a Bluetooth StreamDeck; this project started from
 > its LVGL / web / OTA groundwork and replaced the StreamDeck logic with Bambu printer
 > monitoring and control — now running on an Android tablet. See [Credits](#credits).
 
@@ -31,7 +31,7 @@ On the **Android‑tablet / web build**, additionally:
 - **Full web control** on `:8080` mirroring every tablet screen (dashboard, filament, files,
   move, scale, spools, settings).
 - **Scale‑based filament manager**: a spool library (create/edit/copy/search/bulk‑edit),
-  weigh spools with the **PandaScale**, live remaining grams that tick down during a print,
+  weigh spools with the **FilaTrack Scale**, live remaining grams that tick down during a print,
   price / cost / remaining‑value, and a *"will this print run short?"* warning.
 - **ntfy push notifications** (print done/failed, filament short), **print history &
   statistics**, and kiosk crash‑restart.
@@ -48,7 +48,7 @@ On the **Android‑tablet / web build**, additionally:
   monitor/controller with a live local‑MQTT link to the printer, **plus a full web UI** on
   `http://<tablet>:8080`. Verified on a Samsung SM‑T280 (Android 5.1.1).
   See [`android/README.md`](android/README.md).
-- **PandaScale** — an ESP32‑S3 + HX711 load‑cell scale (the SpoolEase Scale hardware flashed
+- **FilaTrack Scale** — an ESP32‑S3 + HX711 load‑cell scale (the SpoolEase Scale hardware flashed
   with our own firmware) that feeds real spool weights to the tablet for filament tracking,
   cost, and low/short‑filament warnings. See [`scale/`](scale/).
 
@@ -58,9 +58,9 @@ The exact same `src/ui_*` code also builds as a **PC simulator** (`sim/`) for de
 
 - **Android tablet** — build the APK with the Android NDK + Gradle and push it to the tablet.
   Full step‑by‑step in [`android/README.md`](android/README.md). The printer IP / serial /
-  LAN access code go in `/sdcard/pandatouch.conf` (see `sim/android/pandatouch.conf.example`)
+  LAN access code go in `/sdcard/filatrack.conf` (see `sim/android/filatrack.conf.example`)
   or the on‑screen **Printer setup**.
-- **PandaScale** — open `scale/` in **VS Code** with the **PlatformIO** extension and flash
+- **FilaTrack Scale** — open `scale/` in **VS Code** with the **PlatformIO** extension and flash
   over **USB‑C** (environment `pandascale`). First‑run WiFi setup and load‑cell calibration
   are described in `scale/`.
 
@@ -91,7 +91,7 @@ Notes:
 
 ## Credits
 
-- Based on **[PandaTouch StreamDeck](https://github.com/Disttrack/PandaTouch_streamDeck)**
+- Based on **[FilaTrack StreamDeck](https://github.com/Disttrack/FilaTrack_streamDeck)**
   by Disttrack (MIT). Huge thanks for the display, web dashboard and OTA groundwork.
 - Built on LVGL, the Arduino‑ESP32 framework, and the open‑source libraries listed in
   `platformio.ini`.

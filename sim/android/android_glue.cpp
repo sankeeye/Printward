@@ -5,8 +5,8 @@
 // globals, a config-file loader, and a placeholder FTP listing.
 //
 // The printer IP / serial / ACCESS CODE are read at runtime from
-// /sdcard/pandatouch.conf on the tablet - the access code is a secret and never
-// lives in source or git. See pandatouch.conf.example.
+// /sdcard/filatrack.conf on the tablet - the access code is a secret and never
+// lives in source or git. See filatrack.conf.example.
 #include "storage.h"
 #include "bambu_ftp.h"
 #include "ui_screensaver.h"   // g_screensaver_3d (persisted below)
@@ -31,7 +31,7 @@ uint32_t g_bg_color = 0x101418;
 char g_printer_ip[40] = "";
 char g_printer_serial[32] = "";
 char g_printer_access_code[24] = "";
-char g_scale_ip[40] = "192.168.2.60";   // PandaScale host (scale_ip= in the conf)
+char g_scale_ip[40] = "192.168.2.60";   // FilaTrack Scale host (scale_ip= in the conf)
 char g_ntfy_topic[64] = "";             // ntfy.sh topic for push notifications
 float g_tray_capacity_g[AMS_MAX_UNITS][AMS_MAX_TRAYS] = {{0}};
 float g_tray_used_g[AMS_MAX_UNITS][AMS_MAX_TRAYS] = {{0}};
@@ -50,11 +50,11 @@ void save_tray_weight(int, int) {}
 void save_ext_weight() {}
 void save_cloud_settings() {}
 
-// Writes the current settings back to /sdcard/pandatouch.conf (the on-screen
+// Writes the current settings back to /sdcard/filatrack.conf (the on-screen
 // Printer setup form saves through here). The access code lands in this file
 // on the tablet only - never in git.
 void save_settings() {
-    const char* path = "/sdcard/pandatouch.conf";
+    const char* path = "/sdcard/filatrack.conf";
     FILE* f = fopen(path, "w");
     if (!f) {
         Serial.printf("CONF: save failed - can't write %s\n", path);
@@ -69,7 +69,7 @@ void save_settings() {
     fprintf(f, "ntfy_topic=%s\n", g_ntfy_topic);
     if (g_wifi_ssid[0]) fprintf(f, "wifi_ssid=%s\n", g_wifi_ssid);
     fclose(f);
-    Serial.println("CONF: saved /sdcard/pandatouch.conf");
+    Serial.println("CONF: saved /sdcard/filatrack.conf");
 }
 
 static char *trim(char *s) {
@@ -79,10 +79,10 @@ static char *trim(char *s) {
     return s;
 }
 
-// Reads /sdcard/pandatouch.conf - simple key=value lines, '#' comments. The
+// Reads /sdcard/filatrack.conf - simple key=value lines, '#' comments. The
 // access code stays in this file on the tablet, never in source/git.
 void load_settings() {
-    const char *path = "/sdcard/pandatouch.conf";
+    const char *path = "/sdcard/filatrack.conf";
     FILE *f = fopen(path, "r");
     if (!f) {
         Serial.printf("CONF: %s not found - put printer_ip/printer_serial/access_code there\n", path);
