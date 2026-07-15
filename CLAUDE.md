@@ -50,12 +50,24 @@
   3. **`webctl.cpp` serverantwoorden** → `send_msg(fd, status, "sleutel")`. Die tekst zet de
      pagina rechtstreeks op het scherm, dus vertalen aan de webkant helpt daar niets.
   Ook `src/ui_move.cpp` (`move_blocked`) — die reden gaat naar tablet én web.
+- **Zoek nooit op Nederlandse wóórden** — dat ging drie keer mis: elke ronde miste een andere
+  hoek ("materialen", "geselecteerd", "stabiel"). Draai `python tools/i18n_audit.py`: die pakt
+  élke tekst die op het scherm kan komen, zonder woordenlijst, en jij beoordeelt de lijst.
 - **Valkuilen i18n**:
+  - **JS die een element opnieuw opbouwt overschrijft `data-i18n`.** Zo overleefde
+    "alle materialen" een "vertaalde" pagina: de dropdown wordt door JS gevuld. Bouwt JS de
+    tekst? Dan moet daar `t()` staan, niet alleen `data-i18n` in de HTML.
   - `applyI18n()` doet `el.innerHTML = ...`. Zet `data-i18n` dus **nooit** op een element dat
     een control omsluit — de `<label>`s bij importeren/herstellen bevatten een
     `<input type=file>`; die zou verdwijnen. Tekst in een eigen `<span>` zetten.
-  - Noem een callback-parameter nooit `t` (`.then(function(t){...})`) — dat overschaduwt de
-    vertaalfunctie `t()`. Gebruik `txt`.
+  - Noem niets `t` in een scope waar je vertaalt — niet als callback-parameter
+    (`function(t)`) en niet als lusvariabele (`for(var t=0;...)`). Dat overschaduwt `t()`.
+    De audit-script waarschuwt hierop.
+  - **Vertalingen zijn HTML** (`&hellip;`, `&amp;`, `<b>`). `innerHTML` rendert dat, maar
+    `placeholder`/`textContent`/`alert()` tonen het letterlijk. Daarom houdt de pagina twee
+    tabellen: `I18N` (rauw, voor data-i18n) en `I18NT` (gedecodeerd, wat `t()` teruggeeft).
+  - **Gebruikersdata niet vertalen**: "gebruikt" in de rollenlijst is Arno's eigen notitie
+    (`note=`), geen interface-tekst.
   - `send_resp()` wil een lengte; met vertaalde tekst klopt een handgeteld getal niet meer.
     Daarom `send_msg()`, die `strlen(T(key))` pakt.
   - Taalbestand: max **320 bytes** per tekst, 400 sleutels. De tablet meldt afkappen in

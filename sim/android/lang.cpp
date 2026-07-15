@@ -207,6 +207,15 @@ static const Builtin BUILTIN[] = {
     {"hist.archived",         "archived",                  "gearchiveerd"},
 
     // --- static page text (hints, placeholders, buttons) ---
+    {"hist.unarchive",        "Unarchive", "Herstel"},
+    {"files.show_preview",    "Show preview", "Toon voorbeeld"},
+    {"spools.external",       "External spool", "Externe spoel"},
+    {"scale.stable",          "stable", "stabiel"},
+    {"scale.measuring",       "measuring&hellip;", "&hellip;meten"},
+    {"scale.static_ip",       "static IP", "vast IP"},
+    {"spools.selected",       "selected", "geselecteerd"},
+    {"spools.weighed",        "Weighed", "Gewogen"},
+
     {"spools.weigh_hint",     "= weighed - empty spool", "= gewogen - leeg-spoel"},
     {"spools.name_ph",        "e.g. Bambu PLA Black", "bv. Bambu PLA Zwart"},
     {"spools.note_ph",        "e.g. dried 3/7", "bv. gedroogd 3/7"},
