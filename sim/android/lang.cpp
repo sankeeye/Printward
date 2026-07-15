@@ -207,6 +207,10 @@ static const Builtin BUILTIN[] = {
     {"hist.archived",         "archived",                  "gearchiveerd"},
 
     // --- static page text (hints, placeholders, buttons) ---
+    {"auto",                "auto",                      "auto"},
+
+    {"spools.empty_weight_hint", "weight of the empty spool in grams", "gewicht van de lege spoel in gram"},
+
     {"hist.unarchive",        "Unarchive", "Herstel"},
     {"files.show_preview",    "Show preview", "Toon voorbeeld"},
     {"spools.external",       "External spool", "Externe spoel"},

@@ -180,7 +180,7 @@ section#spools{max-width:1040px}
   <div class="field" style="margin-bottom:14px"><label data-i18n="spools.empty_weight">Leeg spoel</label>
    <div style="display:flex;gap:8px;align-items:center">
     <select id="spEmptySel" style="flex:1"><option value="" data-i18n="spools.pick_library">— kies uit bibliotheek —</option></select>
-    <input type="number" id="spEmpty" value="250" style="width:100px" title="gewicht van de lege spoel in gram">
+    <input type="number" id="spEmpty" value="250" style="width:100px" data-i18n-title="spools.empty_weight_hint" title="gewicht van de lege spoel in gram">
     <span class="muted">g</span>
    </div>
   </div>
@@ -193,9 +193,9 @@ section#spools{max-width:1040px}
   </div>
   <div class="grid">
    <div class="field"><label data-i18n="spools.material">Materiaal</label><select id="spMat"><option>PLA</option><option>PETG</option><option>ABS</option><option>TPU</option><option>ASA</option><option>PC</option><option>PA</option><option>PVA</option></select></div>
-   <div class="field"><label data-i18n="spools.nozzle_min">Nozzle min</label><input type="number" id="spNmin" placeholder="auto"></div>
-   <div class="field"><label data-i18n="spools.nozzle_max">Nozzle max</label><input type="number" id="spNmax" placeholder="auto"></div>
-   <div class="field"><label data-i18n="spools.bambu_code">Bambu-code</label><input type="text" id="spCode" placeholder="auto"></div>
+   <div class="field"><label data-i18n="spools.nozzle_min">Nozzle min</label><input type="number" id="spNmin" data-i18n-ph="auto" placeholder="auto"></div>
+   <div class="field"><label data-i18n="spools.nozzle_max">Nozzle max</label><input type="number" id="spNmax" data-i18n-ph="auto" placeholder="auto"></div>
+   <div class="field"><label data-i18n="spools.bambu_code">Bambu-code</label><input type="text" id="spCode" data-i18n-ph="auto" placeholder="auto"></div>
    <div class="field"><label data-i18n="spools.price">Prijs (EUR/kg)</label><input type="number" id="spPrice" placeholder="0" step="0.01"></div>
   </div>
   <div class="field" style="margin-top:12px"><label data-i18n="spools.note">Notitie</label><input type="text" id="spNote" data-i18n-ph="spools.note_ph" placeholder="bv. gedroogd 3/7"></div>
@@ -349,6 +349,8 @@ function applyI18n(){
   var v=I18N[el.dataset.i18n]; if(v!==undefined)el.innerHTML=v;});
  document.querySelectorAll('[data-i18n-ph]').forEach(function(el){
   var v=I18NT[el.dataset.i18nPh]; if(v!==undefined)el.placeholder=v;});
+ document.querySelectorAll('[data-i18n-title]').forEach(function(el){
+  var v=I18NT[el.dataset.i18nTitle]; if(v!==undefined)el.title=v;});
  viewBtn();
 }
 function loadLang(){
@@ -565,7 +567,7 @@ function pickRoll(slot){pickSlot=slot;$('rollTitle').textContent=t('spools.pick_
  var mat=slotMat(slot);
  fetch('/spools').then(function(r){return r.json();}).then(function(list){
   if(mat)list.sort(function(a,b){return (b.material===mat?1:0)-(a.material===mat?1:0);});
-  var h='<div class="fitem rollpick" onclick="clearRoll()"><div style="display:flex;align-items:center;gap:8px"><div class="sw" style="width:26px;height:20px;flex:0 0 auto;background:#555b63;border:1px solid #888"></div><span><b>Leeg</b> <span class="muted">geen rol in dit slot</span></span></div></div>';
+  var h='<div class="fitem rollpick" onclick="clearRoll()"><div style="display:flex;align-items:center;gap:8px"><div class="sw" style="width:26px;height:20px;flex:0 0 auto;background:#555b63;border:1px solid #888"></div><span><b>'+t('spools.empty_slot','Leeg')+'</b> <span class="muted">'+t('spools.no_roll','geen rol in dit slot')+'</span></span></div></div>';
   if(!list.length)h+='<div class="muted">'+t('spools.none_yet','Nog geen rollen — maak ze aan op de Spools-tab.')+'</div>';
   list.forEach(function(s){var pas=(mat&&s.material===mat)?' <span class="badge" title="Zelfde materiaal als er nu in dit slot zit" style="margin-left:6px;background:#1e5f3a;color:#b9f5cf">'+s.material+' &#10003;</span>':'';
    h+='<div class="fitem rollpick" onclick="chooseRoll('+s.i+')"><div style="display:flex;align-items:center;gap:8px"><div class="sw" style="width:26px;height:20px;flex:0 0 auto;background:'+s.rgb+'"></div><span><b>'+s.name+'</b> <span class="muted">'+s.material+' · '+s.rem+' g</span>'+pas+'</span></div></div>';});
@@ -726,7 +728,7 @@ $('spSave').onclick=function(){
 function loadEmpties(){
  fetch('/empties').then(function(r){return r.json();}).then(function(list){
   emCache=list;
-  var sel=$('spEmptySel'),cur=sel.value,o='<option value="">— kies —</option>';
+  var sel=$('spEmptySel'),cur=sel.value,o='<option value="">'+t('spools.pick_library','— kies uit bibliotheek —')+'</option>';
   list.forEach(function(e){o+='<option value="'+e.weight+'">'+e.name+' ('+e.weight+' g)</option>';});
   sel.innerHTML=o;sel.value=cur;
   var h='';

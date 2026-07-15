@@ -32,9 +32,13 @@ src = io.open(PAGE, encoding="utf-8", errors="surrogateescape").read()
 js = src.split("<script>")[1].split("</script>")[0]
 head = src.index("<script>")
 
-# things the user actually reads
-SINK = re.compile(r"\.textContent\s*=|\.innerHTML\s*=|\.placeholder\s*=|\balert\(|\bconfirm\(|"
-                  r"\bh\s*\+=|\bo\s*\+=|\bsMsg\(|\bspMsg\(|\btitle=")
+# Things the user actually reads.
+# `\w+\s*\+?=\s*'<` catches BOTH `h+='<div>'` and the first `var h='<div>'` of a
+# builder. Matching only `+=` is what let "— kies —" through: that dropdown is
+# built with `o='<option>...'`, an opening assignment, never appended to.
+SINK = re.compile(r"\.textContent\s*=|\.innerHTML\s*=|\.placeholder\s*=|\.title\s*=|"
+                  r"\balert\(|\bconfirm\(|\bsMsg\(|\bspMsg\(|\btitle=|"
+                  r"\b\w+\s*\+?=\s*'<|\bh\s*\+=|\bo\s*\+=")
 LIT = re.compile(r"'((?:[^'\\\n]|\\.)*)'")
 FALLBACK = re.compile(r"t\(\s*'[\w.]+'\s*,\s*$")     # 2nd arg of t() is a default
 TAG = re.compile(r"<[^>]*>")
@@ -55,13 +59,58 @@ for i, line in enumerate(js.split("\n"), 1):
         if words:
             hits.append((src[:head].count("\n") + i, " ".join(words)[:40], v[:54]))
 
-out = ["%4d | %-40s | %s" % h for h in hits]
-print("\n".join(out))
-print("\n%d literal(s) reaching a visible sink." % len(hits))
+print("=== JS: literals reaching something the user reads ===")
+print("\n".join("%4d | %-40s | %s" % h for h in hits))
+print("%d hit(s). Prose here belongs in t('key','fallback')." % len(hits))
+
+# --- the static half -------------------------------------------------------
+# applyI18n() only rewrites elements carrying data-i18n / -ph / -title. Anything
+# else in the markup is frozen in whatever language it was typed in, and no JS
+# scan can see it. A title= with no data-i18n-title hid here for three rounds.
+from html.parser import HTMLParser
+
+
+class Static(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.depth, self.stack, self.text, self.attrs = 0, [], [], []
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        covered = "data-i18n" in a
+        if covered:
+            self.depth += 1
+        self.stack.append(covered)
+        for at, key in (("placeholder", "data-i18n-ph"), ("title", "data-i18n-title")):
+            if at in a and key not in a and WORD.search(a[at] or ""):
+                self.attrs.append((self.getpos()[0], at, a[at][:44]))
+        if tag in ("input", "img", "br", "hr", "meta", "link") and self.stack.pop():
+            self.depth -= 1
+
+    def handle_endtag(self, tag):
+        if self.stack and self.stack.pop():
+            self.depth -= 1
+
+    def handle_data(self, d):
+        t = d.strip()
+        if not self.depth and len(t) > 1 and WORD.search(t):
+            self.text.append((self.getpos()[0], t[:52]))
+
+
+st = Static()
+st.feed(src.split("<script>")[0])
+print("\n=== HTML: text with no data-i18n ===")
+print("\n".join("%4d | %s" % h for h in st.text))
+print("%d hit(s). Product names, units and material names are fine here." % len(st.text))
+print("\n=== HTML: placeholder/title with no data-i18n-ph / -title ===")
+print("\n".join("%4d | %-9s | %s" % h for h in st.attrs) or "  (none)")
 
 shadow = [n for n, l in enumerate(js.split("\n"), 1)
           if re.search(r"function\s*\(\s*t\s*\)|for\s*\(\s*var\s+t\s*=", l)]
 if shadow:
-    print("\nWARNING: `t` is shadowed on JS line(s) %s - t() will not resolve there."
+    print("\nFAIL: `t` is shadowed on JS line(s) %s - t() will not resolve there."
           % ", ".join(map(str, shadow)))
+    sys.exit(1)
+if st.attrs:
+    print("\nFAIL: the attribute(s) above can never be translated.")
     sys.exit(1)

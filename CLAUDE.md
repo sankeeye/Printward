@@ -50,9 +50,12 @@
   3. **`webctl.cpp` serverantwoorden** → `send_msg(fd, status, "sleutel")`. Die tekst zet de
      pagina rechtstreeks op het scherm, dus vertalen aan de webkant helpt daar niets.
   Ook `src/ui_move.cpp` (`move_blocked`) — die reden gaat naar tablet én web.
-- **Zoek nooit op Nederlandse wóórden** — dat ging drie keer mis: elke ronde miste een andere
-  hoek ("materialen", "geselecteerd", "stabiel"). Draai `python tools/i18n_audit.py`: die pakt
-  élke tekst die op het scherm kan komen, zonder woordenlijst, en jij beoordeelt de lijst.
+- **Zoek nooit op Nederlandse wóórden** — dat ging vier keer mis: elke ronde miste een andere
+  hoek ("materialen", "geselecteerd", "stabiel", "— kies —"). Draai `python tools/i18n_audit.py`:
+  die pakt élke tekst die op het scherm kan komen, zonder woordenlijst, en jij beoordeelt de
+  lijst. Hij faalt hard op een `t`-overschaduwing en op een `title=`/`placeholder=` zonder
+  sleutel. Zelfs dat script had eerst een gat (het zag `o+=` maar niet `var o='<option>'`),
+  dus: **vindt de audit niks en zie je het tóch op het scherm, verdenk dan eerst de audit.**
 - **Valkuilen i18n**:
   - **JS die een element opnieuw opbouwt overschrijft `data-i18n`.** Zo overleefde
     "alle materialen" een "vertaalde" pagina: de dropdown wordt door JS gevuld. Bouwt JS de
