@@ -123,12 +123,12 @@ section#spools{max-width:1040px}
 </section>
 
 <section id="files">
- <div class="fbar"><button id="fUp">⬆ Up</button><span id="fpath">/</span><button id="fRef">↻</button><button id="fDel" style="display:none;background:#a40000;margin-left:auto">Verwijder</button></div>
+ <div class="fbar"><button id="fUp" data-i18n="files.up">⬆ Up</button><span id="fpath">/</span><button id="fRef">↻</button><button id="fDel" style="display:none;background:#a40000;margin-left:auto" data-i18n="delete">Verwijder</button></div>
  <div id="flist" class="muted">…</div>
 </section>
 
 <section id="move">
- <div class="step">Stap:
+ <div class="step"><span data-i18n="move.step">Stap:</span>
   <button data-s="0.1">0.1</button><button data-s="1" class="sel">1</button><button data-s="10">10</button> mm</div>
  <div class="movewrap">
   <div class="card"><h3>X / Y</h3><div class="pad">
@@ -137,35 +137,35 @@ section#spools{max-width:1040px}
    <span></span><button data-a="ym">Y-</button><span></span>
   </div></div>
   <div class="card"><h3>Z</h3><div class="zcol"><button data-a="zp">Z+</button><button data-a="zm">Z-</button></div></div>
-  <div class="card"><h3>Extruder</h3><div class="ecol">
-   <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px" class="muted">Lengte <input type="number" id="mExt" value="10" style="width:64px;padding:8px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"> mm</div>
-   <button class="ext big" onclick="mcmd('ext',$('mExt').value)">Extrude</button>
-   <button class="ret big" onclick="mcmd('ret',$('mExt').value)">Retract</button>
+  <div class="card"><h3 data-i18n="move.extruder">Extruder</h3><div class="ecol">
+   <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px" class="muted"><span data-i18n="move.length">Lengte</span> <input type="number" id="mExt" value="10" style="width:64px;padding:8px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"> mm</div>
+   <button class="ext big" onclick="mcmd('ext',$('mExt').value)" data-i18n="move.extrude">Extrude</button>
+   <button class="ret big" onclick="mcmd('ret',$('mExt').value)" data-i18n="move.retract">Retract</button>
   </div></div>
  </div>
- <div class="card"><h3>Ventilator</h3>
-  <div style="display:flex;gap:6px;flex-wrap:wrap"><button onclick="mcmd('fan',0)">Uit</button><button onclick="mcmd('fan',25)">25%</button><button onclick="mcmd('fan',50)">50%</button><button onclick="mcmd('fan',100)">100%</button></div>
+ <div class="card"><h3 data-i18n="dash.fan">Ventilator</h3>
+  <div style="display:flex;gap:6px;flex-wrap:wrap"><button onclick="mcmd('fan',0)" data-i18n="move.off">Uit</button><button onclick="mcmd('fan',25)">25%</button><button onclick="mcmd('fan',50)">50%</button><button onclick="mcmd('fan',100)">100%</button></div>
  </div>
- <div class="card"><h3>Motoren &amp; posities</h3>
-  <div style="display:flex;gap:6px;flex-wrap:wrap"><button onclick="mcmd('motoff')">Motoren uit</button><button onclick="mcmd('center')">Naar midden</button><button onclick="mcmd('front')">Bed naar voren</button><button onclick="mcmd('zup')">Z omhoog</button><button onclick="mcmd('homex')">Home X</button><button onclick="mcmd('homey')">Home Y</button><button onclick="mcmd('homez')">Home Z</button></div>
+ <div class="card"><h3 data-i18n="move.motors_pos">Motoren &amp; posities</h3>
+  <div style="display:flex;gap:6px;flex-wrap:wrap"><button onclick="mcmd('motoff')" data-i18n="move.motors_off">Motoren uit</button><button onclick="mcmd('center')" data-i18n="move.center">Naar midden</button><button onclick="mcmd('front')" data-i18n="move.bed_front">Bed naar voren</button><button onclick="mcmd('zup')" data-i18n="move.z_up">Z omhoog</button><button onclick="mcmd('homex')">Home X</button><button onclick="mcmd('homey')">Home Y</button><button onclick="mcmd('homez')">Home Z</button></div>
  </div>
  <div id="hint"></div>
 </section>
 
 <section id="scale">
- <div style="margin-bottom:10px"><button onclick="tab('set')">&#8592; Instellingen</button></div>
+ <div style="margin-bottom:10px"><button onclick="tab('set')" data-i18n="scale.back_set">&#8592; Instellingen</button></div>
  <div class="card" style="text-align:center"><div id="swt" style="font-size:52px;font-weight:700">– g</div><div id="sst" class="muted">…</div></div>
- <div class="card"><h3>Kalibratie</h3>
-  <button id="sTare">Tarra (nulstellen)</button>
+ <div class="card"><h3 data-i18n="scale.calibration">Kalibratie</h3>
+  <button id="sTare" data-i18n="scale.tare">Tarra (nulstellen)</button>
   <input type="number" id="sKnown" value="500" style="width:110px">
-  <button id="sCal" class="ext">Kalibreer</button>
+  <button id="sCal" class="ext" data-i18n="scale.calibrate">Kalibreer</button>
   <div id="sMsg" class="muted" style="margin-top:8px"></div>
  </div>
- <div class="card"><h3>Netwerk</h3><div id="sInfo" class="muted" style="margin-bottom:10px">…</div>
-  <div class="frow"><label class="muted">Scale IP (waar de tablet de schaal zoekt)</label><input type="text" id="sIp"></div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap"><button id="sIpSave">Opslaan op tablet</button><button id="sIpFix">Vast IP op schaal</button></div>
-  <div class="frow" style="margin-top:12px"><label class="muted">WiFi van de schaal wijzigen</label><input type="text" id="sSsid" placeholder="WiFi naam"><input type="password" id="sPass" placeholder="wachtwoord"></div>
-  <button id="sWifi" class="ph">WiFi wijzigen</button>
+ <div class="card"><h3 data-i18n="scale.network">Netwerk</h3><div id="sInfo" class="muted" style="margin-bottom:10px">…</div>
+  <div class="frow"><label class="muted" data-i18n="scale.ip_label">Scale IP (waar de tablet de schaal zoekt)</label><input type="text" id="sIp"></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button id="sIpSave" data-i18n="scale.save_tablet">Opslaan op tablet</button><button id="sIpFix" data-i18n="scale.fix_ip">Vast IP op schaal</button></div>
+  <div class="frow" style="margin-top:12px"><label class="muted" data-i18n="scale.wifi_label">WiFi van de schaal wijzigen</label><input type="text" id="sSsid" data-i18n-ph="scale.wifi_name" placeholder="WiFi naam"><input type="password" id="sPass" data-i18n-ph="scale.password" placeholder="wachtwoord"></div>
+  <button id="sWifi" class="ph" data-i18n="scale.wifi_change">WiFi wijzigen</button>
  </div>
 </section>
 
@@ -173,18 +173,18 @@ section#spools{max-width:1040px}
  <div class="card" id="spInv" style="display:none"></div>
  <div class="sprow">
  <div class="card" style="flex:1 1 360px"><h3 id="spTitle" data-i18n="spools.new_roll">Nieuwe rol</h3>
-  <div class="field" style="margin-bottom:14px"><label>Naam / merk</label><input type="text" id="spName" placeholder="bv. Bambu PLA Zwart"></div>
-  <div class="field" style="margin-bottom:14px"><label>Kleur</label>
+  <div class="field" style="margin-bottom:14px"><label data-i18n="spools.name">Naam / merk</label><input type="text" id="spName" placeholder="bv. Bambu PLA Zwart"></div>
+  <div class="field" style="margin-bottom:14px"><label data-i18n="spools.colour">Kleur</label>
    <div class="swatches"><input type="color" id="spColor" value="#22aa55" class="chip"><span id="spSw" class="swatches"></span></div>
   </div>
-  <div class="field" style="margin-bottom:14px"><label>Leeg spoel</label>
+  <div class="field" style="margin-bottom:14px"><label data-i18n="spools.empty_weight">Leeg spoel</label>
    <div style="display:flex;gap:8px;align-items:center">
     <select id="spEmptySel" style="flex:1"><option value="">— kies uit bibliotheek —</option></select>
     <input type="number" id="spEmpty" value="250" style="width:100px" title="gewicht van de lege spoel in gram">
     <span class="muted">g</span>
    </div>
   </div>
-  <div class="field" style="margin-bottom:14px"><label>Resterend filament (g)</label>
+  <div class="field" style="margin-bottom:14px"><label data-i18n="spools.remaining">Resterend filament (g)</label>
    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
     <input type="number" id="spRem" value="1000" style="width:130px">
     <button class="formbtn sec" onclick="spRemWeigh()">⚖ Weeg rol</button>
@@ -192,23 +192,23 @@ section#spools{max-width:1040px}
    </div>
   </div>
   <div class="grid">
-   <div class="field"><label>Materiaal</label><select id="spMat"><option>PLA</option><option>PETG</option><option>ABS</option><option>TPU</option><option>ASA</option><option>PC</option><option>PA</option><option>PVA</option></select></div>
+   <div class="field"><label data-i18n="spools.material">Materiaal</label><select id="spMat"><option>PLA</option><option>PETG</option><option>ABS</option><option>TPU</option><option>ASA</option><option>PC</option><option>PA</option><option>PVA</option></select></div>
    <div class="field"><label>Nozzle min</label><input type="number" id="spNmin" placeholder="auto"></div>
    <div class="field"><label>Nozzle max</label><input type="number" id="spNmax" placeholder="auto"></div>
    <div class="field"><label>Bambu-code</label><input type="text" id="spCode" placeholder="auto"></div>
    <div class="field"><label>Prijs (€/kg)</label><input type="number" id="spPrice" placeholder="0" step="0.01"></div>
   </div>
-  <div class="field" style="margin-top:12px"><label>Notitie</label><input type="text" id="spNote" placeholder="bv. gedroogd 3/7"></div>
+  <div class="field" style="margin-top:12px"><label data-i18n="spools.note">Notitie</label><input type="text" id="spNote" placeholder="bv. gedroogd 3/7"></div>
   <input type="hidden" id="spIdx" value="-1">
-  <div style="display:flex;gap:10px;margin-top:16px"><button id="spSave" class="formbtn pri">Opslaan</button><button id="spNew" class="formbtn sec">Nieuw</button></div>
+  <div style="display:flex;gap:10px;margin-top:16px"><button id="spSave" class="formbtn pri" data-i18n="save">Opslaan</button><button id="spNew" class="formbtn sec" data-i18n="spools.new">Nieuw</button></div>
   <div id="spMsg" class="muted" style="margin-top:8px"></div>
  </div>
  <div class="card" style="flex:1 1 300px"><h3 data-i18n="spools.empty_spools">Lege spoelen</h3>
   <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px">
    <div class="field" style="flex:1;min-width:160px"><label>Naam</label><input type="text" id="emName" placeholder="bv. Bambu herbruikbaar"></div>
-   <div class="field" style="width:120px"><label>Gewicht (g)</label><input type="number" id="emWeight" value="250"></div>
-   <button class="formbtn sec" style="height:42px" onclick="emWeigh()">Weeg</button>
-   <button id="emSave" class="formbtn pri" style="height:42px">Toevoegen</button>
+   <div class="field" style="width:120px"><label data-i18n="spools.weight_g">Gewicht (g)</label><input type="number" id="emWeight" value="250"></div>
+   <button class="formbtn sec" style="height:42px" onclick="emWeigh()" data-i18n="spools.weigh">Weeg</button>
+   <button id="emSave" class="formbtn pri" style="height:42px" data-i18n="spools.add">Toevoegen</button>
   </div>
   <div id="emList"></div>
  </div>
@@ -216,9 +216,9 @@ section#spools{max-width:1040px}
  <div class="card"><h3 data-i18n="spools.title">Rollen</h3>
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
    <input type="text" id="spSearch" placeholder="Zoek op naam of materiaal…" oninput="renderSpList()" style="flex:1;min-width:150px;padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff;font-size:15px">
-   <select id="spFMat" onchange="renderSpList()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="">alle materialen</option></select>
-   <select id="spSort" onchange="renderSpList()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="name">naam A-Z</option><option value="low">weinig &rarr; veel</option><option value="high">veel &rarr; weinig</option><option value="price">prijs/kg</option><option value="mat">materiaal</option></select>
-   <label class="muted" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="spLow" onchange="renderSpList()" style="width:18px;height:18px">bijna leeg</label>
+   <select id="spFMat" onchange="renderSpList()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="" data-i18n="hist.all_materials">alle materialen</option></select>
+   <select id="spSort" onchange="renderSpList()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="name" data-i18n="spools.sort_name">naam A-Z</option><option value="low">weinig &rarr; veel</option><option value="high">veel &rarr; weinig</option><option value="price" data-i18n="spools.sort_price">prijs/kg</option><option value="mat" data-i18n="spools.material">materiaal</option></select>
+   <label class="muted" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="spLow" onchange="renderSpList()" style="width:18px;height:18px"><span data-i18n="spools.almost_empty">bijna leeg</span></label>
    <label class="muted" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="spAll" onchange="toggleAll(this.checked)" style="width:18px;height:18px"> alles</label>
   </div>
   <div id="spBulk" style="display:none;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;background:var(--panel2);border-radius:8px;padding:9px 12px">
@@ -296,14 +296,14 @@ section#spools{max-width:1040px}
  <div class="card"><h3 data-i18n="hist.title">Historie / kosten</h3>
  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
   <input id="hSearch" oninput="renderHist()" data-i18n-ph="hist.search" placeholder="Zoek op naam…" style="flex:1;min-width:130px;padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff;font-size:15px">
-  <select id="hMat" onchange="renderHist()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="">alle materialen</option></select>
-  <select id="hOk" onchange="renderHist()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="">gelukt + mislukt</option><option value="1">alleen gelukt</option><option value="0">alleen mislukt</option></select>
-  <select id="hSort" onchange="renderHist()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="date">nieuwste eerst</option><option value="cost">duurste eerst</option><option value="grams">meeste filament</option></select>
+  <select id="hMat" onchange="renderHist()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="" data-i18n="hist.all_materials">alle materialen</option></select>
+  <select id="hOk" onchange="renderHist()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="" data-i18n="hist.ok_and_fail">gelukt + mislukt</option><option value="1" data-i18n="hist.only_ok">alleen gelukt</option><option value="0" data-i18n="hist.only_fail">alleen mislukt</option></select>
+  <select id="hSort" onchange="renderHist()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="date" data-i18n="hist.newest">nieuwste eerst</option><option value="cost" data-i18n="hist.costliest">duurste eerst</option><option value="grams" data-i18n="hist.most_filament">meeste filament</option></select>
   <button onclick="exportCsv()" class="formbtn sec" style="padding:9px 14px">CSV</button>
  </div>
  <div id="histTotal" class="muted" style="font-size:16px;margin-bottom:8px"></div>
  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
-  <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="hArch" onchange="renderHist()" style="width:18px;height:18px">Gearchiveerd tonen</label>
+  <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="hArch" onchange="renderHist()" style="width:18px;height:18px"><span data-i18n="hist.show_arch">Gearchiveerd tonen</span></label>
   <button id="hArchBtn" onclick="hBulk(($('hArch')&&$('hArch').checked)?'unarch':'arch')" style="display:none;background:#8e44ad;color:#fff;border:0;border-radius:6px;padding:8px 12px;cursor:pointer;margin-left:auto">Archiveer</button>
   <button id="hDelBtn" onclick="hBulk('del')" style="display:none;background:#a40000;color:#fff;border:0;border-radius:6px;padding:8px 12px;cursor:pointer">Verwijder</button>
  </div>
