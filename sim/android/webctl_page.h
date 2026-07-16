@@ -314,6 +314,7 @@ section#spools{max-width:1040px}
 
 <div id="rollModal" class="modal"><div class="modalbox">
  <div class="modalhead"><b id="rollTitle" data-i18n="spools.pick_roll">Kies rol</b><button onclick="closeRoll()" data-i18n="close">Sluit</button></div>
+ <div style="display:flex;gap:8px;align-items:center;margin:10px 0"><span class="muted" data-i18n="spools.by_number">Rolnummer:</span><input type="number" id="rollNum" min="1" inputmode="numeric" onkeydown="if(event.key==='Enter')pickByNum()" style="width:90px;padding:8px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff;font-size:16px"><button class="formbtn pri" style="padding:8px 14px" onclick="pickByNum()" data-i18n="spools.pick_it">Pak</button><span id="rollNumMsg" class="muted" style="font-size:12px"></span></div>
  <div id="rollList"></div>
 </div></div>
 <div id="prevModal" class="modal" onclick="this.style.display='none'"><div class="modalbox" style="text-align:center">
@@ -577,13 +578,23 @@ function slotMat(slot){if(!lastS)return'';if(slot===254)return(lastS.ext&&lastS.
 function pickRoll(slot){pickSlot=slot;$('rollTitle').textContent=t('spools.pick_for','Kies rol voor')+' '+slotName(slot);
  var mat=slotMat(slot);
  fetch('/spools').then(function(r){return r.json();}).then(function(list){
+  rollPickList=list;
   list.sort(function(a,b){if(mat){var am=(a.material===mat)?0:1,bm=(b.material===mat)?0:1;if(am!==bm)return am-bm;}return (a.num||0)-(b.num||0);});
   var h='<div class="fitem rollpick" onclick="clearRoll()"><div style="display:flex;align-items:center;gap:8px"><div class="sw" style="width:26px;height:20px;flex:0 0 auto;background:#555b63;border:1px solid #888"></div><span><b>'+t('spools.empty_slot','Leeg')+'</b> <span class="muted">'+t('spools.no_roll','geen rol in dit slot')+'</span></span></div></div>';
   if(!list.length)h+='<div class="muted">'+t('spools.none_yet','Nog geen rollen — maak ze aan op de Spools-tab.')+'</div>';
   list.forEach(function(s){var pas=(mat&&s.material===mat)?' <span class="badge" title="'+t('spools.same_mat','Zelfde materiaal als er nu in dit slot zit')+'" style="margin-left:6px;background:#1e5f3a;color:#b9f5cf">'+s.material+' &#10003;</span>':'';
    h+='<div class="fitem rollpick" onclick="chooseRoll('+s.i+')"><div style="display:flex;align-items:center;gap:8px"><span class="rnum">#'+(s.num||0)+'</span><div class="sw" style="width:26px;height:20px;flex:0 0 auto;background:'+esc(s.rgb)+'"></div><span><b>'+esc(s.name)+'</b> <span class="muted">'+esc(s.material)+' · '+s.rem+' g</span>'+pas+'</span></div></div>';});
   $('rollList').innerHTML=h;$('rollModal').style.display='flex';
+  if($('rollNum')){$('rollNum').value='';if($('rollNumMsg'))$('rollNumMsg').textContent='';setTimeout(function(){$('rollNum').focus();},60);}
  }).catch(function(){});
+}
+var rollPickList=[];
+function pickByNum(){
+ var v=parseInt(($('rollNum')&&$('rollNum').value)||'',10);
+ if(!v){return;}
+ var m=rollPickList.filter(function(s){return (s.num||0)===v;});
+ if(!m.length){if($('rollNumMsg'))$('rollNumMsg').textContent=t('spools.no_num','geen rol #')+v;return;}
+ chooseRoll(m[0].i);
 }
 function chooseRoll(i){fetch('/spool_load?idx='+i+'&slot='+pickSlot).then(function(){closeRoll();});}
 function clearRoll(){fetch('/spool_clear?slot='+pickSlot).then(function(){closeRoll();});}
