@@ -16,8 +16,8 @@ meer talen bij door simpelweg een bestand neer te zetten — zie [`lang/`](lang/
   printer zelf, bereikbaar op je netwerk met de LAN‑toegangscode — werkt ook in de gewone
   cloud‑modus van de printer, geen *"LAN Only"*‑modus nodig): printvoortgang, temperaturen en
   pauze/hervat/stop/licht‑bediening.
-- **Filament‑ / AMS‑ & spoelgewicht‑tracking**, inclusief automatisch aftrekken van de grammen
-  die elke voltooide print heeft gebruikt (zie de gewicht‑relay hieronder).
+- **Filament‑ / AMS‑ & spoelgewicht‑tracking**: resterende grammen die aftellen terwijl een print
+  loopt, plus de kosten per print. Geen extra hardware nodig — zie de filamentbeheerder hieronder.
 - **Bestandsbrowser** via de **FTP**‑dienst van de printer.
 - **Bambu Cloud‑integratie** voor het enige dat de lokale MQTT nooit prijsgeeft: hoeveel gram
   een voltooide print daadwerkelijk heeft verbruikt.
@@ -31,10 +31,13 @@ Op de **Android‑tablet / web‑build**, aanvullend:
 - **Volledige webbediening** op `:8080` die elk tabletscherm nabootst (dashboard, filament,
   bestanden, bewegen, weegschaal, rollen, instellingen), **beveiligd met een wachtwoord en
   alleen bereikbaar op je eigen netwerk**.
-- **Weegschaal‑gebaseerde filamentbeheerder**: een rollen‑bibliotheek (aanmaken/bewerken/
-  kopiëren/zoeken/bulk‑bewerken), rollen wegen met de **FilaTrack Scale**, live resterende
-  grammen die tijdens een print aftellen, prijs / kosten / restwaarde, en een waarschuwing
-  *"komt deze print filament tekort?"*.
+- **Filamentbeheerder (geen weegschaal nodig)**: een rollen‑bibliotheek (aanmaken/bewerken/
+  kopiëren/zoeken/bulk‑bewerken). Typ het gewicht van een rol en de resterende grammen tellen live
+  af tijdens een print (totaal uit het gesneden bestand × voortgang), met prijs / kosten /
+  restwaarde en een waarschuwing *"komt deze print filament tekort?"*. De optionele **FilaTrack
+  Scale** laat je wegen in plaats van typen — en herwegen voor het exacte cijfer — terwijl de Bambu
+  Cloud‑relay (hieronder) de echte grammen per print kan aanleveren zodat het ook zonder weegschaal
+  klopt.
 - **ntfy‑meldingen** (print klaar/mislukt, filament tekort), **printhistorie & statistieken**,
   en kiosk‑herstart na een crash.
 

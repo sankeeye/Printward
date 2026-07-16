@@ -17,8 +17,9 @@ umschaltbar, und weitere Sprachen lassen sich durch das Ablegen einer Datei hinz
   selbst, im Netzwerk mit dem LAN‑Zugangscode erreichbar — funktioniert auch im normalen
   Cloud‑Modus des Druckers, kein *"LAN Only"*‑Modus nötig): Druckfortschritt, Temperaturen und
   Pause/Fortsetzen/Stopp/Licht‑Steuerung.
-- **Filament‑ / AMS‑ & Spulengewicht‑Tracking**, inklusive automatischem Abzug der Gramm, die jeder
-  abgeschlossene Druck verbraucht hat (siehe das Gewicht‑Relay weiter unten).
+- **Filament‑ / AMS‑ & Spulengewicht‑Tracking**: verbleibende Gramm, die während eines Drucks
+  herunterzählen, plus die Kosten pro Druck. Keine Zusatzhardware nötig — siehe den Filamentmanager
+  weiter unten.
 - **Dateibrowser** über den **FTP**‑Dienst des Druckers.
 - **Bambu‑Cloud‑Integration** für das Eine, das das lokale MQTT nie preisgibt: wie viel Gramm ein
   abgeschlossener Druck tatsächlich verbraucht hat.
@@ -32,10 +33,13 @@ Im **Android‑Tablet‑ / Web‑Build** zusätzlich:
 - **Volle Websteuerung** auf `:8080`, die jeden Tablet‑Bildschirm spiegelt (Übersicht, Filament,
   Dateien, Bewegen, Waage, Spulen, Einstellungen), **passwortgeschützt und nur im eigenen
   Netzwerk erreichbar**.
-- **Waagenbasierter Filamentmanager**: eine Spulenbibliothek (anlegen/bearbeiten/kopieren/suchen/
-  Sammelbearbeitung), Spulen mit der **FilaTrack Scale** wiegen, live verbleibende Gramm, die
-  während eines Drucks herunterzählen, Preis / Kosten / Restwert und eine Warnung
-  *"reicht das Filament für diesen Druck?"*.
+- **Filamentmanager (keine Waage nötig)**: eine Spulenbibliothek (anlegen/bearbeiten/kopieren/
+  suchen/Sammelbearbeitung). Gib das Gewicht einer Spule ein und die verbleibenden Gramm zählen
+  während eines Drucks live herunter (Gesamtmenge aus der gesliceten Datei × Fortschritt), mit
+  Preis / Kosten / Restwert und einer Warnung *"reicht das Filament für diesen Druck?"*. Die
+  optionale **FilaTrack Scale** lässt dich wiegen statt tippen — und für den exakten Wert neu
+  wiegen — während das Bambu‑Cloud‑Relay (unten) die echten Gramm pro Druck liefern kann, damit es
+  auch ohne Waage stimmt.
 - **ntfy‑Benachrichtigungen** (Druck fertig/fehlgeschlagen, Filament knapp), **Druckverlauf &
   Statistik** und Kiosk‑Neustart nach einem Absturz.
 

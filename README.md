@@ -16,8 +16,8 @@ languages can be added by dropping in a file — see [`lang/`](lang/).
   inside the printer, reached on your network with the LAN access code — this works in the
   printer's normal cloud mode too, no *"LAN Only"* mode required): print progress,
   temperatures, and pause/resume/stop/light controls.
-- **Filament / AMS & spool weight tracking**, including automatic subtraction of the
-  grams used by each finished print (see the weight relay below).
+- **Filament / AMS & spool‑weight tracking**: remaining grams that count down as a print
+  runs, plus the cost of each print. No extra hardware required — see the filament manager below.
 - **File browser** over the printer's **FTP** service.
 - **Bambu Cloud integration** for the one thing the local MQTT feed never exposes: how many
   grams a finished print actually used.
@@ -30,9 +30,12 @@ On the **Android‑tablet / web build**, additionally:
   temperature presets.
 - **Full web control** on `:8080` mirroring every tablet screen (dashboard, filament, files,
   move, scale, spools, settings), **password‑protected and answering only on your own network**.
-- **Scale‑based filament manager**: a spool library (create/edit/copy/search/bulk‑edit),
-  weigh spools with the **FilaTrack Scale**, live remaining grams that tick down during a print,
-  price / cost / remaining‑value, and a *"will this print run short?"* warning.
+- **Filament manager (no scale required)**: a spool library (create/edit/copy/search/bulk‑edit).
+  Enter a roll's weight and the remaining grams tick down live during a print (the sliced file's
+  total × progress), with price / cost / remaining‑value and a *"will this print run short?"*
+  warning. The optional **FilaTrack Scale** lets you weigh instead of type — and re‑weigh for the
+  exact figure — while the Bambu Cloud relay (below) can feed each print's real grams to keep it
+  accurate without a scale.
 - **ntfy push notifications** (print done/failed, filament short), **print history &
   statistics**, and kiosk crash‑restart.
 
