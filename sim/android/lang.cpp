@@ -97,6 +97,7 @@ static const Builtin BUILTIN[] = {
     {"spools.by_number",    "Roll number:",           "Rolnummer:"},
     {"spools.pick_it",      "Pick",                   "Pak"},
     {"spools.no_num",       "no roll #",              "geen rol #"},
+    {"spools.all_mat",      "All",                    "Alle"},
     {"spools.empty_slot",   "Empty",                  "Leeg"},
     {"spools.no_roll",      "no roll in this slot",   "geen rol in dit slot"},
     {"spools.same_mat",     "Same material as this slot currently holds",

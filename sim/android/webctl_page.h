@@ -85,6 +85,8 @@ h3{margin:0 0 10px;font-size:15px;color:var(--muted);font-weight:600}
 .rollcard .name{font-weight:600}
 .badge{display:inline-block;background:#2a323b;color:#cfd6dd;border-radius:20px;padding:2px 10px;font-size:12px;margin-left:8px}
 .rnum{display:inline-block;background:#0e639c;color:#fff;border-radius:6px;padding:1px 8px;font-size:13px;font-weight:700;margin-right:4px;font-variant-numeric:tabular-nums}
+.matchip{background:#2a323b;color:#cfd6dd;border:1px solid #3a434d;border-radius:20px;padding:7px 15px;font-size:14px;cursor:pointer}
+.matchip.on{background:#0e639c;color:#fff;border-color:#0e639c;font-weight:600}
 .grams{margin-left:auto;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
 .iconbtn{background:#2a323b;color:#cfd6dd;border:0;border-radius:8px;width:40px;height:36px;font-size:16px;cursor:pointer}
 .iconbtn:active{filter:brightness(1.4)}
@@ -219,11 +221,12 @@ section#spools{max-width:1040px}
  <div class="card"><h3 data-i18n="spools.title">Rollen</h3>
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
    <input type="text" id="spSearch" data-i18n-ph="spools.search" placeholder="Zoek op naam of materiaal…" oninput="renderSpList()" style="flex:1;min-width:150px;padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff;font-size:15px">
-   <select id="spFMat" onchange="renderSpList()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="" data-i18n="hist.all_materials">alle materialen</option></select>
+   <select id="spFMat" onchange="renderMatChips();renderSpList()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff;display:none"><option value="" data-i18n="hist.all_materials">alle materialen</option></select>
    <select id="spSort" onchange="renderSpList()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="num" data-i18n="spools.sort_num">op nummer (oudste eerst)</option><option value="name" data-i18n="spools.sort_name">naam A-Z</option><option value="low" data-i18n="spools.sort_low">weinig &rarr; veel</option><option value="high" data-i18n="spools.sort_high">veel &rarr; weinig</option><option value="price" data-i18n="spools.sort_price">prijs/kg</option><option value="mat" data-i18n="spools.material">materiaal</option></select>
    <label class="muted" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="spLow" onchange="renderSpList()" style="width:18px;height:18px"><span data-i18n="spools.almost_empty">bijna leeg</span></label>
    <label class="muted" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="spAll" onchange="toggleAll(this.checked)" style="width:18px;height:18px"> <span data-i18n="all">alles</span></label>
   </div>
+  <div id="spMatChips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
   <div id="spBulk" style="display:none;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;background:var(--panel2);border-radius:8px;padding:9px 12px">
    <b id="spSelCount"></b>
    <button class="formbtn" style="background:#4a2323;color:#ff9a9a;padding:8px 14px" onclick="bulkDel()" data-i18n="delete">Verwijder</button>
@@ -662,7 +665,7 @@ function loadSpools(){
   var mats={};list.forEach(function(s){if(s.material)mats[s.material]=1;});
   var sel=$('spFMat');if(sel){var cur=sel.value,o='<option value="">'+t('hist.all_materials','alle materialen')+'</option>';Object.keys(mats).sort().forEach(function(m){o+='<option>'+m+'</option>';});sel.innerHTML=o;sel.value=cur;}
   if($('spNum')&&$('spIdx')&&$('spIdx').value==-1&&!$('spNum').value)$('spNum').value=nextSpNum();
-  renderInv();renderSpList();})
+  renderMatChips();renderInv();renderSpList();})
  .catch(function(){$('spList').innerHTML='<div class="muted">'+t('no_tablet','geen tablet')+'</div>';});
 }
 function mLen(g,mat){var d={PLA:1.24,PETG:1.27,ABS:1.04,ASA:1.07,TPU:1.21,PC:1.20,PA:1.14,PVA:1.23}[mat]||1.24;return g/(d*2.4053);}
@@ -687,6 +690,15 @@ function spMatch(s){
  if(fmat&&s.material!==fmat)return false;
  if($('spLow')&&$('spLow').checked&&!(spGrams(s)<lowG))return false;
  return true;
+}
+function setMat(m){if($('spFMat'))$('spFMat').value=m||'';renderMatChips();renderSpList();}
+function renderMatChips(){
+ var box=$('spMatChips');if(!box)return;
+ var cur=($('spFMat')&&$('spFMat').value)||'';
+ var mats={};spCache.forEach(function(s){if(s.material)mats[s.material]=1;});
+ var h='<button class="matchip'+(cur===''?' on':'')+'" data-m="" onclick="setMat(this.dataset.m)">'+t('spools.all_mat','Alle')+'</button>';
+ Object.keys(mats).sort().forEach(function(m){h+='<button class="matchip'+(cur===m?' on':'')+'" data-m="'+esc(m)+'" onclick="setMat(this.dataset.m)">'+esc(m)+'</button>';});
+ box.innerHTML=h;
 }
 function renderSpList(){
  var sort=($('spSort')&&$('spSort').value)||'name';
