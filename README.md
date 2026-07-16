@@ -140,4 +140,8 @@ interface, and the scale.
 
 ## License
 
-MIT — see [LICENSE](LICENSE). The original project is also MIT; this fork keeps that.
+**GNU AGPL-3.0** — see [LICENSE](LICENSE). Copyright © 2026 sankeeye.
+
+Free software: use it, study it, share it, improve it. But if you distribute it — or run a
+modified version as a network service — you must release your source under the same license.
+In short: it stays open, and no one can take it closed and sell it as their own product.

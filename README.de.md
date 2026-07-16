@@ -146,5 +146,8 @@ die Waage.
 
 ## Lizenz
 
-MIT — siehe [LICENSE](LICENSE). Das ursprüngliche Projekt ist ebenfalls MIT; dieser Fork behält das
-bei.
+**GNU AGPL-3.0** — siehe [LICENSE](LICENSE). Copyright © 2026 sankeeye.
+
+Freie Software: nutzen, studieren, teilen, verbessern. Wer sie aber verbreitet — oder eine
+geänderte Version als Netzwerkdienst betreibt — muss den Quellcode unter derselben Lizenz
+freigeben. Kurz: sie bleibt offen, und niemand kann daraus ein geschlossenes Bezahlprodukt machen.

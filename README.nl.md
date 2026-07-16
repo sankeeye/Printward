@@ -142,4 +142,8 @@ weegschaal.
 
 ## Licentie
 
-MIT — zie [LICENSE](LICENSE). Het oorspronkelijke project is ook MIT; deze fork houdt dat aan.
+**GNU AGPL-3.0** — zie [LICENSE](LICENSE). Copyright © 2026 sankeeye.
+
+Vrije software: gebruik het, bestudeer het, deel het, verbeter het. Maar wie het verspreidt — of
+een aangepaste versie als online dienst draait — moet z'n broncode onder dezelfde licentie
+vrijgeven. Kortom: het blijft open, en niemand kan er een gesloten betaalproduct van maken.
