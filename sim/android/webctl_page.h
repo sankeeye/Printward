@@ -224,6 +224,7 @@ section#spools{max-width:1040px}
    <select id="spFMat" onchange="renderMatChips();renderSpList()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff;display:none"><option value="" data-i18n="hist.all_materials">alle materialen</option></select>
    <select id="spSort" onchange="renderSpList()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="num" data-i18n="spools.sort_num">op nummer (oudste eerst)</option><option value="name" data-i18n="spools.sort_name">naam A-Z</option><option value="low" data-i18n="spools.sort_low">weinig &rarr; veel</option><option value="high" data-i18n="spools.sort_high">veel &rarr; weinig</option><option value="price" data-i18n="spools.sort_price">prijs/kg</option><option value="mat" data-i18n="spools.material">materiaal</option></select>
    <label class="muted" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="spLow" onchange="renderSpList()" style="width:18px;height:18px"><span data-i18n="spools.almost_empty">bijna leeg</span></label>
+   <label class="muted" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="spAms" onchange="renderSpList()" style="width:18px;height:18px"><span data-i18n="spools.in_ams">in AMS</span></label>
    <label class="muted" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="spAll" onchange="toggleAll(this.checked)" style="width:18px;height:18px"> <span data-i18n="all">alles</span></label>
   </div>
   <div id="spMatChips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
@@ -689,6 +690,7 @@ function spMatch(s){
  if(q&&(s.name+' '+s.material).toLowerCase().indexOf(q)<0)return false;
  if(fmat&&s.material!==fmat)return false;
  if($('spLow')&&$('spLow').checked&&!(spGrams(s)<lowG))return false;
+ if($('spAms')&&$('spAms').checked&&!(s.slot!=null&&s.slot>=0))return false;
  return true;
 }
 function setMat(m){if($('spFMat'))$('spFMat').value=m||'';renderMatChips();renderSpList();}
