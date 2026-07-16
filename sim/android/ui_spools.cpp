@@ -157,9 +157,9 @@ static void format_spool_row(char* buf, int len, const Spool& s) {
     float g = spool_live_grams(s);
     float m = roll_meters(g, s.material);
     if (s.price_kg > 0)
-        snprintf(buf, len, "%s  %s%s  %.0f g (~%.0f m)  EUR %.2f", s.name, s.material, slp, g, m, g * s.price_kg / 1000.0f);
+        snprintf(buf, len, "#%d  %s  %s%s  %.0f g (~%.0f m)  EUR %.2f", s.number, s.name, s.material, slp, g, m, g * s.price_kg / 1000.0f);
     else
-        snprintf(buf, len, "%s  %s%s  %.0f g (~%.0f m)", s.name, s.material, slp, g, m);
+        snprintf(buf, len, "#%d  %s  %s%s  %.0f g (~%.0f m)", s.number, s.name, s.material, slp, g, m);
 }
 // Called from the main loop (~1 Hz): refresh the visible grams without rebuilding
 // the screen, so a printing slot ticks down live in the Spools list too.
@@ -452,6 +452,7 @@ static void edit_save_cb(lv_event_t*) {
     strncpy(s.code, lv_textarea_get_text(g_e_code), sizeof(s.code) - 1);
     strncpy(s.note, lv_textarea_get_text(g_e_note), sizeof(s.note) - 1);
     s.price_kg = (float)atof(lv_textarea_get_text(g_e_price));
+    if (g_edit_idx >= 0 && g_edit_idx < g_spool_count) s.number = g_spools[g_edit_idx].number;  // keep the roll number
     spool_upsert(g_edit_idx, s);
     create_spools_ui();
 }

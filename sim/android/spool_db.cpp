@@ -41,9 +41,9 @@ void spool_db_save() {
     for (int i = 0; i < g_spool_count; i++) {
         Spool s = g_spools[i];
         sanitize(s.name); sanitize(s.material); sanitize(s.code); sanitize(s.note);
-        fprintf(f, "%s|%s|%s|%06X|%.1f|%.1f|%d|%d|%s|%.2f|%d\n",
+        fprintf(f, "%s|%s|%s|%06X|%.1f|%.1f|%d|%d|%s|%.2f|%d|%d\n",
                 s.name, s.material, s.code, (unsigned)(s.color & 0xFFFFFF),
-                s.remaining_g, s.empty_g, s.nmin, s.nmax, s.note, s.price_kg, s.slot);
+                s.remaining_g, s.empty_g, s.nmin, s.nmax, s.note, s.price_kg, s.slot, s.number);
     }
     fclose(f);
 }
@@ -54,6 +54,22 @@ static char* field(char** p) {
     if (bar) { *bar = 0; *p = bar + 1; }
     else *p = start + strlen(start);
     return start;
+}
+
+static int spool_max_number() {
+    int m = 0;
+    for (int i = 0; i < g_spool_count; i++) if (g_spools[i].number > m) m = g_spools[i].number;
+    return m;
+}
+
+// Give every roll a number: any still at 0 (new, or from a pre-numbering file) gets
+// the next value above the current max, so numbering follows creation order.
+static void spool_db_ensure_numbers() {
+    int m = spool_max_number();
+    bool changed = false;
+    for (int i = 0; i < g_spool_count; i++)
+        if (g_spools[i].number <= 0) { g_spools[i].number = ++m; changed = true; }
+    if (changed) spool_db_save();
 }
 
 void spool_db_load() {
@@ -78,9 +94,12 @@ void spool_db_load() {
         s.price_kg = (float)atof(field(&p));   // absent in old files -> 0
         char* slotf = field(&p);               // 11th field, absent in old files
         s.slot = (slotf && slotf[0]) ? atoi(slotf) : -1;
+        char* numf = field(&p);                // 12th field, absent in old files -> 0
+        s.number = (numf && numf[0]) ? atoi(numf) : 0;
         g_spools[g_spool_count++] = s;
     }
     fclose(f);
+    spool_db_ensure_numbers();   // give any un-numbered (legacy) roll a number
     Serial.printf("SPOOLS: loaded %d\n", g_spool_count);
 }
 
@@ -96,6 +115,7 @@ int spool_upsert(int idx, const Spool& s) {
     }
     g_spools[idx] = s;
     g_spools[idx].slot = keep;
+    if (g_spools[idx].number <= 0) g_spools[idx].number = spool_max_number() + 1;
     spool_db_save();
     return idx;
 }

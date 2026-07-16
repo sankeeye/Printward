@@ -360,6 +360,8 @@ void webctl_loop() {
                 if (parse_query(c.arg, "nmax", v, sizeof(v))) s.nmax = atoi(v);
                 if (parse_query(c.arg, "price", v, sizeof(v))) s.price_kg = (float)atof(v);
                 else if (c.code >= 0 && c.code < g_spool_count) s.price_kg = g_spools[c.code].price_kg;  // don't drop the price when a save (e.g. weigh) omits it
+                if (parse_query(c.arg, "num", v, sizeof(v))) s.number = atoi(v);
+                else if (c.code >= 0 && c.code < g_spool_count) s.number = g_spools[c.code].number;  // keep the roll number on a partial save
                 spool_upsert(c.code, s);          // c.code = idx (-1 = add)
                 break;
             }
@@ -600,8 +602,8 @@ static void build_spools(char* o, int n) {
         json_escape(s.code, code, sizeof(code));
         json_escape(s.note, note, sizeof(note));
         p += snprintf(o + p, n - p,
-            "%s{\"i\":%d,\"name\":\"%s\",\"material\":\"%s\",\"rgb\":\"#%06X\",\"rem\":%.0f,\"live\":%.0f,\"slot\":%d,\"empty\":%.0f,\"nmin\":%d,\"nmax\":%d,\"code\":\"%s\",\"note\":\"%s\",\"price\":%.2f}",
-            i ? "," : "", i, nm, mat, (unsigned)(s.color & 0xFFFFFF),
+            "%s{\"i\":%d,\"num\":%d,\"name\":\"%s\",\"material\":\"%s\",\"rgb\":\"#%06X\",\"rem\":%.0f,\"live\":%.0f,\"slot\":%d,\"empty\":%.0f,\"nmin\":%d,\"nmax\":%d,\"code\":\"%s\",\"note\":\"%s\",\"price\":%.2f}",
+            i ? "," : "", i, s.number, nm, mat, (unsigned)(s.color & 0xFFFFFF),
             s.remaining_g, spool_live_grams(s), s.slot, s.empty_g, s.nmin, s.nmax, code, note, s.price_kg);
     }
     snprintf(o + p, n - p, "]");

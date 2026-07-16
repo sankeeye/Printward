@@ -87,6 +87,8 @@ static const Builtin BUILTIN[] = {
     {"spools.colour",       "Colour",                 "Kleur"},
     {"spools.remaining",    "Filament left (g)",      "Resterend filament (g)"},
     {"spools.price",        "Price (EUR/kg)",         "Prijs (EUR/kg)"},
+    {"spools.number",       "Roll number #",          "Rolnummer #"},
+    {"spools.number_hint",  "Unique number for this roll - write it on the spool. Filled in automatically.", "Uniek nummer voor deze rol - schrijf het op de spoel. Wordt automatisch ingevuld."},
     {"spools.note",         "Note",                   "Notitie"},
     {"spools.weigh",        "Weigh",                  "Weeg"},
     {"spools.almost_empty", "almost empty",           "bijna leeg"},
@@ -248,6 +250,7 @@ static const Builtin BUILTIN[] = {
     {"hist.costliest",        "most expensive first",      "duurste eerst"},
     {"hist.most_filament",    "most filament",             "meeste filament"},
     {"hist.show_arch",        "Show archived",             "Gearchiveerd tonen"},
+    {"spools.sort_num",       "by number (oldest first)",  "op nummer (oudste eerst)"},
     {"spools.sort_name",      "name A-Z",                  "naam A-Z"},
     {"spools.sort_price",     "price/kg",                  "prijs/kg"},
 

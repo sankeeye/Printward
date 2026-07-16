@@ -74,7 +74,15 @@ static void open_spool_modal(int slot) {
         lv_obj_set_style_text_font(l, &lv_font_montserrat_14, 0);
         lv_obj_set_style_text_color(l, lv_color_hex(0x999999), 0);
     }
-    for (int i = 0; i < g_spool_count; i++) {
+    int order[SPOOL_MAX];
+    for (int i = 0; i < g_spool_count; i++) order[i] = i;
+    for (int a = 0; a + 1 < g_spool_count; a++)          // oldest (lowest #) first
+        for (int b2 = a + 1; b2 < g_spool_count; b2++)
+            if (g_spools[order[b2]].number < g_spools[order[a]].number) {
+                int t = order[a]; order[a] = order[b2]; order[b2] = t;
+            }
+    for (int k = 0; k < g_spool_count; k++) {
+        int i = order[k];
         Spool& s = g_spools[i];
         lv_obj_t* b = lv_btn_create(g_spool_list);
         lv_obj_set_size(b, lv_pct(100), PT_SZ(48));
@@ -90,7 +98,7 @@ static void open_spool_modal(int slot) {
         lv_obj_set_style_border_width(sw, 0, LV_PART_MAIN);
         lv_obj_clear_flag(sw, LV_OBJ_FLAG_CLICKABLE);
         lv_obj_t* l = lv_label_create(b);
-        lv_label_set_text_fmt(l, "%s   %s   %.0f g", s.name, s.material, spool_live_grams(s));
+        lv_label_set_text_fmt(l, "#%d   %s   %s   %.0f g", s.number, s.name, s.material, spool_live_grams(s));
         lv_obj_set_style_text_font(l, &lv_font_montserrat_14, 0);
         lv_obj_add_event_cb(b, spool_choose_cb, LV_EVENT_CLICKED, (void*)(intptr_t)i);
     }

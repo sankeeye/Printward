@@ -23,6 +23,8 @@ struct Spool {
     float price_kg;      // price per kg (for cost tracking), 0 = unknown
     int slot;            // AMS slot this roll is loaded in: -1 none, 254 external,
                          // else unit*AMS_MAX_TRAYS + tray. Managed by load/clear.
+    int number;          // user-facing roll number (#N): auto-assigned lowest-free
+                         // on create, editable. Low = older, so it doubles as FIFO.
 };
 
 extern Spool g_spools[SPOOL_MAX];

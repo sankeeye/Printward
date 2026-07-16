@@ -84,6 +84,7 @@ h3{margin:0 0 10px;font-size:15px;color:var(--muted);font-weight:600}
 .rollcard{display:flex;align-items:center;gap:12px;background:var(--panel2);border-radius:10px;padding:10px 12px;margin-bottom:8px}
 .rollcard .name{font-weight:600}
 .badge{display:inline-block;background:#2a323b;color:#cfd6dd;border-radius:20px;padding:2px 10px;font-size:12px;margin-left:8px}
+.rnum{display:inline-block;background:#0e639c;color:#fff;border-radius:6px;padding:1px 8px;font-size:13px;font-weight:700;margin-right:4px;font-variant-numeric:tabular-nums}
 .grams{margin-left:auto;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
 .iconbtn{background:#2a323b;color:#cfd6dd;border:0;border-radius:8px;width:40px;height:36px;font-size:16px;cursor:pointer}
 .iconbtn:active{filter:brightness(1.4)}
@@ -198,6 +199,7 @@ section#spools{max-width:1040px}
    <div class="field"><label data-i18n="spools.nozzle_max">Nozzle max</label><input type="number" id="spNmax" data-i18n-ph="auto" placeholder="auto"></div>
    <div class="field"><label data-i18n="spools.bambu_code">Bambu-code</label><input type="text" id="spCode" data-i18n-ph="auto" placeholder="auto"></div>
    <div class="field"><label data-i18n="spools.price">Prijs (EUR/kg)</label><input type="number" id="spPrice" placeholder="0" step="0.01"></div>
+   <div class="field"><label data-i18n="spools.number">Rolnummer #</label><input type="number" id="spNum" min="1" step="1" data-i18n-title="spools.number_hint" title="Uniek nummer voor deze rol - schrijf het op de spoel. Wordt automatisch ingevuld."></div>
   </div>
   <div class="field" style="margin-top:12px"><label data-i18n="spools.note">Notitie</label><input type="text" id="spNote" data-i18n-ph="spools.note_ph" placeholder="bv. gedroogd 3/7"></div>
   <input type="hidden" id="spIdx" value="-1">
@@ -218,7 +220,7 @@ section#spools{max-width:1040px}
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
    <input type="text" id="spSearch" data-i18n-ph="spools.search" placeholder="Zoek op naam of materiaal…" oninput="renderSpList()" style="flex:1;min-width:150px;padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff;font-size:15px">
    <select id="spFMat" onchange="renderSpList()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="" data-i18n="hist.all_materials">alle materialen</option></select>
-   <select id="spSort" onchange="renderSpList()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="name" data-i18n="spools.sort_name">naam A-Z</option><option value="low" data-i18n="spools.sort_low">weinig &rarr; veel</option><option value="high" data-i18n="spools.sort_high">veel &rarr; weinig</option><option value="price" data-i18n="spools.sort_price">prijs/kg</option><option value="mat" data-i18n="spools.material">materiaal</option></select>
+   <select id="spSort" onchange="renderSpList()" style="padding:9px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff"><option value="num" data-i18n="spools.sort_num">op nummer (oudste eerst)</option><option value="name" data-i18n="spools.sort_name">naam A-Z</option><option value="low" data-i18n="spools.sort_low">weinig &rarr; veel</option><option value="high" data-i18n="spools.sort_high">veel &rarr; weinig</option><option value="price" data-i18n="spools.sort_price">prijs/kg</option><option value="mat" data-i18n="spools.material">materiaal</option></select>
    <label class="muted" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="spLow" onchange="renderSpList()" style="width:18px;height:18px"><span data-i18n="spools.almost_empty">bijna leeg</span></label>
    <label class="muted" style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="spAll" onchange="toggleAll(this.checked)" style="width:18px;height:18px"> <span data-i18n="all">alles</span></label>
   </div>
@@ -575,11 +577,11 @@ function slotMat(slot){if(!lastS)return'';if(slot===254)return(lastS.ext&&lastS.
 function pickRoll(slot){pickSlot=slot;$('rollTitle').textContent=t('spools.pick_for','Kies rol voor')+' '+slotName(slot);
  var mat=slotMat(slot);
  fetch('/spools').then(function(r){return r.json();}).then(function(list){
-  if(mat)list.sort(function(a,b){return (b.material===mat?1:0)-(a.material===mat?1:0);});
+  list.sort(function(a,b){if(mat){var am=(a.material===mat)?0:1,bm=(b.material===mat)?0:1;if(am!==bm)return am-bm;}return (a.num||0)-(b.num||0);});
   var h='<div class="fitem rollpick" onclick="clearRoll()"><div style="display:flex;align-items:center;gap:8px"><div class="sw" style="width:26px;height:20px;flex:0 0 auto;background:#555b63;border:1px solid #888"></div><span><b>'+t('spools.empty_slot','Leeg')+'</b> <span class="muted">'+t('spools.no_roll','geen rol in dit slot')+'</span></span></div></div>';
   if(!list.length)h+='<div class="muted">'+t('spools.none_yet','Nog geen rollen — maak ze aan op de Spools-tab.')+'</div>';
   list.forEach(function(s){var pas=(mat&&s.material===mat)?' <span class="badge" title="'+t('spools.same_mat','Zelfde materiaal als er nu in dit slot zit')+'" style="margin-left:6px;background:#1e5f3a;color:#b9f5cf">'+s.material+' &#10003;</span>':'';
-   h+='<div class="fitem rollpick" onclick="chooseRoll('+s.i+')"><div style="display:flex;align-items:center;gap:8px"><div class="sw" style="width:26px;height:20px;flex:0 0 auto;background:'+esc(s.rgb)+'"></div><span><b>'+esc(s.name)+'</b> <span class="muted">'+esc(s.material)+' · '+s.rem+' g</span>'+pas+'</span></div></div>';});
+   h+='<div class="fitem rollpick" onclick="chooseRoll('+s.i+')"><div style="display:flex;align-items:center;gap:8px"><span class="rnum">#'+(s.num||0)+'</span><div class="sw" style="width:26px;height:20px;flex:0 0 auto;background:'+esc(s.rgb)+'"></div><span><b>'+esc(s.name)+'</b> <span class="muted">'+esc(s.material)+' · '+s.rem+' g</span>'+pas+'</span></div></div>';});
   $('rollList').innerHTML=h;$('rollModal').style.display='flex';
  }).catch(function(){});
 }
@@ -648,6 +650,7 @@ function loadSpools(){
  fetch('/spools').then(function(r){return r.json();}).then(function(list){spCache=list;
   var mats={};list.forEach(function(s){if(s.material)mats[s.material]=1;});
   var sel=$('spFMat');if(sel){var cur=sel.value,o='<option value="">'+t('hist.all_materials','alle materialen')+'</option>';Object.keys(mats).sort().forEach(function(m){o+='<option>'+m+'</option>';});sel.innerHTML=o;sel.value=cur;}
+  if($('spNum')&&$('spIdx')&&$('spIdx').value==-1&&!$('spNum').value)$('spNum').value=nextSpNum();
   renderInv();renderSpList();})
  .catch(function(){$('spList').innerHTML='<div class="muted">'+t('no_tablet','geen tablet')+'</div>';});
 }
@@ -678,6 +681,7 @@ function renderSpList(){
  var sort=($('spSort')&&$('spSort').value)||'name';
  var arr=spCache.filter(spMatch);
  arr.sort(function(a,b){
+  if(sort==='num')return (a.num||0)-(b.num||0);
   if(sort==='low')return spGrams(a)-spGrams(b);
   if(sort==='high')return spGrams(b)-spGrams(a);
   if(sort==='price')return (b.price||0)-(a.price||0);
@@ -690,7 +694,7 @@ function renderSpList(){
   var low=g<lowG?' <span class="badge" style="background:#5a2020;color:#ffd0d0">'+t('spools.almost_empty','bijna leeg')+'</span>':'';
   h+='<div class="rollcard"><input type="checkbox" '+(spSel[s.i]?'checked':'')+' onchange="selToggle('+s.i+',this.checked)" style="width:20px;height:20px;flex:0 0 auto">'
    +'<div style="width:38px;height:38px;border-radius:8px;flex:0 0 auto;border:1px solid #3a434d;background:'+s.rgb+'"></div>'
-   +'<div style="min-width:0"><div class="name">'+esc(s.name)+'<span class="badge">'+esc(s.material)+'</span>'+sl+low+'</div>'
+   +'<div style="min-width:0"><div class="name"><span class="rnum">#'+(s.num||0)+'</span> '+esc(s.name)+'<span class="badge">'+esc(s.material)+'</span>'+sl+low+'</div>'
    +(s.note?'<div class="muted" style="font-size:12px">'+esc(s.note)+'</div>':'')
    +(s.price>0?'<div class="muted" style="font-size:12px">€ '+s.price.toFixed(2)+'/kg</div>':'')+'</div>'
    +'<div class="grams">'+g+' g<div class="muted" style="font-size:12px;font-weight:400">&asymp; '+Math.round(m)+' m'+(s.price>0?' · € '+(g*s.price/1000).toFixed(2):'')+'</div></div>'
@@ -726,13 +730,14 @@ function spLoad(i){var sl=$('ss'+i).value;fetch('/spool_load?idx='+i+'&slot='+sl
 function spDel(i){if(confirm(t('confirm.del_roll','Rol verwijderen?')))fetch('/spool_del?idx='+i).then(function(){loadSpools();});}
 function spEdit(i){var s=spCache[i];$('spTitle').textContent=t('spools.edit_roll','Rol bewerken');$('spIdx').value=i;
  $('spName').value=s.name;$('spMat').value=s.material;$('spColor').value=s.rgb;$('spRem').value=s.rem;$('spEmpty').value=s.empty;
- $('spNmin').value=s.nmin||'';$('spNmax').value=s.nmax||'';$('spCode').value=s.code||'';$('spNote').value=s.note||'';$('spPrice').value=s.price||'';}
-function spReset(){$('spTitle').textContent=t('spools.new_roll','Nieuwe rol');$('spIdx').value=-1;$('spName').value='';$('spNote').value='';$('spCode').value='';$('spNmin').value='';$('spNmax').value='';$('spPrice').value='';}
+ $('spNmin').value=s.nmin||'';$('spNmax').value=s.nmax||'';$('spCode').value=s.code||'';$('spNote').value=s.note||'';$('spPrice').value=s.price||'';if($('spNum'))$('spNum').value=s.num||'';}
+function nextSpNum(){var m=0;spCache.forEach(function(s){if((s.num||0)>m)m=s.num;});return m+1;}
+function spReset(){$('spTitle').textContent=t('spools.new_roll','Nieuwe rol');$('spIdx').value=-1;$('spName').value='';$('spNote').value='';$('spCode').value='';$('spNmin').value='';$('spNmax').value='';$('spPrice').value='';if($('spNum'))$('spNum').value=nextSpNum();}
 $('spNew').onclick=spReset;
 $('spSave').onclick=function(){
  var q='idx='+$('spIdx').value+'&name='+encodeURIComponent($('spName').value)+'&material='+encodeURIComponent($('spMat').value)
   +'&color='+encodeURIComponent($('spColor').value)+'&rem='+($('spRem').value||0)+'&empty='+($('spEmpty').value||0)
-  +'&nmin='+($('spNmin').value||0)+'&nmax='+($('spNmax').value||0)+'&code='+encodeURIComponent($('spCode').value)+'&note='+encodeURIComponent($('spNote').value)+'&price='+($('spPrice').value||0);
+  +'&nmin='+($('spNmin').value||0)+'&nmax='+($('spNmax').value||0)+'&code='+encodeURIComponent($('spCode').value)+'&note='+encodeURIComponent($('spNote').value)+'&price='+($('spPrice').value||0)+'&num='+($('spNum').value||0);
  fetch('/spool_save?'+q).then(function(r){return r.text();}).then(function(txt){spMsg(txt);spReset();setTimeout(loadSpools,300);});
 };
 function loadEmpties(){
