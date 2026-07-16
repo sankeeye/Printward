@@ -1,3 +1,5 @@
+# FilaTrack ESP32-S3 (16 MB flash) partition layout: two 3 MB OTA app slots
+# + ~9.8 MB SPIFFS. Referenced by [env:pandatouch] (board_build.partitions).
 # Name,   Type, SubType, Offset,  Size, Flags
 nvs,      data, nvs,     ,        0x5000,
 otadata,  data, ota,     ,        0x2000,

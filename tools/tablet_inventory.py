@@ -13,9 +13,10 @@
 # The txt is committed as the work list. Re-run it as you go; "nieuw nodig" should
 # drop towards zero.
 
-import io, os, re, glob, json, unicodedata
+import io, os, re, glob
 
-ROOT = "X:/projects/panda/FilaTrack/"
+# Repo root = the parent of this tools/ dir, so it works on any machine.
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__))).replace("\\", "/") + "/"
 
 # --- what keys already exist, and what text they hold ----------------------
 lang = io.open(ROOT + "sim/android/lang.cpp", encoding="utf-8", errors="surrogateescape").read()
@@ -96,7 +97,4 @@ for i in new:
     out.append("  %-22s:%-4d %s%s" % (i["file"], i["line"], i["text"][:52], d))
 
 io.open(ROOT + "tablet_inventory.txt", "w", encoding="ascii", errors="replace").write("\n".join(out))
-io.open("C:/Users/w/AppData/Local/Temp/claude/i--Mijn-Drive-Claud-Projects-panda-PandaTouch-streamDeck-src/"
-        "c08c6de5-fa97-4704-ad88-5dbfe6a74520/scratchpad/inventory.json", "w",
-        encoding="utf-8").write(json.dumps(items, ensure_ascii=False, indent=1))
 print("\n".join(out[:12]))
