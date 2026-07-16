@@ -66,7 +66,10 @@ work too — they just haven't been tested here yet.
 
 The exact same `src/ui_*` code also builds as a **PC simulator** (`sim/`) for development.
 
-## Build & flash
+## Build from source (developers)
+
+*Just want to use it? You don't need this — see **[INSTALL.md](INSTALL.md)**. This section is for
+building the app and firmware yourself.*
 
 - **Android tablet** — build the APK with the Android NDK + Gradle and push it to the tablet.
   Full step‑by‑step in [`android/README.md`](android/README.md). The printer IP / serial /

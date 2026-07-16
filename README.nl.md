@@ -69,7 +69,10 @@ zouden ook moeten werken — die zijn hier alleen nog niet getest.
 
 Exact dezelfde `src/ui_*`‑code bouwt ook als **PC‑simulator** (`sim/`) voor ontwikkeling.
 
-## Bouwen & flashen
+## Vanaf de broncode bouwen (voor ontwikkelaars)
+
+*Wil je het gewoon gebruiken? Dan heb je dit niet nodig — zie **[INSTALL.md](INSTALL.md)**. Deze
+sectie is om de app en firmware zelf te bouwen.*
 
 - **Android‑tablet** — bouw de APK met de Android NDK + Gradle en zet hem op de tablet. Volledige
   stap‑voor‑stap in [`android/README.md`](android/README.md). Het printer‑IP / serienummer /

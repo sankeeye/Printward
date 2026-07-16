@@ -71,7 +71,10 @@ andere Modelle (P1P, X1C, A1, …) funktionieren — sie wurden hier nur noch ni
 
 Genau derselbe `src/ui_*`‑Code baut auch als **PC‑Simulator** (`sim/`) für die Entwicklung.
 
-## Bauen & Flashen
+## Aus dem Quellcode bauen (für Entwickler)
+
+*Willst du es einfach nur nutzen? Dann brauchst du das nicht — siehe **[INSTALL.md](INSTALL.md)**.
+Dieser Abschnitt ist zum Selbst‑Bauen der App und Firmware.*
 
 - **Android‑Tablet** — baue das APK mit dem Android NDK + Gradle und spiele es aufs Tablet. Die
   vollständige Schritt‑für‑Schritt‑Anleitung steht in [`android/README.md`](android/README.md).
