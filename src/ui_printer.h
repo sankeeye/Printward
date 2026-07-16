@@ -23,17 +23,8 @@ extern volatile int g_pending_action;
 // (0 = nothing pending). Separate from g_pending_action since it carries a value.
 extern volatile int g_pending_speed_level;
 
-// Firmware-update progress overlay (from the old ESP32 OTA path). These flags let
-// a non-UI caller request the full-screen overlay without depending on LVGL. The
-// tablet build installs via APK, so nothing triggers this now - left in place as a
-// generic overlay hook rather than removed with the rest of the ESP32 firmware.
-extern volatile bool g_ota_screen_requested;
-extern volatile int g_ota_progress;
-
 void create_printer_ui();
 void update_printer_ui();      // call periodically from loop() to refresh live values
 void update_status_label();    // wifi/IP + printer connection indicator
-void show_update_screen();
-void update_ota_progress(int pct, const char* msg);
 
 #endif

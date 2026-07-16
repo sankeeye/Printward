@@ -194,7 +194,6 @@ static const Builtin BUILTIN[] = {
     {"dash.light_off",        "Light: Off", "Licht: uit"},
     {"dash.fan_pct",          "Fan %d%%", "Ventilator %d%%"},
     {"dash.short_fmt",        "Filament short: ~%.0f g", "Filament tekort: ~%.0f g"},
-    {"sys.updating",          "Updating system...", "Systeem bijwerken..."},
     {"set.saver_3d",          "Screensaver: 3D", "Screensaver: 3D"},
     {"set.saver_2d",          "Screensaver: 2D", "Screensaver: 2D"},
     {"set.wifi_setup",        "WiFi setup", "WiFi instellen"},

@@ -20,13 +20,6 @@
 lv_obj_t* g_main_screen = nullptr;
 volatile int g_pending_action = ACT_NONE;
 volatile int g_pending_speed_level = 0;
-volatile bool g_ota_screen_requested = false;
-volatile int g_ota_progress = -1;
-
-static lv_obj_t* g_update_screen = nullptr;
-static lv_obj_t* g_update_bar = nullptr;
-static lv_obj_t* g_update_label = nullptr;
-static lv_obj_t* g_update_pct_label = nullptr;
 
 static lv_obj_t* g_wifi_label = nullptr;
 static lv_obj_t* g_conn_dot = nullptr;
@@ -814,62 +807,3 @@ void update_printer_ui() {
 #endif
 }
 
-void update_ota_progress(int pct, const char* msg) {
-    if (!g_update_screen) return;
-
-    if (msg && g_update_label) {
-        lv_label_set_text(g_update_label, msg);
-    }
-
-    if (g_update_bar && pct >= 0) {
-        lv_bar_set_value(g_update_bar, pct, LV_ANIM_ON);
-        if (g_update_pct_label) lv_label_set_text_fmt(g_update_pct_label, "%d%%", pct);
-    }
-
-    lv_timer_handler();
-}
-
-void show_update_screen() {
-    if (g_update_screen) {
-        lv_scr_load(g_update_screen);
-        return;
-    }
-
-    g_update_screen = lv_obj_create(NULL);
-    lv_obj_set_style_bg_color(g_update_screen, lv_color_hex(0x1a1a1a), LV_PART_MAIN);
-
-    lv_obj_t* cont = lv_obj_create(g_update_screen);
-    lv_obj_set_size(cont, 400, 220);
-    lv_obj_center(cont);
-    lv_obj_set_style_bg_color(cont, lv_color_hex(0x2a2a2a), LV_PART_MAIN);
-    lv_obj_set_style_border_color(cont, lv_color_hex(0xffaa00), LV_PART_MAIN);
-    lv_obj_set_style_border_width(cont, 2, LV_PART_MAIN);
-    lv_obj_set_style_radius(cont, 10, LV_PART_MAIN);
-
-    g_update_label = lv_label_create(cont);
-    lv_label_set_text(g_update_label, T("sys.updating"));
-    lv_obj_set_style_text_color(g_update_label, lv_color_hex(0xffffff), LV_PART_MAIN);
-    lv_obj_set_style_text_align(g_update_label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
-    lv_obj_align(g_update_label, LV_ALIGN_TOP_MID, 0, 20);
-
-    g_update_bar = lv_bar_create(cont);
-    lv_obj_set_size(g_update_bar, 300, 20);
-    lv_obj_align(g_update_bar, LV_ALIGN_CENTER, 0, 10);
-    lv_bar_set_range(g_update_bar, 0, 100);
-    lv_bar_set_value(g_update_bar, 0, LV_ANIM_OFF);
-    lv_obj_set_style_bg_color(g_update_bar, lv_color_hex(0x444444), LV_PART_MAIN);
-    lv_obj_set_style_bg_color(g_update_bar, lv_color_hex(0xffaa00), LV_PART_INDICATOR);
-
-    g_update_pct_label = lv_label_create(cont);
-    lv_label_set_text(g_update_pct_label, "0%");
-    lv_obj_set_style_text_font(g_update_pct_label, &lv_font_montserrat_14, 0);
-    lv_obj_align(g_update_pct_label, LV_ALIGN_CENTER, 0, 35);
-
-    lv_obj_t* spinner = lv_spinner_create(cont);
-    lv_obj_set_size(spinner, 30, 30);
-    lv_obj_align(spinner, LV_ALIGN_BOTTOM_MID, 0, -10);
-    lv_obj_set_style_arc_color(spinner, lv_color_hex(0xffaa00), LV_PART_INDICATOR);
-
-    lv_scr_load(g_update_screen);
-    lv_timer_handler();
-}
