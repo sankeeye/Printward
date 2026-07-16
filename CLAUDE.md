@@ -99,9 +99,29 @@
   hardware bevestigd (temp + print-starten werken in LAN-only). Alles op branch
   `feat/android-tablet-port`, self-test 32/32 groen. **README** is meertalig (EN/NL/DE:
   README.md/.nl.md/.de.md) en gegeneraliseerd naar "Bambu Lab" i.p.v. P1S — met bewust één
-  eerlijke regel dat het op een P1S getest is (geen kale "werkt op alles"-claim). **Openstaand**:
-  de losse tablet-schermen in het Duits doorlopen (alleen gebouwd, niet op scherm gezien; Duits is
-  langer, tablet is smal); eventueel `android/README.md` + `CHANGELOG.md` ook generaliseren/vertalen.
+  eerlijke regel dat het op een P1S getest is (geen kale "werkt op alles"-claim).
+- **Opruimronde 16-07**: verwijderd wat over het weggehaalde ESP32-paneel ging — `docs/` helemaal
+  (PINOUT, paneel-datasheet-pdf, pandatouch.png, gedateerde PROGRESS-snapshot), de stale
+  `CHANGELOG.md` (beschreef alleen de verwijderde firmware), en het gegenereerde
+  `tablet_inventory.txt`. `android/README.md` ontdaan van "ESP32-firmware"-framing.
+- **Nog te doen**: de losse tablet-schermen in het Duits doorlopen (alleen gebouwd, niet op scherm
+  gezien; Duits is langer, tablet is smal). En **beslissing nodig over de Bambu Cloud
+  gewicht-relay** — zie hieronder.
+
+## Bambu Cloud gewicht-relay lijkt verweesd (ontdekt 16-07)
+
+- `tools/bambu_weight_relay.py` POST naar `http://<tablet>/api/report_weight` en `/api/cloud_*`
+  (poort **80**). De huidige tabletserver `webctl.cpp` draait op **8080** en heeft die `/api/*`-
+  endpoints **niet** — die zaten op de verwijderde `webserver.cpp`. Nooit overgezet.
+- Gevolg: de relay kan de huidige build niet bereiken. Vermoedelijk **vervangen door de weegschaal**
+  (echte gewichten i.p.v. cloud-schatting) — past bij het "How it started"-verhaal.
+- Verweesde restanten in de tabletcode: `g_cloud_email/_access_token/_last_task_key` (alleen
+  gedefinieerd), `save_cloud_settings()` is leeg, `bambu_pop_pending_finish()` heeft geen aanroeper
+  meer. Stale comments in `bambu_mqtt.h`, `storage.h`, `ui_printer.h` verwijzen naar `bambu_cloud.cpp`
+  / `webserver.cpp` / `printer_app.cpp` (allemaal weg).
+- **README documenteert de relay nog als werkende functie** (Features + hele sectie). Beslissing aan
+  Arno: relay + cloud‑restanten helemaal weg (aanbevolen, weegschaal vervangt het), of endpoints
+  opnieuw overzetten naar webctl.cpp.
 - **Ontwerp i18n** (afgesproken 15-07): teksten krijgen een **sleutel** (`dash.printing`);
   **EN + NL zitten ingebouwd** zodat het out-of-the-box werkt zonder bestanden; daarnaast
   laadt de app **losse taalbestanden** `/sdcard/filatrack_lang_<code>.conf` (`sleutel=vertaling`,

@@ -1,18 +1,19 @@
 # FilaTrack on an Android tablet
 
-Runs the **same LVGL UI** as the ESP32-S3 firmware (and the PC simulator in
-[`../sim`](../sim)) on an Android tablet, as a dedicated Bambu-printer monitor.
-The UI talks to the printer for real: a live **LAN MQTT/TLS** session (status +
-control), the identical `bambu_mqtt.cpp` used on the device.
+Runs the **same LVGL UI** as the PC simulator in [`../sim`](../sim) on an Android
+tablet, as a dedicated Bambu-printer monitor. The UI talks to the printer for real:
+a live **LAN MQTT/TLS** session (status + control) via `bambu_mqtt.cpp`.
 
 Verified on a **Samsung SM-T280** (Android 5.1.1 / API 22, armeabi-v7a).
 
 ## How it fits together
 
-The device firmware, the PC sim and this Android app all compile the same
-`src/ui_*.cpp` screens. The differences are glued in with small shims:
+This code began life as ESP32/Arduino firmware. That device firmware has since been
+removed, but the PC sim and this Android app still compile the same `src/ui_*.cpp`
+screens and the Arduino-shaped `bambu_mqtt.cpp` unchanged — small shims stand in for
+what the Arduino core used to provide:
 
-| Concern            | Device (ESP32)         | Android tablet                                   |
+| Concern            | Original (ESP32/Arduino) | Android tablet                                 |
 |--------------------|------------------------|--------------------------------------------------|
 | Display + touch    | RGB panel + GT911      | SDL2 (LVGL's `LV_USE_SDL`), fullscreen           |
 | `Arduino.h`, `WiFi`| Arduino core           | shims in [`../sim/shim`](../sim/shim)            |
@@ -23,8 +24,8 @@ The device firmware, the PC sim and this Android app all compile the same
 
 `bambu_mqtt.cpp`, `PubSubClient.cpp` and `ArduinoJson` are compiled **unchanged**;
 the Arduino `Print`/`Stream`/`Client`/`IPAddress` base classes and a real
-mbedTLS `WiFiClientSecure` (TLS handshake, `setInsecure()` like the device, since
-the printer serves a self-signed LAN cert) live in `../sim/shim`.
+mbedTLS `WiFiClientSecure` (TLS handshake, `setInsecure()` since the printer serves
+a self-signed LAN cert) live in `../sim/shim`.
 
 ## What's in git vs. what you fetch
 
