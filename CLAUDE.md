@@ -69,8 +69,9 @@
   geblokkeerd-melding). Uit = huidige gedrag.
 - **Waarom**: firmware 1.08+ negeert temperatuur-gcode en print-start van apps van derden in
   **cloud-modus**. In **LAN-only** modus (printer op "LAN Only", verbinden met toegangscode)
-  wél — vermoedelijk. **Niet geverifieerd op echte hardware**: Arno moet op zijn printer testen
-  of het echt werkt. Daarom achter een schakelaar i.p.v. altijd zichtbaar.
+  **wél** — door Arno bevestigd op zijn eigen P1S (16-07): met de printer op LAN Only werken
+  de temperatuur-presets én print-starten. Daarom achter een schakelaar i.p.v. altijd zichtbaar
+  (in cloud zou het niks doen).
 - **De temp-codes bestonden al** (`MOVE_PREHEAT`/`MOVE_PLA`/... in move_perform), waren alleen
   niet aan knoppen gekoppeld — expres weggehaald omdat ze in cloud niks deden (comment stond in
   ui_move.cpp:436). De print-dialoog (`open_confirm_modal`, met AMS-mapping) bestond ook al
@@ -94,11 +95,11 @@
   `tools/i18n_audit.py` + `tools/check_formats.py` · race in `/setcfg` weg (taal wisselt in
   één klik) · **beveiliging**: webwachtwoord (zelf gegenereerd, in Instellingen) + alleen
   lokaal netwerk + XSS-escaping · **webpoort instelbaar** (Instellingen > Printer instellen).
-- **Waar we gebleven zijn**: taal, beveiliging, instelbare poort én LAN-modus afgerond. Alles
-  op branch `feat/android-tablet-port`, self-test 32/32 groen. **Openstaand voor Arno**: op zijn
-  printer testen of de temperatuurknoppen + print-starten écht werken in LAN-only modus (zie
-  LAN-modus hierboven). Verder: de losse tablet-schermen in het Duits doorlopen (alleen gebouwd,
-  niet op scherm gezien; Duits is langer, tablet is smal) en eventueel een README voor buiten.
+- **Waar we gebleven zijn**: taal, beveiliging, instelbare poort én LAN-modus afgerond en op
+  hardware bevestigd (temp + print-starten werken in LAN-only). Alles op branch
+  `feat/android-tablet-port`, self-test 32/32 groen. **Openstaand**: de losse tablet-schermen in
+  het Duits doorlopen (alleen gebouwd, niet op scherm gezien; Duits is langer, tablet is smal) en
+  eventueel een README voor buitenstaanders.
 - **Ontwerp i18n** (afgesproken 15-07): teksten krijgen een **sleutel** (`dash.printing`);
   **EN + NL zitten ingebouwd** zodat het out-of-the-box werkt zonder bestanden; daarnaast
   laadt de app **losse taalbestanden** `/sdcard/filatrack_lang_<code>.conf` (`sleutel=vertaling`,
