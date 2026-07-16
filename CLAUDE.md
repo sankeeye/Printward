@@ -82,6 +82,25 @@
   knoplabels die de i18n-scan miste (`mk_extra_btn` krijgt letterlijke strings, geen `T()`).
   Nu vertaald. `tools/tablet_inventory.py` ziet die nog steeds niet — een blinde vlek.
 
+## Distributie voor leken (afgerond 16-07)
+
+- **Repo is nu PUBLIEK** (was privé; nodig voor gratis GitHub Pages). Historie vooraf gescand:
+  geen geheimen, alleen placeholders. Geheim-dragende bestanden zijn nooit gecommit.
+- **Weegschaal — browser-flasher, volautomatisch**: workflow `.github/workflows/build-scale.yml`
+  bouwt de firmware (PlatformIO), staget de flash-delen + manifest (`tools/ci_stage_scale.py`, ESP
+  Web Tools "parts"-model — geen merge, geen flash-size gok), en deployt de flasher-pagina
+  (`web/flash/index.html`) naar GitHub Pages: **https://sankeeye.github.io/FilaTrack/scale/**.
+  Leek: pc + Chrome/Edge → USB → "Connect & Install". `workflow_dispatch` (handmatig starten).
+  - Valkuilen die we tegenkwamen: PlatformIO maakt géén `flasher_args.json` voor Arduino-builds
+    (daarom hardcoded ESP32-S3-offsets 0x0/0x8000/0xe000/0x10000); `boot_app0.bin` komt uit het
+    framework-package, niet de build-map; esptool niet nodig (parts-model).
+- **Tablet — APK op een release**: `FilaTrack.apk` (debug-build, installeert prima) hangt aan
+  release **v1.0**. Arno bouwt/upload handmatig (APK-CI is niet gedaan — non-self-contained build).
+  Verse APK bouwen: `sync_sources.ps1` + gradle, dan kopie op bureaublad `FilaTrack-install\`.
+- **`INSTALL.md`** in gewone taal (tablet + weegschaal), gelinkt vanuit de drie README's.
+- **Nog optioneel**: APK volautomatisch in CI (Windows-runner, SDL/LVGL/mbedTLS ophalen) — bewust
+  uitgesteld; tot dan bouwt Claude de APK lokaal per versie.
+
 ## Voortgang / Laatste Stand
 
 - **Datum laatste sessie**: 16-07-2026
