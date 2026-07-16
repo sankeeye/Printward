@@ -145,3 +145,7 @@ interface, and the scale.
 Free software: use it, study it, share it, improve it. But if you distribute it — or run a
 modified version as a network service — you must release your source under the same license.
 In short: it stays open, and no one can take it closed and sell it as their own product.
+
+The AGPL covers the code, **not the name "FilaTrack"** or its branding. Don't use the name or
+logo to suggest your fork, product, or service is official or endorsed by this project — fork
+freely, but give your version its own name.

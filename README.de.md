@@ -151,3 +151,7 @@ die Waage.
 Freie Software: nutzen, studieren, teilen, verbessern. Wer sie aber verbreitet — oder eine
 geänderte Version als Netzwerkdienst betreibt — muss den Quellcode unter derselben Lizenz
 freigeben. Kurz: sie bleibt offen, und niemand kann daraus ein geschlossenes Bezahlprodukt machen.
+
+Die AGPL deckt den Code ab, **nicht den Namen „FilaTrack"** oder das Branding. Nutze den Namen
+oder das Logo nicht, um zu suggerieren, dein Fork, Produkt oder Dienst sei offiziell oder von
+diesem Projekt unterstützt — forke frei, aber gib deiner Version einen eigenen Namen.

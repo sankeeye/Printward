@@ -147,3 +147,7 @@ weegschaal.
 Vrije software: gebruik het, bestudeer het, deel het, verbeter het. Maar wie het verspreidt — of
 een aangepaste versie als online dienst draait — moet z'n broncode onder dezelfde licentie
 vrijgeven. Kortom: het blijft open, en niemand kan er een gesloten betaalproduct van maken.
+
+De AGPL dekt de code, **niet de naam "FilaTrack"** of de huisstijl. Gebruik de naam of het logo
+niet om te suggereren dat jouw fork, product of dienst officieel is of door dit project
+goedgekeurd — fork gerust, maar geef jouw versie een eigen naam.
