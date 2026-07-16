@@ -32,3 +32,9 @@ ntfy_topic=                # ntfy.sh topic for push notifications (empty = off)
 # That is the backstop for someone forwarding port 8080 on the router. Set this to
 # 1 only if you know exactly what you are exposing, and why.
 #allow_remote=0
+
+# Web server port (default 8080). Change it if 8080 clashes with something else on
+# the tablet. You can also set it on the tablet under Settings > Printer setup. Must
+# be 1024-65535 - a non-root Android app can't bind below 1024, and anything the
+# server can't bind falls back to 8080 so you're never locked out.
+#webui_port=8080

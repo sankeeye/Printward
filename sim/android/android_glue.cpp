@@ -37,6 +37,7 @@ char g_ntfy_topic[64] = "";             // ntfy.sh topic for push notifications
 char g_lang[8] = "en";                  // UI language (lang= in the conf, see lang.h)
 char g_webui_pass[24] = "";             // web password; generated on first run, shown in Settings
 bool g_allow_remote = false;            // refuse anything off the local network unless set
+int  g_webui_port = 8080;               // web server port (webui_port= in the conf)
 float g_tray_capacity_g[AMS_MAX_UNITS][AMS_MAX_TRAYS] = {{0}};
 float g_tray_used_g[AMS_MAX_UNITS][AMS_MAX_TRAYS] = {{0}};
 float g_ext_capacity_g = 0;
@@ -74,6 +75,7 @@ void save_settings() {
     fprintf(f, "lang=%s\n", g_lang);
     fprintf(f, "webui_pass=%s\n", g_webui_pass);
     fprintf(f, "allow_remote=%d\n", g_allow_remote ? 1 : 0);
+    fprintf(f, "webui_port=%d\n", g_webui_port);
     if (g_wifi_ssid[0]) fprintf(f, "wifi_ssid=%s\n", g_wifi_ssid);
     fclose(f);
     Serial.println("CONF: saved /sdcard/filatrack.conf");
@@ -115,6 +117,10 @@ void load_settings() {
         else if (!strcmp(key, "lang"))           strncpy(g_lang, val, sizeof(g_lang) - 1);
         else if (!strcmp(key, "webui_pass"))     strncpy(g_webui_pass, val, sizeof(g_webui_pass) - 1);
         else if (!strcmp(key, "allow_remote"))   g_allow_remote = (atoi(val) != 0);
+        else if (!strcmp(key, "webui_port")) {
+            int p = atoi(val);
+            if (p >= 1024 && p <= 65535) g_webui_port = p;   // ignore junk; keep the default
+        }
     }
     fclose(f);
     // Never log the access code itself - only whether it was provided.

@@ -15,6 +15,7 @@ static lv_obj_t* g_setup_screen = nullptr;
 static lv_obj_t* g_ip_ta = nullptr;
 static lv_obj_t* g_serial_ta = nullptr;
 static lv_obj_t* g_code_ta = nullptr;
+static lv_obj_t* g_port_ta = nullptr;
 static lv_obj_t* g_kb = nullptr;
 static lv_obj_t* g_status_label = nullptr;
 
@@ -106,6 +107,13 @@ void create_tablet_setup_ui() {
     g_ip_ta     = add_field(root, "Printer IP",     g_printer_ip);
     g_serial_ta = add_field(root, "Printer serial", g_printer_serial);
     g_code_ta   = add_field(root, "Access code",    g_printer_access_code);
+    char portbuf[8];
+    snprintf(portbuf, sizeof(portbuf), "%d", g_webui_port);
+    g_port_ta   = add_field(root, T("set.web_port"), portbuf);
+    // Digits only: this is the on-screen number pad, and it stops the letters that
+    // would just get rejected on save anyway.
+    lv_textarea_set_accepted_chars(g_port_ta, "0123456789");
+    lv_textarea_set_max_length(g_port_ta, 5);
 
     // --- Save + status ---
     lv_obj_t* save_btn = lv_btn_create(root);
@@ -137,15 +145,33 @@ void tablet_setup_loop() {
     if (!g_save_requested) return;
     g_save_requested = false;
 
+    // Validate the port BEFORE saving anything: a bad one must not be written, and
+    // the user stays on this screen to fix it rather than losing their other edits.
+    const char* ptxt = lv_textarea_get_text(g_port_ta);
+    int port = (ptxt && ptxt[0]) ? atoi(ptxt) : 8080;   // blank field -> back to the default
+    if (port < 1024 || port > 65535) {
+        if (g_status_label) lv_label_set_text(g_status_label, T("set.port_range"));
+        return;                      // stay put; nothing saved
+    }
+    bool port_changed = (port != g_webui_port);
+
     strncpy(g_printer_ip, lv_textarea_get_text(g_ip_ta), sizeof(g_printer_ip) - 1);
     g_printer_ip[sizeof(g_printer_ip) - 1] = '\0';
     strncpy(g_printer_serial, lv_textarea_get_text(g_serial_ta), sizeof(g_printer_serial) - 1);
     g_printer_serial[sizeof(g_printer_serial) - 1] = '\0';
     strncpy(g_printer_access_code, lv_textarea_get_text(g_code_ta), sizeof(g_printer_access_code) - 1);
     g_printer_access_code[sizeof(g_printer_access_code) - 1] = '\0';
+    g_webui_port = port;
 
     save_settings();               // persist to /sdcard/filatrack.conf
     bambu_mqtt_settings_changed();  // rebuild topics + reconnect with new creds
+
+    // The server socket is already bound; a new port only takes hold on the next
+    // start. Say so instead of leaving the user to wonder why the address is stale.
+    if (port_changed) {
+        if (g_status_label) lv_label_set_text(g_status_label, T("set.port_restart"));
+        return;                      // keep the message on screen, don't jump away
+    }
 
     lv_scr_load(g_main_screen);     // back to the printer screen
 }

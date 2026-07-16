@@ -39,6 +39,11 @@
 - **Alleen het eigen netwerk.** `addr_is_local()` weigert alles buiten 10./172.16-31./
   192.168./169.254./127. Dit is de vangnet voor de fout die écht gebeurt: iemand zet poort
   8080 door op de router (of UPnP doet het). `allow_remote=1` zet het uit — bewuste keuze.
+- **Poort instelbaar** (`webui_port=`, standaard 8080). Op de tablet via Instellingen >
+  Printer instellen. Geldig 1024-65535 (een niet-root app kan <1024 niet binden), en de
+  server valt terug op 8080 als de ingestelde poort niet bindt — je raakt dus nooit
+  buitengesloten uit het enige scherm waar je het kunt repareren. Wijziging pas actief na
+  herstart (de socket is dan al gebonden); het scherm zegt dat.
 - **Eerlijk over de grens**: dit is HTTP, dus Basic auth gaat base64 over je LAN — dat is
   codering, geen versleuteling. Het stopt "printer open op internet" en "logé op je WiFi",
   **niet** iemand die je WiFi afluistert. Echte TLS = zelfondertekend certificaat + browser-

@@ -42,7 +42,7 @@
 #include <unistd.h>
 #include <android/log.h>
 
-#define WEBCTL_PORT 8080
+#define WEBCTL_PORT 8080   // default + fallback; the live port is g_webui_port
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "FILATRACK", __VA_ARGS__)
 
 extern bool g_screensaver_3d;
@@ -895,6 +895,9 @@ static void handle_conn(int fd) {
     send_resp(fd, "404 Not Found", "text/plain", "", 0);
 }
 
+static int g_bound_port = 0;   // the port we actually got, for webctl_url()
+static void detect_url();      // defined below; called once we know the real port
+
 static int server_thread(void*) {
     int ls = socket(AF_INET, SOCK_STREAM, 0);
     if (ls < 0) { LOGI("WEBCTL: socket() failed"); return 0; }
@@ -904,12 +907,22 @@ static int server_thread(void*) {
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = INADDR_ANY;
-    addr.sin_port = htons(WEBCTL_PORT);
-    if (bind(ls, (sockaddr*)&addr, sizeof(addr)) < 0) {
-        LOGI("WEBCTL: bind :%d failed", WEBCTL_PORT);
-        close(ls);
-        return 0;
+
+    // Try the configured port, then fall back to 8080. A bad or already-taken port
+    // must not lock the user out of the only place they can fix it - the web page
+    // itself. (Ports below 1024 are filtered on load, since a non-root app can't
+    // bind them, but a port that's simply in use can still fail here.)
+    int want = g_webui_port, got = 0;
+    for (int attempt = 0; attempt < 2 && !got; attempt++) {
+        int p = (attempt == 0) ? want : WEBCTL_PORT;
+        if (attempt == 1 && p == want) break;         // fallback == configured, no point retrying
+        addr.sin_port = htons((uint16_t)p);
+        if (bind(ls, (sockaddr*)&addr, sizeof(addr)) == 0) { got = p; break; }
+        LOGI("WEBCTL: bind :%d failed%s", p, attempt == 0 ? " - falling back to 8080" : "");
     }
+    if (!got) { close(ls); return 0; }
+    g_bound_port = got;
+    detect_url();                 // rebuild the URL now that we know the real port
     listen(ls, 8);
     LOGI("WEBCTL: control page on %s", webctl_url());
     for (;;) {
@@ -941,6 +954,7 @@ static int server_thread(void*) {
 // back the source address the kernel picked. No packet is actually sent.
 static char g_url[48] = "";
 static void detect_url() {
+    int port = g_bound_port ? g_bound_port : g_webui_port;
     int s = socket(AF_INET, SOCK_DGRAM, 0);
     if (s < 0) return;
     sockaddr_in a;
@@ -954,7 +968,7 @@ static void detect_url() {
         if (getsockname(s, (sockaddr*)&local, &ll) == 0) {
             char ip[INET_ADDRSTRLEN];
             inet_ntop(AF_INET, &local.sin_addr, ip, sizeof(ip));
-            snprintf(g_url, sizeof(g_url), "http://%s:%d", ip, WEBCTL_PORT);
+            snprintf(g_url, sizeof(g_url), "http://%s:%d", ip, port);
         }
     }
     close(s);

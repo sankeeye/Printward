@@ -134,6 +134,10 @@ static const Builtin BUILTIN[] = {
     {"move.preheating",    "Heating to 220\xC2\xB0" "C...", "Opwarmen naar 220\xC2\xB0" "C..."},
 
     // --- tablet screens ---
+    {"set.web_port",          "Web port", "Webpoort"},
+    {"set.port_range",        "Port must be between 1024 and 65535.", "Poort moet tussen 1024 en 65535 liggen."},
+    {"set.port_restart",      "Saved. Restart the app for the new port.", "Opgeslagen. Herstart de app voor de nieuwe poort."},
+
     {"set.web_hint",        "Web page: %s - sign in with user \"filatrack\" and the password above. Only reachable from your own network.",
                             "Webpagina: %s - log in met gebruiker \"filatrack\" en het wachtwoord hierboven. Alleen bereikbaar vanaf je eigen netwerk."},
 
