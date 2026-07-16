@@ -1,9 +1,9 @@
-# FilaTrack Scale — firmware voor de weegschaal
+# Printward Scale — firmware voor de weegschaal
 
 Onze eigen, simpele firmware voor de **SpoolEase Scale**-hardware (ESP32-S3 +
 HX711 load-cell). Flash dit **in plaats van** de SpoolEase-firmware. De schaal
 wordt een "domme sensor": hij meet het gewicht en geeft dat via LAN-HTTP door
-aan de **FilaTrack-tablet** (die het brein is). Geen NFC, geen database, geen
+aan de **Printward-tablet** (die het brein is). Geen NFC, geen database, geen
 printer-MQTT — alleen een gekalibreerde schaal met een mini web-API.
 
 ## Hardware / bedrading
@@ -33,12 +33,12 @@ pio device monitor         # toont het IP-adres na verbinden
 ## Eerste keer: WiFi instellen
 
 Er staan **geen** WiFi-gegevens in de code. Bij de eerste start opent de schaal
-een WiFi-netwerk **`FilaTrack Scale-setup`** — verbind ermee met je telefoon, kies je
+een WiFi-netwerk **`Printward Scale-setup`** — verbind ermee met je telefoon, kies je
 eigen WiFi en vul het wachtwoord in. Daarna verbindt de schaal automatisch.
 
 ## Kalibreren (één keer)
 
-1. Open in de browser **`http://filatrack-scale.local/`** (of `http://<ip>/`, het IP
+1. Open in de browser **`http://printward-scale.local/`** (of `http://<ip>/`, het IP
    staat in de seriële monitor).
 2. Niets op de schaal → tik **Tarra (nulstellen)**.
 3. Zet een **bekend gewicht** erop (bijv. 500 g), vul dat aantal gram in en tik
@@ -54,5 +54,5 @@ eigen WiFi en vul het wachtwoord in. Daarna verbindt de schaal automatisch.
 | `GET /cal?known=<gram>` | kalibreren met een bekend gewicht |
 | `GET /` | kalibratie-/statuspagina |
 
-De FilaTrack-tablet pollt `GET /weight` tijdens de weeg-flow. Geef de schaal
+De Printward-tablet pollt `GET /weight` tijdens de weeg-flow. Geef de schaal
 bij voorkeur een **vast IP** in je router, dan blijft de koppeling stabiel.

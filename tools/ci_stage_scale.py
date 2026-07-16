@@ -14,7 +14,7 @@ import os
 import shutil
 import sys
 
-build_dir = sys.argv[1] if len(sys.argv) > 1 else "scale/.pio/build/filatrack_scale"
+build_dir = sys.argv[1] if len(sys.argv) > 1 else "scale/.pio/build/printward_scale"
 out_dir = sys.argv[2] if len(sys.argv) > 2 else "dist/scale"
 
 print("=== build dir contents ===")
@@ -43,7 +43,7 @@ for offset, src in layout:
     parts.append({"path": name, "offset": offset})
 
 manifest = {
-    "name": "FilaTrack Scale",
+    "name": "Printward Scale",
     "new_install_prompt_erase": True,
     "builds": [{"chipFamily": "ESP32-S3", "parts": parts}],
 }

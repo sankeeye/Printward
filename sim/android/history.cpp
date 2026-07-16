@@ -14,7 +14,7 @@ PrintRec g_history[HIST_MAX];
 int      g_hist_count = 0;
 float    g_hist_total_cost = 0;
 
-#define HIST_PATH "/sdcard/filatrack_history.conf"
+#define HIST_PATH "/sdcard/printward_history.conf"
 
 static void sani(char* s) { for (; *s; s++) if (*s == '|' || *s == '\n' || *s == '\r') *s = ' '; }
 

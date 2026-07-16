@@ -20,7 +20,7 @@ MARKER = "getPanelHandle"
 ANCHOR = "uint16_t *getFrameBuffer(int16_t w, int16_t h);"
 GETTER = (
     "\n"
-    "  // --- FilaTrack patch (patch_gfx_getter.py): expose the private\n"
+    "  // --- Printward patch (patch_gfx_getter.py): expose the private\n"
     "  // esp_lcd panel handle so we can register a VSYNC restart callback\n"
     "  // against the RGB drift. See src/pt/pt_display.h. ---\n"
     "  esp_lcd_panel_handle_t getPanelHandle() { return _panel_handle; }\n"

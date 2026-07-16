@@ -1,5 +1,5 @@
 @echo off
-title Bambu Cloud Relay - FilaTrack
+title Bambu Cloud Relay - Printward
 cd /d "%~dp0"
 
 :loop

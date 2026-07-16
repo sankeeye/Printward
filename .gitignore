@@ -34,11 +34,12 @@ tools/*.lnk
 
 # Tablet printer config - contains the LAN access code (secret). Only the
 # .example is tracked; a real config stays on the device, never in git.
-# Both names are listed: the file was renamed to filatrack.conf, and an old
-# pandatouch.conf can still be lying around from before the rename.
+# All three historical names are listed so an old config (with the access code)
+# from before a rename can never be committed by accident.
+printward.conf
 filatrack.conf
 pandatouch.conf
-!**/filatrack.conf.example
+!**/printward.conf.example
 !**/pandatouch.conf.example
 
 # Android build tree / gradle output (third-party SDL/lvgl/mbedtls + APKs are

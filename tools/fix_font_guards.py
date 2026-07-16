@@ -5,10 +5,10 @@ import io, glob, re
 # compiled out too and the UI would come up with no glyphs at all. Swap the guard
 # for one of our own that is always on, so the lv_conf.h switch only disables the
 # stock font and ours always builds.
-for f in sorted(glob.glob("X:/projects/panda/FilaTrack/sim/android/fonts/lv_font_montserrat_*.c")):
+for f in sorted(glob.glob("X:/projects/panda/Printward/sim/android/fonts/lv_font_montserrat_*.c")):
     sz = re.search(r"_(\d+)\.c$", f).group(1)
     s = io.open(f, encoding="utf-8", errors="surrogateescape").read()
-    old, new = "LV_FONT_MONTSERRAT_%s" % sz, "FILATRACK_FONT_%s" % sz
+    old, new = "LV_FONT_MONTSERRAT_%s" % sz, "PRINTWARD_FONT_%s" % sz
     if new in s:
         print("  already done:", f.split("/")[-1]); continue
     n = s.count(old)

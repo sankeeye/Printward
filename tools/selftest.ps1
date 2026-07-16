@@ -1,4 +1,4 @@
-# Regression self-test for the FilaTrack tablet, over its LAN HTTP API.
+# Regression self-test for the Printward tablet, over its LAN HTTP API.
 #
 # Why an integration test and not unit tests: the data modules (history, backup,
 # spool_db, filament_track) read/write fixed /sdcard paths, so unit-testing them
@@ -35,13 +35,13 @@ if (-not $Pass) {
     $adb = @("adb", "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe") |
            Where-Object { Get-Command $_ -ErrorAction SilentlyContinue } | Select-Object -First 1
     if ($adb) {
-        $line = (& $adb shell "grep '^webui_pass=' /sdcard/filatrack.conf" 2>$null)
+        $line = (& $adb shell "grep '^webui_pass=' /sdcard/printward.conf" 2>$null)
         if ($line) { $Pass = $line.Trim().Split("=")[1] }
     }
 }
 $AuthHdr = @{}
 if ($Pass) {
-    $b = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("filatrack:$Pass"))
+    $b = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("printward:$Pass"))
     $AuthHdr = @{ Authorization = "Basic $b" }
 } else {
     Write-Host "  (geen webui_pass gevonden - draait de tablet nog zonder wachtwoord?)" -ForegroundColor DarkYellow
@@ -51,7 +51,7 @@ function Get-Json($p)  { Invoke-RestMethod "$TabletUrl$p" -Headers $AuthHdr -Tim
 function Hit($p)       { Invoke-WebRequest "$TabletUrl$p" -Headers $AuthHdr -UseBasicParsing -TimeoutSec 20 }
 function Find-Test     { (Get-Json '/spools') | Where-Object { $_.name -eq $TESTNAME } | Select-Object -First 1 }
 
-Write-Host "FilaTrack self-test -> $TabletUrl`n"
+Write-Host "Printward self-test -> $TabletUrl`n"
 
 # --- 1. status ------------------------------------------------------------
 Write-Host "status:"
@@ -82,7 +82,7 @@ try {
         Check "sectie @@$sec" ($txt -match ("(?m)^@@" + $sec + "$"))
     }
     Check "GEEN toegangscode/secret in de back-up" (-not ($txt -match 'access|serial=|code='))
-    Check "download-header" ($r.Headers['Content-Disposition'] -match 'filatrack-backup')
+    Check "download-header" ($r.Headers['Content-Disposition'] -match 'printward-backup')
 } catch { Check "bereikbaar" $false $_.Exception.Message }
 
 # --- 4. history / spools JSON contract ------------------------------------
@@ -152,7 +152,7 @@ if (-not $Pass) {
         $code = [int]$_.Exception.Response.StatusCode
         Check "zonder wachtwoord geweigerd" ($code -eq 401) "-> kreeg $code, verwachtte 401"
     }
-    $bad = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("filatrack:zeker-niet-het-wachtwoord"))
+    $bad = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("printward:zeker-niet-het-wachtwoord"))
     try {
         Invoke-WebRequest "$TabletUrl/status" -Headers @{Authorization="Basic $bad"} -UseBasicParsing -TimeoutSec 10 | Out-Null
         Check "fout wachtwoord geweigerd" $false "-> fout wachtwoord werd geaccepteerd!"
@@ -174,7 +174,7 @@ if (-not $Pass) {
     $lan = $null
     $adbExe = @("adb", "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe") |
               Where-Object { Get-Command $_ -ErrorAction SilentlyContinue } | Select-Object -First 1
-    if ($adbExe) { $l = (& $adbExe shell "grep '^lan_mode=' /sdcard/filatrack.conf" 2>$null); if ($l) { $lan = $l.Trim().Split("=")[1] } }
+    if ($adbExe) { $l = (& $adbExe shell "grep '^lan_mode=' /sdcard/printward.conf" 2>$null); if ($l) { $lan = $l.Trim().Split("=")[1] } }
     if ($lan -eq "0" -or $null -eq $lan) {
         $body = ""
         try { $body = (Hit '/start?path=ZZ_SELFTEST_NONEXISTENT.3mf').Content } catch { $body = "" }

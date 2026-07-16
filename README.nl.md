@@ -1,10 +1,10 @@
-# FilaTrack voor Bambu Lab
+# Printward voor Bambu Lab
 
 [English](README.md) · **Nederlands** · [Deutsch](README.de.md)
 
 Een zelfstandig **bedien‑ en monitorpaneel voor een Bambu Lab 3D‑printer** dat draait op een
 **Android‑tablet** — met daarnaast een volledige webinterface, zodat je de printer kunt bedienen
-vanaf de tablet of vanuit elke browser op je netwerk. Een losse **FilaTrack Scale** (weegschaal)
+vanaf de tablet of vanuit elke browser op je netwerk. Een losse **Printward Scale** (weegschaal)
 voegt echte spoelgewicht‑tracking toe. Zie [Hardware](#hardware).
 
 De interface is beschikbaar in **Engels, Nederlands en Duits**, direct wisselbaar, en er kunnen
@@ -12,7 +12,7 @@ meer talen bij door simpelweg een bestand neer te zetten — zie [`lang/`](lang/
 
 > **Installeren?** Zie **[INSTALL.nl.md](INSTALL.nl.md)** — de tablet-app is een APK die je downloadt en
 > aantikt, en de weegschaal flash je rechtstreeks vanuit je browser op
-> [de flasher-pagina](https://sankeeye.github.io/FilaTrack/scale/). Geen ontwikkeltools nodig.
+> [de flasher-pagina](https://sankeeye.github.io/Printward/scale/). Geen ontwikkeltools nodig.
 
 ## Functies
 
@@ -38,7 +38,7 @@ Op de **Android‑tablet / web‑build**, aanvullend:
 - **Filamentbeheerder (geen weegschaal nodig)**: een rollen‑bibliotheek (aanmaken/bewerken/
   kopiëren/zoeken/bulk‑bewerken). Typ het gewicht van een rol en de resterende grammen tellen live
   af tijdens een print (totaal uit het gesneden bestand × voortgang), met prijs / kosten /
-  restwaarde en een waarschuwing *"komt deze print filament tekort?"*. De optionele **FilaTrack
+  restwaarde en een waarschuwing *"komt deze print filament tekort?"*. De optionele **Printward
   Scale** laat je wegen in plaats van typen — en herwegen voor het exacte cijfer — terwijl de Bambu
   Cloud‑relay (hieronder) de echte grammen per print kan aanleveren zodat het ook zonder weegschaal
   klopt.
@@ -47,7 +47,7 @@ Op de **Android‑tablet / web‑build**, aanvullend:
 
 > **Let op — temperatuur & prints starten.** Op recente Bambu‑firmware (≥ 01.08) weigert de
 > printer *temperatuur instellen* en *print starten* van externe tools, tenzij hij in **LAN
-> Only**‑modus staat. FilaTrack heeft een **LAN‑modus**‑schakelaar (Instellingen ▸ Printer
+> Only**‑modus staat. Printward heeft een **LAN‑modus**‑schakelaar (Instellingen ▸ Printer
 > instellen): zet die aan als je printer op LAN Only staat, en de temperatuurknoppen en het
 > starten van prints verschijnen. In de gewone cloud‑modus laat je hem uit en start je prints
 > via Bambu Studio / Handy — al het andere hier (monitoren, pauze/stop, licht, bewegen/jog,
@@ -59,11 +59,11 @@ Op de **Android‑tablet / web‑build**, aanvullend:
   met een live lokale‑MQTT‑verbinding naar de printer, **plus een volledige web‑UI** op
   `http://<tablet>:8080`. Geverifieerd op een Samsung SM‑T280 (Android 5.1.1).
   Zie [`android/README.md`](android/README.md).
-- **FilaTrack Scale** — een ESP32‑S3 + HX711 loadcell‑weegschaal (de SpoolEase Scale‑hardware,
+- **Printward Scale** — een ESP32‑S3 + HX711 loadcell‑weegschaal (de SpoolEase Scale‑hardware,
   geflasht met onze eigen firmware) die echte spoelgewichten naar de tablet stuurt voor
   filament‑tracking, kosten en filament‑waarschuwingen. Zie [`scale/`](scale/).
 
-Ontwikkeld en getest op een **Bambu Lab P1S**. FilaTrack praat met de printer via de lokale
+Ontwikkeld en getest op een **Bambu Lab P1S**. Printward praat met de printer via de lokale
 **MQTT + FTP**‑interface die Bambu Lab‑printers delen, dus andere modellen (P1P, X1C, A1, …)
 zouden ook moeten werken — die zijn hier alleen nog niet getest.
 
@@ -76,10 +76,10 @@ sectie is om de app en firmware zelf te bouwen.*
 
 - **Android‑tablet** — bouw de APK met de Android NDK + Gradle en zet hem op de tablet. Volledige
   stap‑voor‑stap in [`android/README.md`](android/README.md). Het printer‑IP / serienummer /
-  de LAN‑toegangscode komen in `/sdcard/filatrack.conf` (zie `sim/android/filatrack.conf.example`)
+  de LAN‑toegangscode komen in `/sdcard/printward.conf` (zie `sim/android/printward.conf.example`)
   of via de **Printer instellen** op het scherm.
-- **FilaTrack Scale** — open `scale/` in **VS Code** met de **PlatformIO**‑extensie en flash via
-  **USB‑C** (omgeving `filatrack_scale`). WiFi‑setup bij de eerste start en het kalibreren van de
+- **Printward Scale** — open `scale/` in **VS Code** met de **PlatformIO**‑extensie en flash via
+  **USB‑C** (omgeving `printward_scale`). WiFi‑setup bij de eerste start en het kalibreren van de
   loadcell staan beschreven in `scale/`.
 
 ## Beveiliging
@@ -89,10 +89,10 @@ De webinterface bedient een echte printer, dus hij staat niet open:
 - **Wachtwoord.** De tablet genereert bij de eerste start zelf een willekeurig wachtwoord en
   toont het onder **Instellingen ▸ Webwachtwoord** — zoals een tv een koppelcode toont, dus er is
   geen standaardwachtwoord dat iemand vergeet te wijzigen en elk apparaat krijgt zijn eigen.
-  Log in als gebruiker `filatrack`.
+  Log in als gebruiker `printward`.
 - **Alleen lokaal netwerk.** De server weigert verbindingen van buiten je eigen netwerk, zodat een
   doorgezette poort of UPnP de printer niet op het internet kan zetten.
-- De LAN‑toegangscode van de printer blijft op de tablet (in `/sdcard/filatrack.conf`) en zit
+- De LAN‑toegangscode van de printer blijft op de tablet (in `/sdcard/printward.conf`) en zit
   nooit in een back‑up of in de webinterface.
 
 Het is gewoon HTTP, dus het wachtwoord gaat onversleuteld over je eigen netwerk — genoeg om de
@@ -125,7 +125,7 @@ Opmerkingen:
 
 ## Hoe het ontstond
 
-FilaTrack begon als firmware voor een klein ESP32‑handpaneeltje — een plek om te zien wat de
+Printward begon als firmware voor een klein ESP32‑handpaneeltje — een plek om te zien wat de
 printer aan het doen was zonder Bambu Studio op een laptop te openen. Het werkte, maar de hardware
 bleek uiteindelijk het beperkende ding, en een oude Android‑tablet deed hetzelfde werk beter: een
 groter scherm, wifi die de OS al regelt, en ruimte om te groeien.
@@ -133,7 +133,7 @@ groter scherm, wifi die de OS al regelt, en ruimte om te groeien.
 En groeien deed het — en het interessante was niet nóg een statusweergave. Het was de vraag die in
 de werkplaats echt opkomt: *hoeveel filament zit er nog op die spoel, en wat heeft deze print me
 gekost?* Dat eerlijk beantwoorden vraagt echte gewichten, geen percentagegok, dus kwam er een tweede
-apparaat bij: een ESP32‑S3 met een loadcell — de FilaTrack Scale. Daaruit kwamen de rollen‑
+apparaat bij: een ESP32‑S3 met een loadcell — de Printward Scale. Daaruit kwamen de rollen‑
 bibliotheek, kosten per print, de historie en de statistieken.
 
 De ESP32‑firmware is inmiddels verwijderd. Wat overblijft is de tabletapp, de webinterface en de
@@ -151,6 +151,6 @@ Vrije software: gebruik het, bestudeer het, deel het, verbeter het. Maar wie het
 een aangepaste versie als online dienst draait — moet z'n broncode onder dezelfde licentie
 vrijgeven. Kortom: het blijft open, en niemand kan er een gesloten betaalproduct van maken.
 
-De AGPL dekt de code, **niet de naam "FilaTrack"** of de huisstijl. Gebruik de naam of het logo
+De AGPL dekt de code, **niet de naam "Printward"** of de huisstijl. Gebruik de naam of het logo
 niet om te suggereren dat jouw fork, product of dienst officieel is of door dit project
 goedgekeurd — fork gerust, maar geef jouw versie een eigen naam.

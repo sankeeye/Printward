@@ -1,19 +1,19 @@
-# Translating FilaTrack
+# Translating Printward
 
-FilaTrack ships with **English** and **Dutch** built in. Any other language is
+Printward ships with **English** and **Dutch** built in. Any other language is
 just a text file — no rebuild, no toolchain, nothing to compile.
 
 ## Add a language in three steps
 
-1. Copy `filatrack_lang_de.conf` (the German example) to
-   `filatrack_lang_<code>.conf`, where `<code>` is a short language code
+1. Copy `printward_lang_de.conf` (the German example) to
+   `printward_lang_<code>.conf`, where `<code>` is a short language code
    (`fr`, `es`, `it`, `pl`, …).
 2. Translate the lines you know. Format is one `key=text` per line; `#` starts a
    comment.
 3. Push it to the tablet:
 
    ```
-   adb push filatrack_lang_fr.conf /sdcard/filatrack_lang_fr.conf
+   adb push printward_lang_fr.conf /sdcard/printward_lang_fr.conf
    ```
 
 The language appears in **Settings → Language** straight away, on the tablet
@@ -28,7 +28,7 @@ perfectly usable. Translate ten lines, use it, add more when you feel like it.
 ## Fixing a word
 
 The same trick works on the built-in languages. Don't like a Dutch label? Put
-just that one line in `filatrack_lang_nl.conf` and it overrides the built-in
+just that one line in `printward_lang_nl.conf` and it overrides the built-in
 text:
 
 ```

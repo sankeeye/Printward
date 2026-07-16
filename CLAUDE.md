@@ -1,13 +1,13 @@
-# FilaTrack — projectcontext
+# Printward — projectcontext
 
 ## Dit Project Specifiek
 
-- **Huidig Doel**: FilaTrack klaarmaken om te delen. Nu bezig met **meertalige interface**
-  (web + tablet, taalkeuze in Settings). Daarvoor: hernoemd van PandaTouch → FilaTrack,
+- **Huidig Doel**: Printward klaarmaken om te delen. Nu bezig met **meertalige interface**
+  (web + tablet, taalkeuze in Settings). Daarvoor: hernoemd van PandaTouch → Printward,
   ESP32-firmware eruit, één repo.
-- **Wat is FilaTrack**: bedien- en monitorpaneel voor een **Bambu Lab P1S**, draait op een
+- **Wat is Printward**: bedien- en monitorpaneel voor een **Bambu Lab P1S**, draait op een
   **Android-tablet** (Samsung SM-T280, Android 5.1.1 / API 22, armeabi-v7a) + volledige
-  **webinterface** op `http://<tablet-ip>:8080`. Losse **FilaTrack Scale** (ESP32-S3 + HX711)
+  **webinterface** op `http://<tablet-ip>:8080`. Losse **Printward Scale** (ESP32-S3 + HX711)
   levert echte spoelgewichten. Kern: niet zomaar status, maar **hoeveel filament er nog op zit
   en wat een print kost**.
 - **Bekende Issues / valkuilen**:
@@ -35,7 +35,7 @@
 - **De webpagina heeft een wachtwoord.** De tablet verzint er zelf één bij de eerste
   start (`webui_pass_ensure()`) en toont het onder **Instellingen > Webwachtwoord** — zoals
   een tv een koppelcode toont. Dus geen standaardwachtwoord dat iemand vergeet te wijzigen,
-  en geen scherm waar een leek niet uitkomt. Gebruiker is `filatrack`. Weg = nieuw bij herstart.
+  en geen scherm waar een leek niet uitkomt. Gebruiker is `printward`. Weg = nieuw bij herstart.
 - **Alleen het eigen netwerk.** `addr_is_local()` weigert alles buiten 10./172.16-31./
   192.168./169.254./127. Dit is de vangnet voor de fout die écht gebeurt: iemand zet poort
   8080 door op de router (of UPnP doet het). `allow_remote=1` zet het uit — bewuste keuze.
@@ -50,7 +50,7 @@
   waarschuwing bij elk bezoek; die ruil is bewust niet gemaakt. De netwerkcheck maakt het
   acceptabel. Wil je verder: dat is een nieuw gesprek, geen bugfix.
 - **Wat níét beschermd is en dat ook niet kan**: de toegangscode staat in
-  `/sdcard/filatrack.conf`, en op Android 5.1 kan elke app met opslagrechten dat lezen. Dat is
+  `/sdcard/printward.conf`, en op Android 5.1 kan elke app met opslagrechten dat lezen. Dat is
   inherent aan `/sdcard`; alleen een andere opslagplek helpt.
 - **De self-test klopt expres zonder sleutel aan** (sectie `beveiliging:`). Een auth die
   wegvalt merk je nooit tijdens normaal gebruik — alles blijft werken. Alleen een test die
@@ -88,20 +88,20 @@
   geen geheimen, alleen placeholders. Geheim-dragende bestanden zijn nooit gecommit.
 - **Licentie: AGPL-3.0** (was MIT). Copyleft: verspreiden of als netwerkdienst draaien = broncode
   onder dezelfde licentie delen, dus niemand kan het dichttimmeren + als betaalproduct verkopen.
-  `LICENSE` = letterlijke AGPL-tekst; README's (3 talen) bijgewerkt + een naam-regel ("FilaTrack"
+  `LICENSE` = letterlijke AGPL-tekst; README's (3 talen) bijgewerkt + een naam-regel ("Printward"
   en huisstijl vallen buiten de AGPL, tegen imitatie). Copyright op `sankeeye`. Geldt vooruit —
   oude MIT-commits blijven onder MIT beschikbaar.
 - **Weegschaal — browser-flasher, volautomatisch**: workflow `.github/workflows/build-scale.yml`
   bouwt de firmware (PlatformIO), staget de flash-delen + manifest (`tools/ci_stage_scale.py`, ESP
   Web Tools "parts"-model — geen merge, geen flash-size gok), en deployt de flasher-pagina
-  (`web/flash/index.html`) naar GitHub Pages: **https://sankeeye.github.io/FilaTrack/scale/**.
+  (`web/flash/index.html`) naar GitHub Pages: **https://sankeeye.github.io/Printward/scale/**.
   Leek: pc + Chrome/Edge → USB → "Connect & Install". `workflow_dispatch` (handmatig starten).
   - Valkuilen die we tegenkwamen: PlatformIO maakt géén `flasher_args.json` voor Arduino-builds
     (daarom hardcoded ESP32-S3-offsets 0x0/0x8000/0xe000/0x10000); `boot_app0.bin` komt uit het
     framework-package, niet de build-map; esptool niet nodig (parts-model).
-- **Tablet — APK op een release**: `FilaTrack.apk` (debug-build, installeert prima) hangt aan
+- **Tablet — APK op een release**: `Printward.apk` (debug-build, installeert prima) hangt aan
   release **v1.0**. Arno bouwt/upload handmatig (APK-CI is niet gedaan — non-self-contained build).
-  Verse APK bouwen: `sync_sources.ps1` + gradle, dan kopie op bureaublad `FilaTrack-install\`.
+  Verse APK bouwen: `sync_sources.ps1` + gradle, dan kopie op bureaublad `Printward-install\`.
 - **`INSTALL.md`** in gewone taal (tablet + weegschaal), gelinkt vanuit de drie README's.
 - **Nog optioneel**: APK volautomatisch in CI (Windows-runner, SDL/LVGL/mbedTLS ophalen) — bewust
   uitgesteld; tot dan bouwt Claude de APK lokaal per versie.
@@ -113,8 +113,8 @@
   (print klaar mét modelfoto, mislukt, tekort, rol bijna op) · per-materiaal statistiek ·
   filament-balkjes · verbindingsbol · ETA + laagteller · actief slot · klok ·
   waarschuwingspill · uitgebreide historie (zoeken/filteren/sorteren/CSV) ·
-  voorraadoverzicht + restlengte · diagnose-scherm · self-test · **hernoemd naar FilaTrack**
-  (incl. datamigratie) · package `nl.filatrack.app` · ESP32-firmware verwijderd (2097 regels) ·
+  voorraadoverzicht + restlengte · diagnose-scherm · self-test · **hernoemd naar Printward**
+  (incl. datamigratie) · package `nl.printward.app` · ESP32-firmware verwijderd (2097 regels) ·
   **web + tablet volledig meertalig** (EN/NL/DE, incl. serverantwoorden, eigen Latin-1-font) +
   `tools/i18n_audit.py` + `tools/check_formats.py` · race in `/setcfg` weg (taal wisselt in
   één klik) · **beveiliging**: webwachtwoord (zelf gegenereerd, in Instellingen) + alleen
@@ -158,17 +158,17 @@ per print voorkomen dat de schatting wegdrijft.
 - **Bevestigd werkend (16-07)**: Arno draaide de relay, hij logde in bij Bambu Cloud, vond een
   voltooide print en bereikte de tablet. Endpoint-plumbing + self-test 35/35 groen.
 - **Relay draait lokaal**: kan niet vanaf de netwerkschijf starten (Windows blokkeert .bat vanaf
-  een netwerkpad). Kopie op Arno's bureaublad: `C:\Users\w\Desktop\FilaTrack-relay\` (relay +
+  een netwerkpad). Kopie op Arno's bureaublad: `C:\Users\w\Desktop\Printward-relay\` (relay +
   config). Pas ik de relay in de repo aan, dan moet die kopie ververst worden.
 - **Tablet-IP was gedrift** (.33 → .110 via DHCP). Config `device_ip` bijgewerkt. Aanbevolen:
   DHCP-reservering op de router zodat het niet nog eens wegdrijft.
 - **Ontwerp i18n** (afgesproken 15-07): teksten krijgen een **sleutel** (`dash.printing`);
   **EN + NL zitten ingebouwd** zodat het out-of-the-box werkt zonder bestanden; daarnaast
-  laadt de app **losse taalbestanden** `/sdcard/filatrack_lang_<code>.conf` (`sleutel=vertaling`,
+  laadt de app **losse taalbestanden** `/sdcard/printward_lang_<code>.conf` (`sleutel=vertaling`,
   zelfde stijl als de andere conf-bestanden) die ingebouwde teksten overschrijven of een
   nieuwe taal toevoegen — **een taal erbij = een bestand neerzetten, geen hercompilatie**.
   Eén set bestanden bedient zowel tablet als web (web haalt ze via `/lang`), dus vertalingen
-  hoeven maar één keer. `lang=` in filatrack.conf, `/setcfg?lang=`, keuze in Settings.
+  hoeven maar één keer. `lang=` in printward.conf, `/setcfg?lang=`, keuze in Settings.
 - **Volgende stap**: Arno laat de tablet in het Duits nakijken (de losse schermen zag ik niet),
   daarna eventueel Frans/Spaans — dat is nu alleen nog een `.conf` neerzetten, geen code.
 - **Tablet-i18n, wat je moet weten**:
@@ -231,7 +231,7 @@ per print voorkomen dat de schatting wegdrijft.
     Daarom `send_msg()`, die `strlen(T(key))` pakt.
   - Taalbestand: max **320 bytes** per tekst, 400 sleutels. De tablet meldt afkappen in
     `adb logcat -s SDL/APP | grep LANG` in plaats van het stil te doen.
-- **Openstaand aan Arno's kant**: kiosk opnieuw kiezen (Home → FilaTrack → Altijd; reset door
+- **Openstaand aan Arno's kant**: kiosk opnieuw kiezen (Home → Printward → Altijd; reset door
   de nieuwe package) · `tools\Backup instellen.bat` draaien voor de dagelijkse back-up ·
   `Eigen-bambu-hulp` archiveren op GitHub.
 - **Later/optioneel**: droog-datum + herinnering bij rollen · model-foto op de tablet
@@ -241,14 +241,14 @@ per print voorkomen dat de schatting wegdrijft.
 
 ```powershell
 # sync + build + install (JAVA_HOME is Android Studio1, niet Android Studio!)
-X:\projects\panda\FilaTrack\android\sync_sources.ps1 -Jni C:\pt_android\app\jni
+X:\projects\panda\Printward\android\sync_sources.ps1 -Jni C:\pt_android\app\jni
 $env:JAVA_HOME="C:\Program Files\Android\Android Studio1\jbr"
 cd C:\pt_android; .\gradlew.bat assembleDebug
 adb install -r C:\pt_android\app\build\outputs\apk\debug\app-debug.apk
-adb shell monkey -p nl.filatrack.app -c android.intent.category.LAUNCHER 1
-adb logcat -s FILATRACK          # onze logs
+adb shell monkey -p nl.printward.app -c android.intent.category.LAUNCHER 1
+adb logcat -s PRINTWARD          # onze logs
 
-X:\projects\panda\FilaTrack\tools\selftest.ps1    # 28 checks tegen de echte tablet
+X:\projects\panda\Printward\tools\selftest.ps1    # 28 checks tegen de echte tablet
 ```
 
 - **Git op de NAS**: de repo staat op een share, dus git wil een `safe.directory`-regel voor
@@ -265,9 +265,9 @@ X:\projects\panda\FilaTrack\tools\selftest.ps1    # 28 checks tegen de echte tab
 
 - **Taal**: communiceer in het Nederlands. Code/commits/comments in het Engels.
 - **Nooit hardcoden**: de printer-**toegangscode** is een secret — alleen op de tablet in
-  `/sdcard/filatrack.conf`, nooit in git. Staat in `.gitignore` (beide namen). De `/backup`
+  `/sdcard/printward.conf`, nooit in git. Staat in `.gitignore` (beide namen). De `/backup`
   bevat 'm bewust NIET. Geen secrets in Notion.
-- **Data op de tablet**: `/sdcard/filatrack_*.conf`. Wijzig je een bestandsnaam of -formaat,
+- **Data op de tablet**: `/sdcard/printward_*.conf`. Wijzig je een bestandsnaam of -formaat,
   **bouw dan een migratie** (zie `migrate_legacy_data()`) — anders start iedereen leeg op.
 - **Werk op een feature-branch**, niet direct op main. Commit/push alleen op verzoek.
 - **Niet destructief testen op echte data** (er zijn ooit echte spoelen gewist). De self-test
@@ -277,7 +277,7 @@ X:\projects\panda\FilaTrack\tools\selftest.ps1    # 28 checks tegen de echte tab
 
 ## Repo
 
-- Eén repo: **github.com/sankeeye/FilaTrack** (remote `origin`). Al het werk staat op `main`
+- Eén repo: **github.com/sankeeye/Printward** (remote `origin`). Al het werk staat op `main`
   (GitHub's standaard-branch). Nieuwe klus? Verse branch vanaf main, daarna samenvoegen.
 - Alles is eigen werk; er zit geen code van derden meer in (gemeten: 19 gedeelde regels,
   allemaal kale declaraties). Zie "How it started" in de README.

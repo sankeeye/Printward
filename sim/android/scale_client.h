@@ -2,12 +2,12 @@
 #ifndef SCALE_CLIENT_H
 #define SCALE_CLIENT_H
 
-// HTTP client for the FilaTrack Scale (the load-cell scale). Runs a background thread
+// HTTP client for the Printward Scale (the load-cell scale). Runs a background thread
 // that polls GET /weight and /info from the scale and executes queued commands
 // (tare, calibrate, WiFi/IP change) - all off the LVGL/main thread so the UI
 // never blocks on the network. The Scale screen reads the cached values.
 
-extern char g_scale_ip[40];   // scale host/IP (from filatrack.conf, scale_ip=)
+extern char g_scale_ip[40];   // scale host/IP (from printward.conf, scale_ip=)
 
 void  scale_client_start();            // start the background poller (once)
 void  scale_set_polling(bool on);      // poll only while the Scale screen is open

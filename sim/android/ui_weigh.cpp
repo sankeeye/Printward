@@ -1,5 +1,5 @@
 // "Scale" screen (tablet only): live weight + tare/calibrate + network
-// management for the FilaTrack Scale. Everything the scale's own web page can do,
+// management for the Printward Scale. Everything the scale's own web page can do,
 // on the tablet. All scale I/O goes through scale_client (a background thread);
 // this file only builds the LVGL UI and reads/queues via that client.
 #include "ui_weigh.h"

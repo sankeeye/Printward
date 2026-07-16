@@ -31,7 +31,7 @@ for k, en, nl in rows:
         print("FAIL builtin nl  %-22s en=%s nl=%s" % (k, specs(en), specs(nl)))
 
 bad = 0
-for p in glob.glob(os.path.join(ROOT, "lang", "filatrack_lang_*.conf")):
+for p in glob.glob(os.path.join(ROOT, "lang", "printward_lang_*.conf")):
     code = re.search(r"lang_(\w+)\.conf", p).group(1)
     for i, line in enumerate(io.open(p, encoding="utf-8").read().split("\n"), 1):
         if not line or line.startswith("#") or "=" not in line:

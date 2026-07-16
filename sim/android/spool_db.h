@@ -7,7 +7,7 @@
 // A small on-tablet spool library: pre-fill your rolls once, then "load" one
 // into an AMS slot - which sets our weight tracking (capacity = remaining) and
 // pushes the material/colour/temps to the printer's AMS over MQTT.
-// Persisted to /sdcard/filatrack_spools.conf.
+// Persisted to /sdcard/printward_spools.conf.
 
 #define SPOOL_MAX 48
 

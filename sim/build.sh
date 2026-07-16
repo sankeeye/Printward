@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds the FilaTrack UI simulator (native, SDL) with the MSYS2 UCRT64 gcc.
+# Builds the Printward UI simulator (native, SDL) with the MSYS2 UCRT64 gcc.
 #
 # It compiles the REAL UI sources from ../src (ui_printer/files/settings/
 # filament/wifi) plus sim/mocks.cpp and sim/main.cpp, against the sim/shim
@@ -62,11 +62,11 @@ UI_SOURCES=(
 echo ">> Building simulator ($MAIN + UI sources)..."
 "$GPP" "${CFLAGS[@]}" -std=c++17 \
   "$SIM/$MAIN" "$SIM/mocks.cpp" "${UI_SOURCES[@]}" \
-  "$BUILD/liblvgl.a" -L"$UCRT/lib" -lSDL2 -o "$SIM/filatrack_sim.exe"
+  "$BUILD/liblvgl.a" -L"$UCRT/lib" -lSDL2 -o "$SIM/printward_sim.exe"
 
 # Bundle runtime DLLs so the .exe runs standalone.
 for dll in SDL2.dll libstdc++-6.dll libgcc_s_seh-1.dll libwinpthread-1.dll; do
   cp -f "$UCRT/bin/$dll" "$SIM/" 2>/dev/null || true
 done
 
-echo ">> Built: $SIM/filatrack_sim.exe"
+echo ">> Built: $SIM/printward_sim.exe"

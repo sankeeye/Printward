@@ -13,8 +13,8 @@ int   g_spool_count = 0;
 EmptySpool g_empties[EMPTY_MAX];
 int        g_empty_count = 0;
 
-#define SPOOLS_PATH  "/sdcard/filatrack_spools.conf"
-#define EMPTIES_PATH "/sdcard/filatrack_empties.conf"
+#define SPOOLS_PATH  "/sdcard/printward_spools.conf"
+#define EMPTIES_PATH "/sdcard/printward_empties.conf"
 
 // Bambu generic filament codes + typical temps per material. Best-effort - the
 // per-spool `code` field overrides these when the user fills it in.

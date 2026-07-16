@@ -7,6 +7,6 @@ void create_screensaver();   // build the (hidden) overlay once at startup
 void screensaver_loop();     // call every main-loop iteration
 
 // Screensaver model view: false = top-down 2D, true = isometric 3D. Chosen in
-// Settings, persisted in /sdcard/filatrack.conf.
+// Settings, persisted in /sdcard/printward.conf.
 extern bool g_screensaver_3d;
 void screensaver_view_changed();   // call after flipping g_screensaver_3d to redraw

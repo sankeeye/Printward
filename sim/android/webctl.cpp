@@ -44,7 +44,7 @@
 #include <android/log.h>
 
 #define WEBCTL_PORT 8080   // default + fallback; the live port is g_webui_port
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "FILATRACK", __VA_ARGS__)
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "PRINTWARD", __VA_ARGS__)
 
 extern bool g_screensaver_3d;
 
@@ -231,7 +231,7 @@ static void b64(const char* in, char* out, int n) {
 static bool authorized(const char* buf) {
     if (!g_webui_pass[0]) return true;         // no password set -> no gate (see webui_pass_ensure)
     char want[80], expect[128];
-    snprintf(want, sizeof(want), "filatrack:%s", g_webui_pass);
+    snprintf(want, sizeof(want), "printward:%s", g_webui_pass);
     char enc[128];
     b64(want, enc, sizeof(enc));
     snprintf(expect, sizeof(expect), "Authorization: Basic %s", enc);
@@ -438,7 +438,7 @@ void webctl_loop() {
             case Q_RESTORE: {
                 // The web thread wrote the uploaded backup to a temp file; apply it
                 // here (main thread) and reload every module from the fresh files.
-                FILE* f = fopen("/sdcard/filatrack_restore.tmp", "rb");
+                FILE* f = fopen("/sdcard/printward_restore.tmp", "rb");
                 if (f) {
                     fseek(f, 0, SEEK_END); long n = ftell(f); fseek(f, 0, SEEK_SET);
                     if (n < 0) n = 0;
@@ -455,7 +455,7 @@ void webctl_loop() {
                     }
                     fclose(f);
                 }
-                remove("/sdcard/filatrack_restore.tmp");
+                remove("/sdcard/printward_restore.tmp");
                 break;
             }
             case Q_REPORT_WEIGHT:
@@ -543,12 +543,12 @@ static void build_diag(char* o, int n) {
 
     struct DiagFile { const char* tag; const char* path; };
     static const DiagFile F[] = {
-        {"rollen",     "/sdcard/filatrack_spools.conf"},
-        {"lege spoel", "/sdcard/filatrack_empties.conf"},
-        {"gewichten",  "/sdcard/filatrack_weights.conf"},
-        {"historie",   "/sdcard/filatrack_history.conf"},
-        {"statistiek", "/sdcard/filatrack_stats.conf"},
-        {"snapshot",   "/sdcard/filatrack_backup/spools.conf"},
+        {"rollen",     "/sdcard/printward_spools.conf"},
+        {"lege spoel", "/sdcard/printward_empties.conf"},
+        {"gewichten",  "/sdcard/printward_weights.conf"},
+        {"historie",   "/sdcard/printward_history.conf"},
+        {"statistiek", "/sdcard/printward_stats.conf"},
+        {"snapshot",   "/sdcard/printward_backup/spools.conf"},
     };
     time_t tnow = time(nullptr);
     for (int i = 0; i < (int)(sizeof(F) / sizeof(F[0])); i++) {
@@ -649,10 +649,10 @@ static void handle_conn(int fd) {
     // Gate everything, not just the write endpoints: /status alone tells you what
     // is printing and what it cost, and /backup hands over the whole roll library.
     if (!authorized(buf)) {
-        const char* body = "FilaTrack: password required. It is on the tablet, under Settings.\n";
+        const char* body = "Printward: password required. It is on the tablet, under Settings.\n";
         char hdr[256];
         int n = snprintf(hdr, sizeof(hdr),
-            "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"FilaTrack\"\r\n"
+            "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"Printward\"\r\n"
             "Content-Type: text/plain; charset=utf-8\r\nContent-Length: %d\r\n"
             "Cache-Control: no-store\r\nConnection: close\r\n\r\n", (int)strlen(body));
         send(fd, hdr, n, 0);
@@ -689,7 +689,7 @@ static void handle_conn(int fd) {
             have += k;
         }
         body[have] = 0;
-        FILE* tf = fopen("/sdcard/filatrack_restore.tmp", "wb");
+        FILE* tf = fopen("/sdcard/printward_restore.tmp", "wb");
         if (tf) {
             fwrite(body, 1, have, tf);
             fclose(tf);
@@ -713,7 +713,7 @@ static void handle_conn(int fd) {
             char hdr[256];
             int hn = snprintf(hdr, sizeof(hdr),
                 "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\n"
-                "Content-Disposition: attachment; filename=\"filatrack-backup.ptb\"\r\n"
+                "Content-Disposition: attachment; filename=\"printward-backup.ptb\"\r\n"
                 "Content-Length: %d\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n", len);
             send(fd, hdr, hn, 0);
             send(fd, blob, len, 0);
@@ -881,7 +881,7 @@ static void handle_conn(int fd) {
         return;
     }
     if (!strcmp(path, "/notify_test")) {
-        notify_send("FilaTrack", "Test melding - het werkt!");
+        notify_send("Printward", "Test melding - het werkt!");
         send_msg(fd, "200 OK", "test_sent");
         return;
     }
@@ -988,7 +988,7 @@ static int server_thread(void*) {
             char who[INET_ADDRSTRLEN] = "?";
             inet_ntop(AF_INET, &peer.sin_addr, who, sizeof(who));
             LOGI("WEBCTL: refused %s - not on the local network (allow_remote=0)", who);
-            const char* body = "FilaTrack only answers on your own network.\n";
+            const char* body = "Printward only answers on your own network.\n";
             send_resp(fd, "403 Forbidden", "text/plain; charset=utf-8", body, (int)strlen(body));
             close(fd);
             continue;

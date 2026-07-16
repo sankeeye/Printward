@@ -5,7 +5,7 @@
 R"PAGE(<!doctype html>
 <html lang="nl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FilaTrack</title>
+<title>Printward</title>
 <style>
 :root{--bg:#0e1216;--panel:#1c2229;--panel2:#161b21;--btn:#2c3e50;--txt:#eceff2;--muted:#93a0ad;--accent:#3465a4}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -95,7 +95,7 @@ h3{margin:0 0 10px;font-size:15px;color:var(--muted);font-weight:600}
 .sprow .card{margin-bottom:0}
 section#spools{max-width:1040px}
 </style></head><body>
-<header><div class="t">FilaTrack</div><div style="display:flex;gap:14px;align-items:center"><span id="clock" class="muted"></span><span id="conn" class="muted" data-i18n="dash.connecting">verbinden…</span></div></header>
+<header><div class="t">Printward</div><div style="display:flex;gap:14px;align-items:center"><span id="clock" class="muted"></span><span id="conn" class="muted" data-i18n="dash.connecting">verbinden…</span></div></header>
 <nav>
  <button data-tab="dash" class="on" data-i18n="nav.dashboard">Dashboard</button>
  <button data-tab="files" data-i18n="nav.files">Files</button>
@@ -245,7 +245,7 @@ section#spools{max-width:1040px}
 </section>
 
 <section id="set">
- <div class="card"><h3 data-i18n="set.scale">FilaTrack Scale (weegschaal)</h3>
+ <div class="card"><h3 data-i18n="set.scale">Printward Scale (weegschaal)</h3>
   <div class="muted" style="margin-bottom:8px" data-i18n="set.scale_hint">Gewicht, tarra, kalibreren en WiFi/IP van de schaal.</div>
   <button onclick="tab('scale')" class="formbtn pri" data-i18n="set.manage_scale">Schaal beheren</button>
  </div>
@@ -259,7 +259,7 @@ section#spools{max-width:1040px}
   <div id="cMsg"></div>
  </div>
  <div class="card"><h3 data-i18n="set.notifications">Meldingen (ntfy)</h3>
-  <div class="frow"><label class="muted" data-i18n="set.ntfy_topic">ntfy topic (leeg = uit)</label><input type="text" id="cNtfy" data-i18n-ph="set.ntfy_ph" placeholder="bv. filatrack-geheim-x9k2"></div>
+  <div class="frow"><label class="muted" data-i18n="set.ntfy_topic">ntfy topic (leeg = uit)</label><input type="text" id="cNtfy" data-i18n-ph="set.ntfy_ph" placeholder="bv. printward-geheim-x9k2"></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button id="cNtfySave" class="formbtn pri" data-i18n="save">Opslaan</button><button id="cNtfyTest" class="formbtn sec" data-i18n="set.test">Test</button></div>
   <div class="frow" style="margin-top:14px"><label class="muted" data-i18n="set.low_threshold">Waarschuwen als een rol onder dit aantal gram komt</label>
    <div style="display:flex;gap:8px;align-items:center"><input type="number" id="cLow" min="0" step="10" placeholder="100" style="width:120px"><span class="muted">g</span><button id="cLowSave" class="formbtn sec" data-i18n="save">Opslaan</button></div></div>
@@ -280,7 +280,7 @@ section#spools{max-width:1040px}
  <div class="card"><h3 data-i18n="set.language">Taal</h3>
   <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
    <select id="cLang" style="padding:10px;border-radius:8px;border:1px solid #333b44;background:var(--panel2);color:#fff;font-size:16px;min-width:150px"></select>
-   <span class="muted" style="font-size:12px" data-i18n="set.lang_hint">Geldt voor de tablet én deze pagina. Een taal toevoegen? Zet een bestand filatrack_lang_&lt;code&gt;.conf op de tablet — zie lang/README.md.</span>
+   <span class="muted" style="font-size:12px" data-i18n="set.lang_hint">Geldt voor de tablet én deze pagina. Een taal toevoegen? Zet een bestand printward_lang_&lt;code&gt;.conf op de tablet — zie lang/README.md.</span>
   </div>
   <div id="cLangMsg" class="muted" style="margin-top:8px"></div>
  </div>
@@ -330,7 +330,7 @@ function tab(n){
  if(n==='set')loadDiag();
 }
 // --- translations -------------------------------------------------------
-// The tablet owns the strings (built-in EN/NL + any filatrack_lang_*.conf), so
+// The tablet owns the strings (built-in EN/NL + any printward_lang_*.conf), so
 // the page just asks for the active table. t() falls back to the key, which
 // makes a missing translation visible instead of blank.
 var I18N={},I18NT={},LANGS=[];
@@ -486,7 +486,7 @@ function exportCsv(){
  var rows=[['datum','naam','materiaal','grammen','kosten_eur','duur_min','resultaat']];
  histCache.forEach(function(r){rows.push([r.when,'"'+(r.name||'').replace(/"/g,'""')+'"',r.mat||'',r.grams||0,(r.cost||0).toFixed(2),r.mins||0,r.ok?'gelukt':'mislukt']);});
  var csv=rows.map(function(x){return x.join(',');}).join('\r\n');
- var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='filatrack-historie.csv';a.click();URL.revokeObjectURL(a.href);
+ var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='printward-historie.csv';a.click();URL.revokeObjectURL(a.href);
 }
 function hSelIds(){var a=[];document.querySelectorAll('.hsel:checked').forEach(function(el){a.push(el.dataset.i);});return a;}
 function hSelUpd(){var n=hSelIds().length;var showArch=$('hArch')&&$('hArch').checked;
@@ -770,7 +770,7 @@ function renderBkStatus(age){
  if(btn)btn.className='formbtn '+(overdue?'pri':'sec');
 }
 function downloadBackup(){
- var a=document.createElement('a');a.href='/backup';a.download='filatrack-backup.ptb';
+ var a=document.createElement('a');a.href='/backup';a.download='printward-backup.ptb';
  document.body.appendChild(a);a.click();a.remove();
  if($('bkMsg'))$('bkMsg').textContent=t('bk.downloaded','back-up gedownload');
 }
@@ -782,7 +782,7 @@ function exportRolls(){
  Promise.all([fetch('/spools').then(function(r){return r.json();}),fetch('/empties').then(function(r){return r.json();})]).then(function(a){
   var blob=new Blob([JSON.stringify({spools:a[0],empties:a[1]},null,1)],{type:'application/json'});
   var url=URL.createObjectURL(blob),link=document.createElement('a');
-  link.href=url;link.download='filatrack_rollen.json';link.click();URL.revokeObjectURL(url);
+  link.href=url;link.download='printward_rollen.json';link.click();URL.revokeObjectURL(url);
   if(m)m.textContent=(a[0]||[]).length+' '+t('roll.exported','rollen geexporteerd');
  }).catch(function(){if(m)m.textContent=t('no_conn','geen verbinding');});
 }

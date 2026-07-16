@@ -6,7 +6,7 @@
 //
 // This used to be a 427-line header full of ESP32-S3 RGB panel timings, GPIO
 // maps and LEDC backlight code for the original handheld device. That target is
-// gone - FilaTrack runs on an Android tablet - and the app only ever needed two
+// gone - Printward runs on an Android tablet - and the app only ever needed two
 // things from it, so the rest went with the firmware it belonged to.
 
 #include <stdint.h>

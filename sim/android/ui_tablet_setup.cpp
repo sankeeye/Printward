@@ -202,7 +202,7 @@ void tablet_setup_loop() {
     // next opened, and the web /start reads it live.
     g_lan_mode = g_lan_pending;
 
-    save_settings();               // persist to /sdcard/filatrack.conf
+    save_settings();               // persist to /sdcard/printward.conf
     bambu_mqtt_settings_changed();  // rebuild topics + reconnect with new creds
 
     // The server socket is already bound; a new port only takes hold on the next

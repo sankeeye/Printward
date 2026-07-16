@@ -1,12 +1,12 @@
-# Builds the FilaTrack Scale firmware (ESP32-S3) and publishes a browser flasher.
+# Builds the Printward Scale firmware (ESP32-S3) and publishes a browser flasher.
 #
 # Run it by hand from the Actions tab (Run workflow). It builds the firmware, stages
 # the flash parts + a manifest, drops in the flasher page, and deploys it to GitHub
 # Pages, so anyone can flash the scale from Chrome/Edge at:
-#   https://<you>.github.io/FilaTrack/scale/
+#   https://<you>.github.io/Printward/scale/
 #
 # One-time: enable Pages under Settings > Pages > Source: "GitHub Actions".
-name: Build FilaTrack Scale firmware
+name: Build Printward Scale firmware
 
 on:
   workflow_dispatch:        # run manually from the Actions tab
@@ -33,17 +33,17 @@ jobs:
         run: pip install --upgrade platformio
 
       - name: Build scale firmware
-        run: pio run -d scale -e filatrack_scale
+        run: pio run -d scale -e printward_scale
 
       - name: Stage firmware + flasher for ESP Web Tools
         run: |
-          python tools/ci_stage_scale.py scale/.pio/build/filatrack_scale dist/scale
+          python tools/ci_stage_scale.py scale/.pio/build/printward_scale dist/scale
           cp web/flash/index.html dist/scale/index.html
 
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
         with:
-          name: filatrack-scale-firmware
+          name: printward-scale-firmware
           path: dist/scale
 
       - name: Configure Pages

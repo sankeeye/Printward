@@ -1,4 +1,4 @@
-# FilaTrack UI simulator
+# Printward UI simulator
 
 Runs the **real** LVGL UI from `../src` (printer, files, settings, filament,
 wifi screens) in an 800×480 window **on the PC**, fed with mock data - so you

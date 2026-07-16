@@ -7,11 +7,11 @@
 #include <cstdlib>
 #include <dirent.h>
 
-#define LANG_FILE_FMT "/sdcard/filatrack_lang_%s.conf"
+#define LANG_FILE_FMT "/sdcard/printward_lang_%s.conf"
 
 // --- built-in strings -----------------------------------------------------
 // Keys are grouped by screen. English first (also the fallback), then Dutch.
-// Adding a language does NOT belong here - drop a filatrack_lang_<code>.conf on
+// Adding a language does NOT belong here - drop a printward_lang_<code>.conf on
 // the tablet instead. This table only exists so the app works out of the box.
 struct Builtin { const char* key; const char* en; const char* nl; };
 static const Builtin BUILTIN[] = {
@@ -145,8 +145,8 @@ static const Builtin BUILTIN[] = {
     {"set.port_range",        "Port must be between 1024 and 65535.", "Poort moet tussen 1024 en 65535 liggen."},
     {"set.port_restart",      "Saved. Restart the app for the new port.", "Opgeslagen. Herstart de app voor de nieuwe poort."},
 
-    {"set.web_hint",        "Web page: %s - sign in with user \"filatrack\" and the password above. Only reachable from your own network.",
-                            "Webpagina: %s - log in met gebruiker \"filatrack\" en het wachtwoord hierboven. Alleen bereikbaar vanaf je eigen netwerk."},
+    {"set.web_hint",        "Web page: %s - sign in with user \"printward\" and the password above. Only reachable from your own network.",
+                            "Webpagina: %s - log in met gebruiker \"printward\" en het wachtwoord hierboven. Alleen bereikbaar vanaf je eigen netwerk."},
     {"set.web_pass",          "Web password", "Webwachtwoord"},
 
     {"dash.left_fmt",       "%dh%02dm left",             "nog %du%02dm"},
@@ -157,7 +157,7 @@ static const Builtin BUILTIN[] = {
     {"scale.static_suffix",   " \xE2\x80\xA2 static IP", " \xE2\x80\xA2 vast IP"},
     {"move.nozzle_fmt",       "Nozzle %.0f/%.0f\xC2\xB0" "C", "Nozzle %.0f/%.0f\xC2\xB0" "C"},
     {"files.print_blocked",   "Printing goes through Bambu Studio/Handy (the firmware blocks third-party start).", "Printen gaat via Bambu Studio/Handy (firmware blokkeert start van derden)."},
-    {"set.printer_hint_file", "To change printer settings, edit /sdcard/filatrack.conf and restart the app", "Printerinstellingen wijzigen? Pas /sdcard/filatrack.conf aan en herstart de app"},
+    {"set.printer_hint_file", "To change printer settings, edit /sdcard/printward.conf and restart the app", "Printerinstellingen wijzigen? Pas /sdcard/printward.conf aan en herstart de app"},
     {"set.printer_hint_web",  "To change printer settings, open http://%s/ in a browser", "Printerinstellingen wijzigen? Open http://%s/ in een browser"},
 
     {"ss.layer",              "Layer %d / %d", "Laag %d / %d"},
@@ -327,7 +327,7 @@ static const Builtin BUILTIN[] = {
     {"spools.import_btn",     "Import rolls", "Importeer rollen"},
     {"spools.full_bk_hint",   "A full backup (including history and statistics) lives under <b>Settings</b>.", "Een volledige back-up (incl. historie en statistieken) staat bij <b>Settings</b>."},
     {"set.code_empty",        "leave empty = unchanged", "laat leeg = ongewijzigd"},
-    {"set.ntfy_ph",           "e.g. filatrack-secret-x9k2", "bv. filatrack-geheim-x9k2"},
+    {"set.ntfy_ph",           "e.g. printward-secret-x9k2", "bv. printward-geheim-x9k2"},
     {"set.ntfy_hint",         "Install the free <b>ntfy</b> app (or ntfy.sh in the browser) and subscribe to this topic. You get a notification when a print finishes or fails, when filament runs short, and when a weighed roll drops below the threshold.", "Installeer de gratis <b>ntfy</b>-app (of ntfy.sh in de browser) en abonneer op dit topic. Je krijgt een melding bij print klaar/mislukt, filament tekort en als een gewogen rol onder de drempel komt."},
     {"set.backup_hint",       "Everything on the tablet in one file: rolls, empty spools, weights, history and statistics. (Printer IP/serial/access code are <b>not</b> included.)", "Alles op de tablet in een bestand: rollen, lege spoelen, gewichten, historie en statistieken. (Printer-IP/serial/toegangscode zitten er <b>niet</b> in.)"},
     {"set.bk_download",       "Download backup", "Download back-up"},
@@ -417,15 +417,15 @@ static const Builtin BUILTIN[] = {
                             "Back-up & herstel (alles)"},
     {"set.diagnostics",     "Diagnostics",            "Diagnose"},
     {"set.language",        "Language",               "Taal"},
-    {"set.lang_hint",       "Applies to the tablet and this page. Adding a language? Drop a filatrack_lang_&lt;code&gt;.conf on the tablet - see lang/README.md.",
-                            "Geldt voor de tablet en deze pagina. Een taal toevoegen? Zet een filatrack_lang_&lt;code&gt;.conf op de tablet - zie lang/README.md."},
+    {"set.lang_hint",       "Applies to the tablet and this page. Adding a language? Drop a printward_lang_&lt;code&gt;.conf on the tablet - see lang/README.md.",
+                            "Geldt voor de tablet en deze pagina. Een taal toevoegen? Zet een printward_lang_&lt;code&gt;.conf op de tablet - zie lang/README.md."},
     {"set.lang_saved",      "Language saved.",        "Taal opgeslagen."},
-    {"set.scale",           "FilaTrack Scale",        "FilaTrack Scale"},
+    {"set.scale",           "Printward Scale",        "Printward Scale"},
     {"set.screensaver",     "Screensaver",            "Screensaver"},
 };
 static const int NBUILTIN = (int)(sizeof(BUILTIN) / sizeof(BUILTIN[0]));
 
-// --- runtime overrides (from /sdcard/filatrack_lang_<code>.conf) -----------
+// --- runtime overrides (from /sdcard/printward_lang_<code>.conf) -----------
 #define OVR_MAX 400
 // val is sized for the longest built-in text, not the average one: the ntfy and
 // backup hints are a couple of sentences, and a translation tends to run longer
@@ -517,14 +517,14 @@ int lang_codes(char out[][8], int max) {
     int n = 0;
     const char* fixed[] = {"en", "nl"};
     for (int i = 0; i < 2 && n < max; i++) { strncpy(out[n], fixed[i], 7); out[n][7] = 0; n++; }
-    // plus every filatrack_lang_<code>.conf on the tablet
+    // plus every printward_lang_<code>.conf on the tablet
     DIR* d = opendir("/sdcard");
     if (!d) return n;
     struct dirent* e;
     while ((e = readdir(d)) && n < max) {
-        const char* p = strstr(e->d_name, "filatrack_lang_");
+        const char* p = strstr(e->d_name, "printward_lang_");
         if (!p || p != e->d_name) continue;
-        const char* code = e->d_name + strlen("filatrack_lang_");
+        const char* code = e->d_name + strlen("printward_lang_");
         const char* dot = strstr(code, ".conf");
         if (!dot || dot == code || dot - code > 7) continue;
         char c[8]; int len = (int)(dot - code);

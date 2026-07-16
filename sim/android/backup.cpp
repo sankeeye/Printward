@@ -11,11 +11,11 @@
 // The data files we protect. Order is stable so a backup blob is deterministic.
 struct DataFile { const char* tag; const char* path; };
 static const DataFile FILES[] = {
-    {"spools",  "/sdcard/filatrack_spools.conf"},
-    {"empties", "/sdcard/filatrack_empties.conf"},
-    {"weights", "/sdcard/filatrack_weights.conf"},
-    {"history", "/sdcard/filatrack_history.conf"},
-    {"stats",   "/sdcard/filatrack_stats.conf"},
+    {"spools",  "/sdcard/printward_spools.conf"},
+    {"empties", "/sdcard/printward_empties.conf"},
+    {"weights", "/sdcard/printward_weights.conf"},
+    {"history", "/sdcard/printward_history.conf"},
+    {"stats",   "/sdcard/printward_stats.conf"},
 };
 static const int NFILES = (int)(sizeof(FILES) / sizeof(FILES[0]));
 
@@ -116,17 +116,29 @@ int backup_apply(const char* data) {
     return restored;
 }
 
-// --- one-time migration from the old PandaTouch file names ----------------
+// --- one-time migration from the old PandaTouch / FilaTrack file names --------
+// Printward is the third name of this project (PandaTouch -> FilaTrack -> Printward).
+// On first run, adopt any data left under an old name so nobody starts empty. The
+// direct predecessor (FilaTrack) is listed first, so it wins if both ever coexist.
 void migrate_legacy_data() {
     static const struct { const char* from; const char* to; } M[] = {
-        {"/sdcard/pandatouch.conf",              "/sdcard/filatrack.conf"},
-        {"/sdcard/pandatouch_spools.conf",       "/sdcard/filatrack_spools.conf"},
-        {"/sdcard/pandatouch_empties.conf",      "/sdcard/filatrack_empties.conf"},
-        {"/sdcard/pandatouch_weights.conf",      "/sdcard/filatrack_weights.conf"},
-        {"/sdcard/pandatouch_history.conf",      "/sdcard/filatrack_history.conf"},
-        {"/sdcard/pandatouch_stats.conf",        "/sdcard/filatrack_stats.conf"},
-        {"/sdcard/pandatouch_backup_state.conf", "/sdcard/filatrack_backup_state.conf"},
-        {"/sdcard/pandatouch_lownotify.conf",    "/sdcard/filatrack_lownotify.conf"},
+        {"/sdcard/filatrack.conf",               "/sdcard/printward.conf"},
+        {"/sdcard/filatrack_spools.conf",        "/sdcard/printward_spools.conf"},
+        {"/sdcard/filatrack_empties.conf",       "/sdcard/printward_empties.conf"},
+        {"/sdcard/filatrack_weights.conf",       "/sdcard/printward_weights.conf"},
+        {"/sdcard/filatrack_history.conf",       "/sdcard/printward_history.conf"},
+        {"/sdcard/filatrack_stats.conf",         "/sdcard/printward_stats.conf"},
+        {"/sdcard/filatrack_backup_state.conf",  "/sdcard/printward_backup_state.conf"},
+        {"/sdcard/filatrack_lownotify.conf",     "/sdcard/printward_lownotify.conf"},
+        {"/sdcard/filatrack_lang_de.conf",       "/sdcard/printward_lang_de.conf"},
+        {"/sdcard/pandatouch.conf",              "/sdcard/printward.conf"},
+        {"/sdcard/pandatouch_spools.conf",       "/sdcard/printward_spools.conf"},
+        {"/sdcard/pandatouch_empties.conf",      "/sdcard/printward_empties.conf"},
+        {"/sdcard/pandatouch_weights.conf",      "/sdcard/printward_weights.conf"},
+        {"/sdcard/pandatouch_history.conf",      "/sdcard/printward_history.conf"},
+        {"/sdcard/pandatouch_stats.conf",        "/sdcard/printward_stats.conf"},
+        {"/sdcard/pandatouch_backup_state.conf", "/sdcard/printward_backup_state.conf"},
+        {"/sdcard/pandatouch_lownotify.conf",    "/sdcard/printward_lownotify.conf"},
     };
     int moved = 0;
     for (int i = 0; i < (int)(sizeof(M) / sizeof(M[0])); i++) {
@@ -139,11 +151,11 @@ void migrate_legacy_data() {
         char* d = read_all(M[i].from, &len);
         if (d) { if (write_all(M[i].to, d, len)) moved++; free(d); }
     }
-    if (moved) Serial.printf("MIGRATE: %d PandaTouch data file(s) -> FilaTrack\n", moved);
+    if (moved) Serial.printf("MIGRATE: %d legacy data file(s) -> Printward\n", moved);
 }
 
 // --- "is your data actually safe?" bookkeeping ----------------------------
-#define BSTATE_PATH "/sdcard/filatrack_backup_state.conf"
+#define BSTATE_PATH "/sdcard/printward_backup_state.conf"
 
 static long bstate_get(const char* key) {
     FILE* f = fopen(BSTATE_PATH, "r");
@@ -213,7 +225,7 @@ const char* backup_sd_dir() {
         struct stat st;
         if (stat(roots[i], &st) != 0 || !S_ISDIR(st.st_mode)) continue;   // no card here
         char dir[192];
-        snprintf(dir, sizeof(dir), "%s/Android/data/nl.filatrack.app/files", roots[i]);
+        snprintf(dir, sizeof(dir), "%s/Android/data/nl.printward.app/files", roots[i]);
         if (!ensure_dir(dir)) continue;
         char probe[224];
         snprintf(probe, sizeof(probe), "%s/.pt_write_test", dir);
@@ -244,18 +256,18 @@ void backup_auto_loop() {
     if (newest == 0 || newest == last_mtime) return;   // nothing (new) to snapshot
     last_mtime = newest;
 
-    mkdir("/sdcard/filatrack_backup", 0777);
+    mkdir("/sdcard/printward_backup", 0777);
     for (int i = 0; i < NFILES; i++) {
         long fl = 0;
         char* fc = read_all(FILES[i].path, &fl);
         if (fc) {
             char dst[128];
-            snprintf(dst, sizeof(dst), "/sdcard/filatrack_backup/%s.conf", FILES[i].tag);
+            snprintf(dst, sizeof(dst), "/sdcard/printward_backup/%s.conf", FILES[i].tag);
             write_all(dst, fc, fl);
             free(fc);
         }
     }
-    Serial.println("BACKUP: snapshot -> /sdcard/filatrack_backup");
+    Serial.println("BACKUP: snapshot -> /sdcard/printward_backup");
 
     // Also drop a single-file copy on a removable card when one is present. That
     // copy survives a factory reset and can be pulled out of a dead tablet, which
@@ -266,7 +278,7 @@ void backup_auto_loop() {
         char* blob = backup_build(&len);
         if (blob && len > 0) {
             char dst[224];
-            snprintf(dst, sizeof(dst), "%s/filatrack-backup.ptb", sd);
+            snprintf(dst, sizeof(dst), "%s/printward-backup.ptb", sd);
             if (write_all(dst, blob, len)) Serial.printf("BACKUP: SD copy written (%d B)\n", len);
         }
         free(blob);

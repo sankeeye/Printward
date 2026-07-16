@@ -1,5 +1,5 @@
-# FilaTrack tablet config. Copy this to the tablet as /sdcard/filatrack.conf:
-#     adb push filatrack.conf /sdcard/filatrack.conf
+# Printward tablet config. Copy this to the tablet as /sdcard/printward.conf:
+#     adb push printward.conf /sdcard/printward.conf
 #
 # The access_code is a SECRET (printer LAN access code, shown on the printer's
 # screen under Settings > WLAN). Keep this file on the tablet only - never
@@ -13,14 +13,14 @@ access_code=00000000
 brightness=70
 wifi_ssid=HomeWiFi
 view3d=1                    # screensaver g-code view: 1 = 3D isometric, 0 = 2D top-down
-scale_ip=192.168.2.60      # FilaTrack Scale host (fixed IP, or a name if mDNS works)
+scale_ip=192.168.2.60      # Printward Scale host (fixed IP, or a name if mDNS works)
 ntfy_topic=                # ntfy.sh topic for push notifications (empty = off)
 
 # Not in this file (managed on the tablet itself):
-#   /sdcard/filatrack_weights.conf   per-slot filament weight/price tracking
-#   /sdcard/filatrack_spools.conf    the spool library
-#   /sdcard/filatrack_empties.conf   empty-spool weight library
-#   /sdcard/filatrack_history.conf   recent-print log
+#   /sdcard/printward_weights.conf   per-slot filament weight/price tracking
+#   /sdcard/printward_spools.conf    the spool library
+#   /sdcard/printward_empties.conf   empty-spool weight library
+#   /sdcard/printward_history.conf   recent-print log
 
 # The web page (http://<tablet>:8080) needs a password. Leave this out and the
 # tablet makes one on first start and shows it under Settings > Web password -
@@ -28,7 +28,7 @@ ntfy_topic=                # ntfy.sh topic for push notifications (empty = off)
 # get a fresh one.
 #webui_pass=
 
-# FilaTrack only answers on your own network (10./172.16-31./192.168./169.254.).
+# Printward only answers on your own network (10./172.16-31./192.168./169.254.).
 # That is the backstop for someone forwarding port 8080 on the router. Set this to
 # 1 only if you know exactly what you are exposing, and why.
 #allow_remote=0

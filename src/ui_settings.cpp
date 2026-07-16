@@ -14,7 +14,7 @@
 #ifdef __ANDROID__
 #include "ui_tablet_setup.h"   // on-screen printer config (tablet only)
 #include "ui_screensaver.h"    // g_screensaver_3d toggle
-#include "ui_weigh.h"          // FilaTrack Scale management screen (tablet only)
+#include "ui_weigh.h"          // Printward Scale management screen (tablet only)
 #endif
 
 static lv_obj_t* g_settings_screen = nullptr;
@@ -119,7 +119,7 @@ void create_settings_ui() {
     lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
     lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
 
-    add_info_row(root, "Firmware", FILATRACK_VERSION);
+    add_info_row(root, "Firmware", PRINTWARD_VERSION);
 #ifndef __ANDROID__
     // The tablet's own WiFi/IP is managed by Android, not by this UI.
     add_info_row(root, "WiFi network", String(g_wifi_ssid));
@@ -143,7 +143,7 @@ void create_settings_ui() {
 
     lv_obj_t* hint = lv_label_create(root);
 #ifdef __ANDROID__
-    // Was "edit filatrack.conf and restart", which stopped being true once the
+    // Was "edit printward.conf and restart", which stopped being true once the
     // Printer setup button below existed. Now it says where the web page is, next
     // to the password it needs.
     lv_label_set_text_fmt(hint, T("set.web_hint"), webctl_url());
@@ -179,7 +179,7 @@ void create_settings_ui() {
     lv_obj_center(setup_btn_label);
     lv_obj_add_event_cb(setup_btn, printer_setup_btn_cb, LV_EVENT_CLICKED, NULL);
 
-    // Row: screensaver 2D/3D toggle + open the FilaTrack Scale (scale) screen.
+    // Row: screensaver 2D/3D toggle + open the Printward Scale (scale) screen.
     lv_obj_t* row2 = lv_obj_create(root);
     lv_obj_set_size(row2, lv_pct(100), PT_SZ(44));
     lv_obj_set_style_bg_opa(row2, LV_OPA_TRANSP, LV_PART_MAIN);

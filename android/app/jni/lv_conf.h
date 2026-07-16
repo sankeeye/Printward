@@ -601,7 +601,7 @@
  * Switching these to 0 drops LVGL's copy (its .c is guarded by the same macro) and
  * removes its declaration from lv_font.h; LV_FONT_CUSTOM_DECLARE below puts the
  * declaration back, so the ~131 &lv_font_montserrat_N references keep working
- * untouched. Our files use their own FILATRACK_FONT_N guard so they still build. */
+ * untouched. Our files use their own PRINTWARD_FONT_N guard so they still build. */
 #define LV_FONT_MONTSERRAT_8  0
 #define LV_FONT_MONTSERRAT_10 0
 #define LV_FONT_MONTSERRAT_12 0

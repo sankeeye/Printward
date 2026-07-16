@@ -5,8 +5,8 @@
 // globals, a config-file loader, and a placeholder FTP listing.
 //
 // The printer IP / serial / ACCESS CODE are read at runtime from
-// /sdcard/filatrack.conf on the tablet - the access code is a secret and never
-// lives in source or git. See filatrack.conf.example.
+// /sdcard/printward.conf on the tablet - the access code is a secret and never
+// lives in source or git. See printward.conf.example.
 #include "storage.h"
 #include "bambu_ftp.h"
 #include "ui_screensaver.h"   // g_screensaver_3d (persisted below)
@@ -32,7 +32,7 @@ uint32_t g_bg_color = 0x101418;
 char g_printer_ip[40] = "";
 char g_printer_serial[32] = "";
 char g_printer_access_code[24] = "";
-char g_scale_ip[40] = "192.168.2.60";   // FilaTrack Scale host (scale_ip= in the conf)
+char g_scale_ip[40] = "192.168.2.60";   // Printward Scale host (scale_ip= in the conf)
 char g_ntfy_topic[64] = "";             // ntfy.sh topic for push notifications
 char g_lang[8] = "en";                  // UI language (lang= in the conf, see lang.h)
 char g_webui_pass[24] = "";             // web password; generated on first run, shown in Settings
@@ -52,11 +52,11 @@ void init_storage() {}
 void save_tray_weight(int, int) {}
 void save_ext_weight() {}
 
-// Writes the current settings back to /sdcard/filatrack.conf (the on-screen
+// Writes the current settings back to /sdcard/printward.conf (the on-screen
 // Printer setup form saves through here). The access code lands in this file
 // on the tablet only - never in git.
 void save_settings() {
-    const char* path = "/sdcard/filatrack.conf";
+    const char* path = "/sdcard/printward.conf";
     FILE* f = fopen(path, "w");
     if (!f) {
         Serial.printf("CONF: save failed - can't write %s\n", path);
@@ -76,7 +76,7 @@ void save_settings() {
     fprintf(f, "lan_mode=%d\n", g_lan_mode ? 1 : 0);
     if (g_wifi_ssid[0]) fprintf(f, "wifi_ssid=%s\n", g_wifi_ssid);
     fclose(f);
-    Serial.println("CONF: saved /sdcard/filatrack.conf");
+    Serial.println("CONF: saved /sdcard/printward.conf");
 }
 
 static char *trim(char *s) {
@@ -86,10 +86,10 @@ static char *trim(char *s) {
     return s;
 }
 
-// Reads /sdcard/filatrack.conf - simple key=value lines, '#' comments. The
+// Reads /sdcard/printward.conf - simple key=value lines, '#' comments. The
 // access code stays in this file on the tablet, never in source/git.
 void load_settings() {
-    const char *path = "/sdcard/filatrack.conf";
+    const char *path = "/sdcard/printward.conf";
     FILE *f = fopen(path, "r");
     if (!f) {
         Serial.printf("CONF: %s not found - put printer_ip/printer_serial/access_code there\n", path);

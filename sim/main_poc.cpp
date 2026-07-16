@@ -1,4 +1,4 @@
-// FilaTrack UI simulator - proof-of-concept.
+// Printward UI simulator - proof-of-concept.
 // Opens an 800x480 SDL window running LVGL, to prove the toolchain + LVGL + SDL
 // pipeline works on the PC before wiring in the real UI screens.
 #define SDL_MAIN_HANDLED
@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
     lv_obj_set_style_bg_color(scr, lv_color_hex(0x101418), 0);
 
     lv_obj_t *title = lv_label_create(scr);
-    lv_label_set_text(title, "FilaTrack Simulator");
+    lv_label_set_text(title, "Printward Simulator");
     lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
     lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 40);

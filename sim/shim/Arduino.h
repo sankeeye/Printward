@@ -1,6 +1,6 @@
 // Minimal Arduino compatibility shim for the PC simulator.
 // Provides just enough of the Arduino core (String, Serial, millis, pin stubs)
-// for the FilaTrack UI sources to compile and run natively. NOT a full
+// for the Printward UI sources to compile and run natively. NOT a full
 // Arduino implementation - only what the UI/display code touches.
 #pragma once
 #ifndef SIM_ARDUINO_H
@@ -172,22 +172,22 @@ private:
 inline String operator+(const char *c, const String &o) { String r(c); r += o; return r; }
 
 // --- Serial ---
-// On Android, SDL doesn't capture stdout, so route to logcat (tag "FILATRACK");
-// view with:  adb logcat -s FILATRACK
+// On Android, SDL doesn't capture stdout, so route to logcat (tag "PRINTWARD");
+// view with:  adb logcat -s PRINTWARD
 // On the PC simulator, route to stdout.
 #ifdef __ANDROID__
 #include <android/log.h>
 class SerialClass {
 public:
     void begin(unsigned long) {}
-    void print(const char *c) { if (c) __android_log_print(ANDROID_LOG_INFO, "FILATRACK", "%s", c); }
-    void print(const String &s) { __android_log_print(ANDROID_LOG_INFO, "FILATRACK", "%s", s.c_str()); }
-    void print(int v) { __android_log_print(ANDROID_LOG_INFO, "FILATRACK", "%d", v); }
+    void print(const char *c) { if (c) __android_log_print(ANDROID_LOG_INFO, "PRINTWARD", "%s", c); }
+    void print(const String &s) { __android_log_print(ANDROID_LOG_INFO, "PRINTWARD", "%s", s.c_str()); }
+    void print(int v) { __android_log_print(ANDROID_LOG_INFO, "PRINTWARD", "%d", v); }
     void println() {}
-    void println(const char *c) { if (c) __android_log_print(ANDROID_LOG_INFO, "FILATRACK", "%s", c); }
-    void println(const String &s) { __android_log_print(ANDROID_LOG_INFO, "FILATRACK", "%s", s.c_str()); }
-    void println(int v) { __android_log_print(ANDROID_LOG_INFO, "FILATRACK", "%d", v); }
-    template <typename... A> void printf(const char *f, A... a) { __android_log_print(ANDROID_LOG_INFO, "FILATRACK", f, a...); }
+    void println(const char *c) { if (c) __android_log_print(ANDROID_LOG_INFO, "PRINTWARD", "%s", c); }
+    void println(const String &s) { __android_log_print(ANDROID_LOG_INFO, "PRINTWARD", "%s", s.c_str()); }
+    void println(int v) { __android_log_print(ANDROID_LOG_INFO, "PRINTWARD", "%d", v); }
+    template <typename... A> void printf(const char *f, A... a) { __android_log_print(ANDROID_LOG_INFO, "PRINTWARD", f, a...); }
     void write(const uint8_t *, unsigned int) {}
     operator bool() const { return true; }
 };

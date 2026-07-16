@@ -21,9 +21,9 @@
 
 import io, os, re, subprocess, sys
 
-LV = "X:/projects/panda/FilaTrack/.pio/libdeps/pandatouch/lvgl"
+LV = "X:/projects/panda/Printward/.pio/libdeps/pandatouch/lvgl"
 GEN = LV + "/scripts/built_in_font"
-OUT = "X:/projects/panda/FilaTrack/sim/android/fonts"
+OUT = "X:/projects/panda/Printward/sim/android/fonts"
 SIZES = [12, 14, 18, 20, 22, 24, 28, 38, 48]
 
 # Reproduce the stock build exactly, except for the text range. Pull the

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Bambu Cloud -> FilaTrack weight relay
+Bambu Cloud -> Printward weight relay
 ========================================
 
-Why this exists: the FilaTrack's own attempt to log into Bambu Cloud
+Why this exists: the Printward's own attempt to log into Bambu Cloud
 directly (to find out how many grams a finished print used) gets blocked by
 Cloudflare's bot-protection - it flat out returns an HTML challenge page
 instead of ever reaching Bambu's login handler. That's a TLS-fingerprint
@@ -12,7 +12,7 @@ level block that an ESP32 can't get around.
 A normal computer's HTTP client isn't blocked the same way, so this script
 runs here on your PC instead: it logs into Bambu Cloud, periodically checks
 your print history, and whenever it sees a finished print it hasn't reported
-yet, sends the grams used to the FilaTrack over your local network. The
+yet, sends the grams used to the Printward over your local network. The
 device then subtracts that from whichever spool/tray was active for that
 print - same bookkeeping as if it could talk to Bambu Cloud itself.
 
@@ -27,7 +27,7 @@ Setup
        python bambu_weight_relay.py
    Leave it running in the background while you print. It only needs your
    PC on and connected to the internet + your home network; the printer and
-   FilaTrack don't need anything extra.
+   Printward don't need anything extra.
 
 Security note: the Bambu password is stored ENCRYPTED in config.json as
 "bambu_password_enc" (Windows DPAPI, tied to your Windows user account) - run
@@ -181,7 +181,7 @@ def device_url(cfg, path):
 
 def device_auth(cfg):
     pw = cfg.get("device_pass") or ""
-    return ("filatrack", pw) if pw else None
+    return ("printward", pw) if pw else None
 
 
 def load_state():
@@ -298,7 +298,7 @@ def push_token_to_device(cfg, token):
 
 
 def device_request_verification_code(cfg, email):
-    """Tells the FilaTrack to show a 'enter your Bambu code' field in its web
+    """Tells the Printward to show a 'enter your Bambu code' field in its web
     dashboard. Doesn't ask Bambu for anything - bambu_login() already triggered
     the email; this just routes the prompt to a browser instead of a terminal.
     (The current tablet build has no dashboard code field, so this 404s and the
@@ -336,7 +336,7 @@ def make_code_prompt(cfg):
         except requests.exceptions.RequestException:
             return input(f"Check {email} for a 6-digit code from Bambu and enter it here: ").strip()
 
-        print(f"Bambu needs a verification code. Open the FilaTrack dashboard at "
+        print(f"Bambu needs a verification code. Open the Printward dashboard at "
               f"{device_url(cfg, '/')} and type the 6-digit code emailed to {email}.")
         deadline = time.time() + 15 * 60  # wait up to 15 min for it to be typed
         while time.time() < deadline:
@@ -414,7 +414,7 @@ def main():
         save_state(state)
         print("Logged in.")
 
-    print(f"Bambu weight relay starting. Reporting finished-print weights to the FilaTrack at "
+    print(f"Bambu weight relay starting. Reporting finished-print weights to the Printward at "
           f"{device_url(cfg, '')}, every {cfg['poll_interval_sec']}s. Ctrl+C to stop.")
 
     while True:

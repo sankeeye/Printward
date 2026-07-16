@@ -8,16 +8,16 @@
 // compiled in, so the app is always usable even with no files present. On top of
 // that, a plain language file dropped on the tablet
 //
-//     /sdcard/filatrack_lang_<code>.conf      key=translated text
+//     /sdcard/printward_lang_<code>.conf      key=translated text
 //
 // can override any built-in string OR add a whole new language - no rebuild, no
-// toolchain. That's the point: someone who wants FilaTrack in German only has to
+// toolchain. That's the point: someone who wants Printward in German only has to
 // write a text file.
 //
 // The web page is served the same table via /lang, so each string is translated
 // once and both the tablet and the browser use it.
 
-// Selected language code, persisted as lang= in /sdcard/filatrack.conf.
+// Selected language code, persisted as lang= in /sdcard/printward.conf.
 // Defined in android_glue.cpp next to the other settings.
 extern char g_lang[8];
 
@@ -37,7 +37,7 @@ const char* lang_current();
 // code like "en" / "nl" / "de".
 void lang_set(const char* code);
 
-// Available languages: the built-in ones plus every filatrack_lang_*.conf found
+// Available languages: the built-in ones plus every printward_lang_*.conf found
 // on the tablet. Returns how many were written into `out`.
 int lang_codes(char out[][8], int max);
 

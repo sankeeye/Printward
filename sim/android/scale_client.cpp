@@ -1,4 +1,4 @@
-// HTTP client for the FilaTrack Scale. A background thread polls /weight and /info
+// HTTP client for the Printward Scale. A background thread polls /weight and /info
 // from the scale and runs queued commands (tare/cal/setwifi/setip). All network
 // I/O is here, off the LVGL/main thread; the Scale UI just reads cached values.
 #include "scale_client.h"

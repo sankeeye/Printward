@@ -1,9 +1,9 @@
-# FilaTrack installeren
+# Printward installeren
 
 [English](INSTALL.md) · **Nederlands** · [Deutsch](INSTALL.de.md)
 
 Twee onderdelen. De **tablet-app** heb je altijd nodig; de **weegschaal** alleen als je de
-FilaTrack Scale-hardware hebt. Geen ontwikkeltools, niets zelf bouwen.
+Printward Scale-hardware hebt. Geen ontwikkeltools, niets zelf bouwen.
 
 ---
 
@@ -14,15 +14,15 @@ FilaTrack Scale-hardware hebt. Geen ontwikkeltools, niets zelf bouwen.
 Instellingen ▸ WLAN / Netwerk).
 
 1. **Haal de app op.** Open op de tablet een webbrowser en ga naar de
-   [**Releases-pagina**](https://github.com/sankeeye/FilaTrack/releases). Download
-   **`FilaTrack.apk`**. *(Of download hem op een computer en zet hem via USB op de tablet.)*
+   [**Releases-pagina**](https://github.com/sankeeye/Printward/releases). Download
+   **`Printward.apk`**. *(Of download hem op een computer en zet hem via USB op de tablet.)*
 
-2. **Installeer hem.** Tik op de gedownloade `FilaTrack.apk`. Android waarschuwt dat het geen
+2. **Installeer hem.** Tik op de gedownloade `Printward.apk`. Android waarschuwt dat het geen
    apps uit deze bron mag installeren — tik op **Instellingen**, zet **"Toestaan uit deze
    bron"** aan, ga terug en tik op **Installeren**. *(Dit is normaal voor elke app die niet uit
    de Play Store komt.)*
 
-3. **Eerste keer instellen.** Open FilaTrack. Hij vraagt om je printer:
+3. **Eerste keer instellen.** Open Printward. Hij vraagt om je printer:
    - **Printer-IP** — bijv. `192.168.1.50`, van het netwerkscherm van de printer of je router.
    - **Serienummer** — op het scherm van de printer, of op de sticker.
    - **Toegangscode** — de LAN-toegangscode van de printer (Instellingen ▸ WLAN op de printer).
@@ -32,7 +32,7 @@ Instellingen ▸ WLAN / Netwerk).
 4. **De webpagina (optioneel).** Je kunt de printer ook bedienen vanuit elke browser op je
    netwerk. Het adres en het wachtwoord staan op de tablet onder **Instellingen ▸ Webadres** en
    **Instellingen ▸ Webwachtwoord** (elke tablet maakt zijn eigen wachtwoord — log in als
-   gebruiker `filatrack`).
+   gebruiker `printward`).
 
 > **Tip:** geef de tablet een vast IP-adres in je router (een "DHCP-reservering") zodat zijn
 > adres nooit verandert.
@@ -41,11 +41,11 @@ Instellingen ▸ WLAN / Netwerk).
 
 ## 2. De weegschaal (optioneel)
 
-Alleen als je de **FilaTrack Scale** hebt (ESP32-S3 + weegcel). Die weegt je spoelen zodat de
+Alleen als je de **Printward Scale** hebt (ESP32-S3 + weegcel). Die weegt je spoelen zodat de
 app het filament exact bijhoudt.
 
 1. Open op een **computer** (geen telefoon) met **Chrome** of **Edge**:
-   **<https://sankeeye.github.io/FilaTrack/scale/>**
+   **<https://sankeeye.github.io/Printward/scale/>**
 
 2. Verbind de weegschaal met de computer via een **USB-C**-kabel.
 
@@ -55,7 +55,7 @@ app het filament exact bijhoudt.
 4. **Eerste keer instellen.** Na het flashen maakt de weegschaal zijn eigen wifi-netwerk.
    Verbind ermee, voer je thuis-wifi in en kalibreer daarna met een bekend gewicht. Details in
    [`scale/README.md`](scale/README.md). Zet ten slotte op de tablet het IP van de weegschaal
-   onder **Instellingen ▸ FilaTrack Scale**.
+   onder **Instellingen ▸ Printward Scale**.
 
 ---
 
