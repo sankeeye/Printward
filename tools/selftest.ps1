@@ -166,6 +166,22 @@ if (-not $Pass) {
     } catch {
         Check "/backup zonder wachtwoord geweigerd" ([int]$_.Exception.Response.StatusCode -eq 401)
     }
+
+    # LAN-gate: met LAN uit mag /start niks starten - het antwoordt met de
+    # geblokkeerd-melding, niet 'verstuurd'. Alleen de UIT-kant testen (veilig:
+    # er wordt niets in de wachtrij gezet). De AAN-kant zou een echte print
+    # kunnen starten, dus die niet automatisch.
+    $lan = $null
+    $adbExe = @("adb", "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe") |
+              Where-Object { Get-Command $_ -ErrorAction SilentlyContinue } | Select-Object -First 1
+    if ($adbExe) { $l = (& $adbExe shell "grep '^lan_mode=' /sdcard/filatrack.conf" 2>$null); if ($l) { $lan = $l.Trim().Split("=")[1] } }
+    if ($lan -eq "0" -or $null -eq $lan) {
+        $body = ""
+        try { $body = (Hit '/start?path=ZZ_SELFTEST_NONEXISTENT.3mf').Content } catch { $body = "" }
+        Check "LAN uit: /start start niks" ($body -notmatch 'verstuurd|sent') "-> '$body'"
+    } else {
+        Write-Host "  SKIP  LAN-gate (lan_mode=$lan; /start-aan niet automatisch testen)" -ForegroundColor DarkGray
+    }
 }
 
 # --- taal: elke taal moet compleet zijn -----------------------------------

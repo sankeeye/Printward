@@ -3,6 +3,7 @@
 #include "ui_printer.h"
 #include "bambu_ftp.h"
 #include "bambu_mqtt.h"
+#include "storage.h"   // g_lan_mode
 #include <lvgl.h>
 #include "ui_scale.h"   // tablet font scaling (Android only)
 
@@ -250,9 +251,14 @@ static void row_click_cb(lv_event_t* e) {
     if (entry.is_dir) {
         g_current_path = join_path(g_current_path, entry.name);
         request_list_refresh();
+    } else if (g_lan_mode) {
+        // LAN-only mode: the firmware lets a third-party tool start a print, so open
+        // the confirm dialog (AMS mapping and all - it was built and just wasn't
+        // reachable). In cloud mode this same call is silently ignored by 1.08+,
+        // which is why it stays behind the toggle.
+        open_confirm_modal(entry);
     } else {
-        // Starting a print is blocked by Bambu firmware >= 01.08 from third-party
-        // tools, so this is browse-only; start prints from Studio/Handy.
+        // Cloud/default: 1.08+ blocks third-party print start, so this is browse-only.
         lv_label_set_text(g_status_label, T("files.print_blocked"));
     }
 }

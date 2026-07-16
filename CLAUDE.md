@@ -61,6 +61,26 @@
 - **XSS gedicht 15-07**: namen gingen onbewerkt in `innerHTML`. `esc()` in webctl_page.h; de
   gevaarlijke bron is `it.name` (bestandsnamen ván de printer — modellen komen van internet).
 
+## LAN-modus (afgesproken 16-07)
+
+- **Wat**: `lan_mode=` (standaard uit), schakelaar op Instellingen > Printer instellen. Aan =
+  temperatuurknoppen terug op Move (PLA/PETG/ABS/TPU-presets + Nozzle/Bed uit) én print-starten
+  werkt (tablet: de al bestaande confirm-dialoog; web: `/start` schakelt door i.p.v. de
+  geblokkeerd-melding). Uit = huidige gedrag.
+- **Waarom**: firmware 1.08+ negeert temperatuur-gcode en print-start van apps van derden in
+  **cloud-modus**. In **LAN-only** modus (printer op "LAN Only", verbinden met toegangscode)
+  wél — vermoedelijk. **Niet geverifieerd op echte hardware**: Arno moet op zijn printer testen
+  of het echt werkt. Daarom achter een schakelaar i.p.v. altijd zichtbaar.
+- **De temp-codes bestonden al** (`MOVE_PREHEAT`/`MOVE_PLA`/... in move_perform), waren alleen
+  niet aan knoppen gekoppeld — expres weggehaald omdat ze in cloud niks deden (comment stond in
+  ui_move.cpp:436). De print-dialoog (`open_confirm_modal`, met AMS-mapping) bestond ook al
+  compleet; klikken op een bestand toonde alleen de melding. LAN-aan roept nu de dialoog aan.
+- **Geen herstart nodig** (anders dan de poort): Move/Files lezen `g_lan_mode` bij het openen,
+  web `/start` leest het live.
+- **En passant**: het "Regelen"-scherm (`create_move_extra_ui`) had hardcoded Nederlandse
+  knoplabels die de i18n-scan miste (`mk_extra_btn` krijgt letterlijke strings, geen `T()`).
+  Nu vertaald. `tools/tablet_inventory.py` ziet die nog steeds niet — een blinde vlek.
+
 ## Voortgang / Laatste Stand
 
 - **Datum laatste sessie**: 16-07-2026
@@ -74,11 +94,11 @@
   `tools/i18n_audit.py` + `tools/check_formats.py` · race in `/setcfg` weg (taal wisselt in
   één klik) · **beveiliging**: webwachtwoord (zelf gegenereerd, in Instellingen) + alleen
   lokaal netwerk + XSS-escaping · **webpoort instelbaar** (Instellingen > Printer instellen).
-- **Waar we gebleven zijn**: taal én beveiliging afgerond en door Arno afgetekend
-  ("ik vind het goed zo"). Alles op branch `feat/android-tablet-port`, self-test 31/31 groen.
-  Nog te doen: de losse tablet-schermen (Files, Move, Spools, Scale, Settings) in het Duits
-  doorlopen — die heb ik alleen gebouwd, niet op het scherm gezien; Duits is langer dan
-  Nederlands en de tablet is smal, dus daar kan tekst uit z'n vakje lopen.
+- **Waar we gebleven zijn**: taal, beveiliging, instelbare poort én LAN-modus afgerond. Alles
+  op branch `feat/android-tablet-port`, self-test 32/32 groen. **Openstaand voor Arno**: op zijn
+  printer testen of de temperatuurknoppen + print-starten écht werken in LAN-only modus (zie
+  LAN-modus hierboven). Verder: de losse tablet-schermen in het Duits doorlopen (alleen gebouwd,
+  niet op scherm gezien; Duits is langer, tablet is smal) en eventueel een README voor buiten.
 - **Ontwerp i18n** (afgesproken 15-07): teksten krijgen een **sleutel** (`dash.printing`);
   **EN + NL zitten ingebouwd** zodat het out-of-the-box werkt zonder bestanden; daarnaast
   laadt de app **losse taalbestanden** `/sdcard/filatrack_lang_<code>.conf` (`sleutel=vertaling`,

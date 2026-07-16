@@ -38,3 +38,10 @@ ntfy_topic=                # ntfy.sh topic for push notifications (empty = off)
 # be 1024-65535 - a non-root Android app can't bind below 1024, and anything the
 # server can't bind falls back to 8080 so you're never locked out.
 #webui_port=8080
+
+# LAN mode (default off). Turn on ONLY if your printer is set to LAN-only mode.
+# It exposes temperature controls (Move screen) and lets you start prints from the
+# tablet/web. Firmware 1.08+ ignores both from a third-party tool in cloud mode,
+# which is why they stay hidden by default. Toggle it on the tablet under
+# Settings > Printer setup.
+#lan_mode=0

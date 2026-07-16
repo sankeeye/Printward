@@ -23,6 +23,7 @@ extern char g_printer_access_code[24];
 extern char g_webui_pass[24];    // web UI password (see webui_pass_ensure())
 extern bool g_allow_remote;      // serve clients outside the local network too
 extern int  g_webui_port;        // web server port (default 8080)
+extern bool g_lan_mode;          // printer LAN-only: expose temperature + print-start
 void webui_pass_ensure();        // make one on first run; no-op afterwards
 
 // Manual spool-weight tracking. capacity_g is what the user enters when

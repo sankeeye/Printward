@@ -10,6 +10,7 @@
 #include "lang.h"   // blocked-reason text is shown on the tablet and the web
 #include "ui_printer.h"
 #include "bambu_mqtt.h"
+#include "storage.h"   // g_lan_mode gates the temperature controls
 #include <lvgl.h>
 #include <cstdio>
 #include <cstring>
@@ -267,21 +268,39 @@ static void create_move_extra_ui() {
     lv_obj_set_style_text_font(bl, &lv_font_montserrat_14, 0); lv_obj_center(bl);
     lv_obj_add_event_cb(bb, extra_back_cb, LV_EVENT_CLICKED, NULL);
 
-    make_col_title(root, "Ventilator");
+    // These were hardcoded Dutch - the button labels go through mk_extra_btn, which
+    // the i18n sweep didn't reach (it looked at lv_label_set_text). Fixed here.
+    // Fan 50/100% and Home X/Y/Z stay literal: loanword + number, same in every language.
+    make_col_title(root, T("dash.fan"));
     lv_obj_t* r2 = mk_wrap_row(root);
-    mk_extra_btn(r2, "Fan uit", MOVE_FAN, 0, 0x2c3e50, 120);
+    mk_extra_btn(r2, T("move.fan_off"), MOVE_FAN, 0, 0x2c3e50, 120);
     mk_extra_btn(r2, "Fan 50%", MOVE_FAN, 50, 0x2c3e50, 120);
     mk_extra_btn(r2, "Fan 100%", MOVE_FAN, 100, 0x2c3e50, 130);
 
-    make_col_title(root, "Motoren & posities");
+    make_col_title(root, T("move.motors_pos"));
     lv_obj_t* r3 = mk_wrap_row(root);
-    mk_extra_btn(r3, "Motoren uit", MOVE_MOTORS_OFF, 0, 0xc0392b, 150);
-    mk_extra_btn(r3, "Naar midden", MOVE_CENTER, 0, 0x2c3e50, 150);
-    mk_extra_btn(r3, "Bed naar voren", MOVE_FRONT, 0, 0x2c3e50, 170);
-    mk_extra_btn(r3, "Z omhoog", MOVE_ZUP, 0, 0x2c3e50, 130);
+    mk_extra_btn(r3, T("move.motors_off"), MOVE_MOTORS_OFF, 0, 0xc0392b, 150);
+    mk_extra_btn(r3, T("move.center"), MOVE_CENTER, 0, 0x2c3e50, 150);
+    mk_extra_btn(r3, T("move.bed_front"), MOVE_FRONT, 0, 0x2c3e50, 170);
+    mk_extra_btn(r3, T("move.z_up"), MOVE_ZUP, 0, 0x2c3e50, 130);
     mk_extra_btn(r3, "Home X", MOVE_HOME_X, 0, 0x2c3e50, 100);
     mk_extra_btn(r3, "Home Y", MOVE_HOME_Y, 0, 0x2c3e50, 100);
     mk_extra_btn(r3, "Home Z", MOVE_HOME_Z, 0, 0x2c3e50, 100);
+
+    // Temperature only works when the printer is in LAN-only mode - 1.08+ ignores
+    // it from a third-party tool in cloud mode. Behind the LAN switch, so it isn't
+    // sitting there doing nothing for the common (cloud) case. The presets set both
+    // nozzle and bed; Nozzle/Bed off cool down.
+    if (g_lan_mode) {
+        make_col_title(root, T("move.temp_section"));
+        lv_obj_t* rt = mk_wrap_row(root);
+        mk_extra_btn(rt, "PLA",  MOVE_PLA,  0, 0xe67e22, 100);
+        mk_extra_btn(rt, "PETG", MOVE_PETG, 0, 0xe67e22, 100);
+        mk_extra_btn(rt, "ABS",  MOVE_ABS,  0, 0xe67e22, 100);
+        mk_extra_btn(rt, "TPU",  MOVE_TPU,  0, 0xe67e22, 100);
+        mk_extra_btn(rt, T("move.nozzle_off"), MOVE_COOL,     0, 0x2980b9, 130);
+        mk_extra_btn(rt, T("move.bed_off"),    MOVE_BED_COOL, 0, 0x2980b9, 110);
+    }
 
     lv_scr_load(g_extra_screen);
 }

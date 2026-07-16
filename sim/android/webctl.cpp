@@ -786,6 +786,9 @@ static void handle_conn(int fd) {
         char pth[200];
         parse_query(query, "path", pth, sizeof(pth));
         if (!pth[0]) { send_resp(fd, "400 Bad Request", "text/plain", "", 0); return; }
+        // Same gate as the tablet: 1.08+ only accepts a third-party print start in
+        // LAN-only mode. Off, the web says so rather than pretending it worked.
+        if (!g_lan_mode) { send_msg(fd, "200 OK", "files.print_blocked"); return; }
         q_push(Q_START, 0, 0, pth);
         send_msg(fd, "200 OK", "print_start_sent");
         return;

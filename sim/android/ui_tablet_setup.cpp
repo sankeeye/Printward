@@ -16,8 +16,24 @@ static lv_obj_t* g_ip_ta = nullptr;
 static lv_obj_t* g_serial_ta = nullptr;
 static lv_obj_t* g_code_ta = nullptr;
 static lv_obj_t* g_port_ta = nullptr;
+static lv_obj_t* g_lan_sw = nullptr;
+static lv_obj_t* g_lan_btn_label = nullptr;
+static bool      g_lan_pending = false;   // toggled in the UI, read on save
 static lv_obj_t* g_kb = nullptr;
 static lv_obj_t* g_status_label = nullptr;
+
+static void lan_update_label() {
+    if (!g_lan_btn_label) return;
+    char buf[48];
+    snprintf(buf, sizeof(buf), "%s: %s", T("set.lan_mode"), g_lan_pending ? T("on") : T("off"));
+    lv_label_set_text(g_lan_btn_label, buf);
+}
+
+static void lan_toggle_cb(lv_event_t* e) {
+    (void)e;
+    g_lan_pending = !g_lan_pending;
+    lan_update_label();
+}
 
 // See ui_wifi.cpp: save_settings() + bambu_mqtt_settings_changed() are slow
 // enough to tear a frame if run straight from the click callback, so queue it.
@@ -115,6 +131,26 @@ void create_tablet_setup_ui() {
     lv_textarea_set_accepted_chars(g_port_ta, "0123456789");
     lv_textarea_set_max_length(g_port_ta, 5);
 
+    // --- LAN mode toggle ---
+    // A button, not lv_switch: LV_USE_SWITCH/CHECKBOX are off in lv_conf.h, and the
+    // screensaver toggle already proves the flip-a-button pattern works here.
+    g_lan_pending = g_lan_mode;
+    g_lan_sw = lv_btn_create(root);
+    lv_obj_set_size(g_lan_sw, lv_pct(100), PT_SZ(40));
+    lv_obj_set_style_bg_color(g_lan_sw, lv_color_hex(0x555555), LV_PART_MAIN);
+    g_lan_btn_label = lv_label_create(g_lan_sw);
+    lan_update_label();
+    lv_obj_set_style_text_font(g_lan_btn_label, &lv_font_montserrat_14, 0);
+    lv_obj_center(g_lan_btn_label);
+    lv_obj_add_event_cb(g_lan_sw, lan_toggle_cb, LV_EVENT_CLICKED, NULL);
+
+    lv_obj_t* lan_hint = lv_label_create(root);
+    lv_label_set_text(lan_hint, T("set.lan_hint"));
+    lv_obj_set_style_text_font(lan_hint, &lv_font_montserrat_12, 0);
+    lv_obj_set_style_text_color(lan_hint, lv_color_hex(0x777777), 0);
+    lv_label_set_long_mode(lan_hint, LV_LABEL_LONG_WRAP);
+    lv_obj_set_width(lan_hint, lv_pct(100));
+
     // --- Save + status ---
     lv_obj_t* save_btn = lv_btn_create(root);
     lv_obj_set_size(save_btn, lv_pct(100), PT_SZ(44));
@@ -162,6 +198,9 @@ void tablet_setup_loop() {
     strncpy(g_printer_access_code, lv_textarea_get_text(g_code_ta), sizeof(g_printer_access_code) - 1);
     g_printer_access_code[sizeof(g_printer_access_code) - 1] = '\0';
     g_webui_port = port;
+    // LAN mode: no restart needed - the Move and Files screens read it when they're
+    // next opened, and the web /start reads it live.
+    g_lan_mode = g_lan_pending;
 
     save_settings();               // persist to /sdcard/filatrack.conf
     bambu_mqtt_settings_changed();  // rebuild topics + reconnect with new creds

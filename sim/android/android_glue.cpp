@@ -38,6 +38,7 @@ char g_lang[8] = "en";                  // UI language (lang= in the conf, see l
 char g_webui_pass[24] = "";             // web password; generated on first run, shown in Settings
 bool g_allow_remote = false;            // refuse anything off the local network unless set
 int  g_webui_port = 8080;               // web server port (webui_port= in the conf)
+bool g_lan_mode = false;                // printer in LAN-only mode: expose temp + print-start
 float g_tray_capacity_g[AMS_MAX_UNITS][AMS_MAX_TRAYS] = {{0}};
 float g_tray_used_g[AMS_MAX_UNITS][AMS_MAX_TRAYS] = {{0}};
 float g_ext_capacity_g = 0;
@@ -76,6 +77,7 @@ void save_settings() {
     fprintf(f, "webui_pass=%s\n", g_webui_pass);
     fprintf(f, "allow_remote=%d\n", g_allow_remote ? 1 : 0);
     fprintf(f, "webui_port=%d\n", g_webui_port);
+    fprintf(f, "lan_mode=%d\n", g_lan_mode ? 1 : 0);
     if (g_wifi_ssid[0]) fprintf(f, "wifi_ssid=%s\n", g_wifi_ssid);
     fclose(f);
     Serial.println("CONF: saved /sdcard/filatrack.conf");
@@ -121,6 +123,7 @@ void load_settings() {
             int p = atoi(val);
             if (p >= 1024 && p <= 65535) g_webui_port = p;   // ignore junk; keep the default
         }
+        else if (!strcmp(key, "lan_mode"))       g_lan_mode = (atoi(val) != 0);
     }
     fclose(f);
     // Never log the access code itself - only whether it was provided.
