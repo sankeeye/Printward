@@ -130,8 +130,13 @@ per print voorkomen dat de schatting wegdrijft.
   terug op de terminal (het dashboard-codeveld bestaat niet meer).
 - **Opgeruimd**: `g_cloud_*` globals + lege `save_cloud_settings()` weg (storage.h/android_glue/
   mocks), `bambu_pop_pending_finish`/`pending_finish` weg, stale comments kloppend.
-- **Niet getest**: de echte cloud-login + print-toewijzing (vraagt Arno's account + echte print).
-  Wel getest: endpoint-plumbing (401 zonder wachtwoord, `{"result":"ok"}` met), self-test 35/35.
+- **Bevestigd werkend (16-07)**: Arno draaide de relay, hij logde in bij Bambu Cloud, vond een
+  voltooide print en bereikte de tablet. Endpoint-plumbing + self-test 35/35 groen.
+- **Relay draait lokaal**: kan niet vanaf de netwerkschijf starten (Windows blokkeert .bat vanaf
+  een netwerkpad). Kopie op Arno's bureaublad: `C:\Users\w\Desktop\FilaTrack-relay\` (relay +
+  config). Pas ik de relay in de repo aan, dan moet die kopie ververst worden.
+- **Tablet-IP was gedrift** (.33 → .110 via DHCP). Config `device_ip` bijgewerkt. Aanbevolen:
+  DHCP-reservering op de router zodat het niet nog eens wegdrijft.
 - **Ontwerp i18n** (afgesproken 15-07): teksten krijgen een **sleutel** (`dash.printing`);
   **EN + NL zitten ingebouwd** zodat het out-of-the-box werkt zonder bestanden; daarnaast
   laadt de app **losse taalbestanden** `/sdcard/filatrack_lang_<code>.conf` (`sleutel=vertaling`,
