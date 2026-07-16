@@ -1,0 +1,36 @@
+# Builds the FilaTrack Scale firmware (ESP32-S3) in CI.
+#
+# First step toward a one-click install: prove the scale firmware builds on GitHub's
+# runners. Run it by hand from the Actions tab (Run workflow) and download the result
+# under "Artifacts". Once this is green we add the merge → release → web flasher on top.
+name: Build FilaTrack Scale firmware
+
+on:
+  workflow_dispatch:        # run manually from the Actions tab
+
+jobs:
+  scale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install PlatformIO
+        run: pip install --upgrade platformio
+
+      - name: Build scale firmware
+        run: pio run -d scale -e filatrack_scale
+
+      - name: Upload build output
+        uses: actions/upload-artifact@v4
+        with:
+          name: filatrack-scale-build
+          # Everything a flasher needs; we'll merge these into one image next.
+          path: |
+            scale/.pio/build/filatrack_scale/firmware.bin
+            scale/.pio/build/filatrack_scale/bootloader.bin
+            scale/.pio/build/filatrack_scale/partitions.bin
+            scale/.pio/build/filatrack_scale/flasher_args.json
