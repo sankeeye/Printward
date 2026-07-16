@@ -93,21 +93,20 @@ iemand die actief je netwerkverkeer afluistert.
 
 De login van Bambu Cloud zit achter Cloudflare‑botbescherming, dus draait er in plaats daarvan
 een klein Python‑hulpje op je pc: het logt in bij Bambu Cloud, volgt je printhistorie en meldt
-de grammen die elke voltooide print gebruikte aan de tablet, over je netwerk. Het houdt ook het
-cloud‑token van de tablet vers.
+de grammen die elke voltooide print gebruikte aan de tablet, over je netwerk.
 
 Instellen:
 
 1. `pip install requests`
 2. Kopieer `tools/config.example.json` naar `tools/config.json` en vul je gegevens in
-   (Bambu‑e‑mail, printer‑serienummer, het IP van de tablet). `config.json` en `relay_state.json`
+   (Bambu‑e‑mail, printer‑serienummer, het IP, de poort en het webwachtwoord van de tablet - Instellingen > Webwachtwoord). `config.json` en `relay_state.json`
    staan in git‑ignore — ze bevatten je inloggegevens/token en moeten lokaal blijven.
 3. Start het: `python tools/bambu_weight_relay.py` — laat het draaien tijdens het printen.
 
 Opmerkingen:
 
-- **Verificatiecode**: als Bambu om een 6‑cijferige e‑mailcode vraagt, toont de relay een veld in
-  het webdashboard van de tablet waar je hem intypt — zo kan de relay zonder scherm draaien.
+- **Verificatiecode**: ongeveer elke 90 dagen vraagt een nieuwe login om een 6‑cijferige code per
+  e‑mail; de relay vraagt die in zijn terminal, dus draai hem met een venster bij de eerste login.
 - **Windows‑gemak**: `encrypt_password.bat` bewaart je wachtwoord versleuteld (`bambu_password_enc`,
   via Windows DPAPI gekoppeld aan je account) in plaats van platte tekst; `start_relay_hidden.vbs`
   draait de relay zonder consolevenster. Deze zijn optioneel en alleen voor Windows — op Linux/macOS

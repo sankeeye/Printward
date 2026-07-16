@@ -182,6 +182,22 @@ if (-not $Pass) {
     } else {
         Write-Host "  SKIP  LAN-gate (lan_mode=$lan; /start-aan niet automatisch testen)" -ForegroundColor DarkGray
     }
+
+    # Cloud weight relay endpoints wired + gated. Reporting a weight with no
+    # pending finish attributes nothing (safe), so this just confirms the endpoint
+    # answers behind the password and cloud_status tells the relay "logged in".
+    try {
+        Invoke-WebRequest "$TabletUrl/api/report_weight?weight_g=1&task_key=ZZ" -UseBasicParsing -TimeoutSec 8 | Out-Null
+        Check "report_weight vereist wachtwoord" $false "-> kwam erin zonder!"
+    } catch { Check "report_weight vereist wachtwoord" ([int]$_.Exception.Response.StatusCode -eq 401) }
+    try {
+        $rw = (Hit '/api/report_weight?weight_g=1&task_key=ZZ_SELFTEST').Content
+        Check "report_weight antwoordt ok" ($rw -match 'ok') "-> '$rw'"
+    } catch { Check "report_weight antwoordt ok" $false $_.Exception.Message }
+    try {
+        $cs = (Hit '/api/cloud_status').Content
+        Check "cloud_status = logged_in" ($cs -match 'logged_in.*true') "-> '$cs'"
+    } catch { Check "cloud_status = logged_in" $false $_.Exception.Message }
 }
 
 # --- taal: elke taal moet compleet zijn -----------------------------------

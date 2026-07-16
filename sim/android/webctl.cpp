@@ -49,7 +49,8 @@ extern bool g_screensaver_3d;
 
 // --- thread-safe request queue (web thread -> main thread) ---------------
 enum QKind { Q_MOVE = 1, Q_CTL, Q_CFG, Q_START, Q_SPOOL_SAVE, Q_SPOOL_DEL, Q_SPOOL_LOAD,
-             Q_EMPTY_SAVE, Q_EMPTY_DEL, Q_SPOOL_BULK, Q_SPOOL_CLEAR, Q_HIST_BULK, Q_RESTORE };
+             Q_EMPTY_SAVE, Q_EMPTY_DEL, Q_SPOOL_BULK, Q_SPOOL_CLEAR, Q_HIST_BULK, Q_RESTORE,
+             Q_REPORT_WEIGHT };
 enum CtlCode { CTL_PAUSE = 1, CTL_RESUME, CTL_STOP, CTL_LIGHT, CTL_FAN, CTL_SPEED };
 
 struct QCmd {
@@ -456,6 +457,11 @@ void webctl_loop() {
                 remove("/sdcard/filatrack_restore.tmp");
                 break;
             }
+            case Q_REPORT_WEIGHT:
+                // Cloud relay reported a finished print's actual grams (in c.step).
+                // Correct the live estimate on the right slot (main thread here).
+                filament_reconcile_actual(c.step);
+                break;
         }
         // One spot, after every case, so q_wait() can see this item is really done.
         SDL_LockMutex(g_qmtx);
@@ -893,6 +899,35 @@ static void handle_conn(int fd) {
         char* js = (char*)malloc(24576);
         if (js) { build_history(js, 24576); send_resp(fd, "200 OK", "application/json; charset=utf-8", js, (int)strlen(js)); free(js); }
         else send_resp(fd, "500 Error", "text/plain", "", 0);
+        return;
+    }
+    // --- Bambu Cloud weight relay (tools/bambu_weight_relay.py) ----------------
+    // The relay runs on a PC, logs into Bambu Cloud (which the tablet can't - it's
+    // behind Cloudflare), and reports each finished print's real filament use here.
+    // That corrects the live estimate, which matters most for people without the
+    // scale, who can't re-weigh to fix the estimate's drift. Params are in the
+    // query string (the relay sends them that way); auth is the normal web password.
+    if (!strcmp(path, "/api/report_weight")) {
+        char w[24], key[80];
+        parse_query(query, "weight_g", w, sizeof(w));
+        parse_query(query, "task_key", key, sizeof(key));
+        float grams = w[0] ? (float)atof(w) : 0;
+        // Dedup: the relay reports each print once, but ignore a repeat of the last
+        // task_key in case a cycle overlaps. Newer keys sort greater (they're ISO
+        // timestamps), matching how the relay walks its list oldest-first.
+        static char last_key[80] = "";
+        if (grams > 0 && (!key[0] || strcmp(key, last_key) > 0)) {
+            if (key[0]) { strncpy(last_key, key, sizeof(last_key) - 1); last_key[sizeof(last_key) - 1] = 0; }
+            q_push(Q_REPORT_WEIGHT, 0, grams, nullptr);
+        }
+        send_resp(fd, "200 OK", "application/json; charset=utf-8", "{\"result\":\"ok\"}", 15);
+        return;
+    }
+    if (!strcmp(path, "/api/cloud_status")) {
+        // The tablet no longer polls Bambu Cloud itself (the relay does), so tell
+        // the relay we're "logged in" - that stops it trying to push a token here.
+        const char* b = "{\"logged_in\":true}";
+        send_resp(fd, "200 OK", "application/json; charset=utf-8", b, (int)strlen(b));
         return;
     }
     send_resp(fd, "404 Not Found", "text/plain", "", 0);

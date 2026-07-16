@@ -23,9 +23,10 @@ extern volatile int g_pending_action;
 // (0 = nothing pending). Separate from g_pending_action since it carries a value.
 extern volatile int g_pending_speed_level;
 
-// OTA (both web-dashboard upload and ArduinoOTA/network-IDE flashing) shows a
-// full-screen progress overlay; these flags let webserver.cpp/printer_app.cpp
-// request it without depending on LVGL directly.
+// Firmware-update progress overlay (from the old ESP32 OTA path). These flags let
+// a non-UI caller request the full-screen overlay without depending on LVGL. The
+// tablet build installs via APK, so nothing triggers this now - left in place as a
+// generic overlay hook rather than removed with the rest of the ESP32 firmware.
 extern volatile bool g_ota_screen_requested;
 extern volatile int g_ota_progress;
 

@@ -29,9 +29,6 @@ float g_tray_capacity_g[AMS_MAX_UNITS][AMS_MAX_TRAYS] = {{0}};
 float g_tray_used_g[AMS_MAX_UNITS][AMS_MAX_TRAYS] = {{0}};
 float g_ext_capacity_g = 0;
 float g_ext_used_g = 0;
-String g_cloud_email = "";
-String g_cloud_access_token = "";
-String g_cloud_last_task_key = "";
 
 // pt_display.h declares this extern; define it so anything that touches it links.
 volatile bool pt_display_suspended = false;
@@ -42,13 +39,11 @@ void load_settings() {}
 void save_settings() {}
 void save_tray_weight(int, int) {}
 void save_ext_weight() {}
-void save_cloud_settings() {}
 
 // --- MQTT (bambu_mqtt.h): commands just log; no real printer ---
 void bambu_mqtt_setup() {}
 void bambu_mqtt_loop() {}
 bool bambu_is_connected() { return true; }
-bool bambu_pop_pending_finish(unsigned long *, int *) { return false; }
 void bambu_cmd_pause() { Serial.println("[sim] cmd: pause"); }
 void bambu_cmd_resume() { Serial.println("[sim] cmd: resume"); }
 void bambu_cmd_stop() { Serial.println("[sim] cmd: STOP"); }

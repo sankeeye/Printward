@@ -43,9 +43,6 @@ float g_tray_capacity_g[AMS_MAX_UNITS][AMS_MAX_TRAYS] = {{0}};
 float g_tray_used_g[AMS_MAX_UNITS][AMS_MAX_TRAYS] = {{0}};
 float g_ext_capacity_g = 0;
 float g_ext_used_g = 0;
-String g_cloud_email = "";
-String g_cloud_access_token = "";
-String g_cloud_last_task_key = "";
 
 // pt_display.h declares this extern; define it so anything that touches it links.
 volatile bool pt_display_suspended = false;
@@ -54,7 +51,6 @@ volatile bool pt_display_suspended = false;
 void init_storage() {}
 void save_tray_weight(int, int) {}
 void save_ext_weight() {}
-void save_cloud_settings() {}
 
 // Writes the current settings back to /sdcard/filatrack.conf (the on-screen
 // Printer setup form saves through here). The access code lands in this file

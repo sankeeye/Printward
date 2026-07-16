@@ -15,19 +15,6 @@ static String g_request_topic;
 static unsigned long g_last_reconnect_attempt = 0;
 static bool g_topics_built = false;
 
-// Small ring buffer of "a print just finished, here's which tray was active"
-// events - see bambu_pop_pending_finish() / active_tray_now in bambu_mqtt.h.
-#define PENDING_FINISH_MAX 4
-struct PendingFinish { unsigned long finish_ms; int tray_now; bool used; };
-static PendingFinish g_pending_finishes[PENDING_FINISH_MAX];
-static int g_pending_finish_next = 0;
-static char g_prev_gcode_state[16] = "";
-
-static void push_pending_finish(int tray_now) {
-    g_pending_finishes[g_pending_finish_next] = { millis(), tray_now, false };
-    g_pending_finish_next = (g_pending_finish_next + 1) % PENDING_FINISH_MAX;
-}
-
 static void build_topics() {
     g_report_topic = String("device/") + g_printer_serial + "/report";
     g_request_topic = String("device/") + g_printer_serial + "/request";
@@ -70,17 +57,6 @@ static void handle_mqtt_message(char* topic, byte* payload, unsigned int length)
     if (!print["gcode_state"].isNull()) {
         strncpy(g_printer_status.gcode_state, print["gcode_state"] | "", 15);
         g_printer_status.gcode_state[15] = '\0';
-
-        // A print just finished if we're transitioning INTO FINISH from a
-        // state that means a job was actually running (guards against
-        // startup, where prev is "" and current might already be FINISH from
-        // a much older job with nothing new to attribute).
-        bool was_active = (strcmp(g_prev_gcode_state, "RUNNING") == 0 || strcmp(g_prev_gcode_state, "PAUSE") == 0);
-        if (was_active && strcmp(g_printer_status.gcode_state, "FINISH") == 0) {
-            push_pending_finish(g_printer_status.active_tray_now);
-        }
-        strncpy(g_prev_gcode_state, g_printer_status.gcode_state, 15);
-        g_prev_gcode_state[15] = '\0';
     }
     if (!print["subtask_name"].isNull()) {
         strncpy(g_printer_status.task_name, print["subtask_name"] | "", 63);
@@ -251,18 +227,6 @@ void bambu_mqtt_settings_changed() {
     g_topics_built = false;
     g_printer_status.mqtt_connected = false;
     g_last_reconnect_attempt = 0;
-}
-
-bool bambu_pop_pending_finish(unsigned long* finish_ms, int* tray_now) {
-    for (int i = 0; i < PENDING_FINISH_MAX; i++) {
-        if (!g_pending_finishes[i].used && g_pending_finishes[i].finish_ms != 0) {
-            g_pending_finishes[i].used = true;
-            *finish_ms = g_pending_finishes[i].finish_ms;
-            *tray_now = g_pending_finishes[i].tray_now;
-            return true;
-        }
-    }
-    return false;
 }
 
 void bambu_cmd_pause() {

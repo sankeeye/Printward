@@ -118,31 +118,73 @@ static char  g_cur_file[128] = "";
 static int   g_cur_slot = -1;
 static float g_base_used = 0;
 
+// Finished prints waiting for the cloud relay's actual weight, oldest-first. We
+// record the slot and the grams the estimate applied for that print (0 when the
+// file never parsed, so there was no estimate). filament_reconcile_actual() pops
+// these and corrects the estimate to the real figure.
+struct FinishedPrint { int slot; float estimated_g; };
+#define FINISHED_MAX 4
+static FinishedPrint g_finished[FINISHED_MAX];
+static int g_finished_head = 0, g_finished_count = 0;
+
+static void push_finished(int slot, float estimated_g) {
+    int i = (g_finished_head + g_finished_count) % FINISHED_MAX;
+    if (g_finished_count == FINISHED_MAX) {   // full: drop the oldest
+        g_finished_head = (g_finished_head + 1) % FINISHED_MAX;
+    } else {
+        g_finished_count++;
+    }
+    g_finished[i] = { slot, estimated_g };
+}
+
 void filament_track_loop() {
     PrinterStatus& s = g_printer_status;
     bool printing = (strcmp(s.gcode_state, "RUNNING") == 0 || strcmp(s.gcode_state, "PAUSE") == 0);
     int slot = s.active_tray_now;                 // 254 ext, else u*4+t, -1/255 none
     float total = gcode_view_ready() ? gcode_view_filament_g() : 0.0f;
 
-    bool valid = printing && s.gcode_file[0] && total > 0 && slot >= 0 && slot != 255 &&
-                 (slot == EXT_SLOT || (slot / AMS_MAX_TRAYS) < AMS_MAX_UNITS) &&
-                 cap_of(slot) > 0;   // only track slots that have been weighed
+    // Track any print on a slot that has a capacity (weighed or a typed roll
+    // weight) - even when the gcode total isn't known, so the relay can still
+    // attribute the finish. The estimate below only runs once the total is known.
+    bool tracking = printing && s.gcode_file[0] && slot >= 0 && slot != 255 &&
+                    (slot == EXT_SLOT || (slot / AMS_MAX_TRAYS) < AMS_MAX_UNITS) &&
+                    cap_of(slot) > 0;
 
-    if (valid) {
+    if (tracking) {
         if (strcmp(g_cur_file, s.gcode_file) != 0 || g_cur_slot != slot) {
             strncpy(g_cur_file, s.gcode_file, sizeof(g_cur_file) - 1);
             g_cur_file[sizeof(g_cur_file) - 1] = 0;
             g_cur_slot = slot;
             g_base_used = used_of(slot);          // consumption already committed before this print
         }
-        float pct = s.progress_pct; if (pct < 0) pct = 0; if (pct > 100) pct = 100;
-        set_used(slot, g_base_used + total * pct / 100.0f);
+        if (total > 0) {                          // only estimate once we know the total
+            float pct = s.progress_pct; if (pct < 0) pct = 0; if (pct > 100) pct = 100;
+            set_used(slot, g_base_used + total * pct / 100.0f);
+        }
     } else if (g_cur_slot >= 0 && !printing) {
-        // print ended (finished or cancelled) - persist the last estimate once
+        // print ended (finished or cancelled): hand the relay the estimate we
+        // applied (used - base, i.e. 0 if the total never parsed) so it can
+        // correct to the real weight, then persist.
+        push_finished(g_cur_slot, used_of(g_cur_slot) - g_base_used);
         filament_save();
         g_cur_slot = -1;
         g_cur_file[0] = 0;
     }
+}
+
+bool filament_reconcile_actual(float actual_g) {
+    if (actual_g <= 0 || g_finished_count == 0) return false;
+    FinishedPrint fp = g_finished[g_finished_head];
+    g_finished_head = (g_finished_head + 1) % FINISHED_MAX;
+    g_finished_count--;
+    // used already holds base + estimated; swap the estimate for the real figure.
+    float corrected = used_of(fp.slot) - fp.estimated_g + actual_g;
+    if (corrected < 0) corrected = 0;
+    set_used(fp.slot, corrected);
+    filament_save();
+    Serial.printf("CLOUD: reconciled slot %d - estimate %.1fg -> actual %.1fg\n",
+                  fp.slot, fp.estimated_g, actual_g);
+    return true;
 }
 
 // --- queries -------------------------------------------------------------

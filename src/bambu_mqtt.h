@@ -52,8 +52,8 @@ struct PrinterStatus {
 
     // Bambu's "tray_now": which tray is actively feeding the nozzle right
     // now. 255/-1 = none, 254 = external spool, otherwise (ams_id*4)+tray_id.
-    // Used to guess which spool a just-finished print consumed from - see
-    // bambu_cloud.h/.cpp, since the LAN status feed has no per-print weight.
+    // filament_track uses this to know which spool a running/finished print drew
+    // from, since the LAN status feed carries no per-print weight.
     int active_tray_now = -1;
 };
 
@@ -72,12 +72,6 @@ bool bambu_is_connected();
 // Call after the printer IP / serial / access code change at runtime: drops the
 // current session and reconnects promptly with the new settings.
 void bambu_mqtt_settings_changed();
-
-// Records {finish time, tray that was active} whenever a print job finishes
-// (gcode_state transitions away from RUNNING/PAUSE to FINISH), in a small
-// ring buffer. bambu_cloud.cpp drains this to attribute cloud-reported print
-// weight to the right tray - see the comment on active_tray_now above.
-bool bambu_pop_pending_finish(unsigned long* finish_ms, int* tray_now);
 
 // Commands (fire-and-forget, no acks are tracked - state changes are
 // observed asynchronously via the next status push instead).

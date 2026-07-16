@@ -37,4 +37,12 @@ bool  filament_any_low();             // any slot low
 // (not printing / no gcode filament total / active slot not weighed).
 float filament_shortfall();
 
+// The Bambu Cloud weight relay reports the ACTUAL grams a finished print used.
+// This corrects the live estimate for that print: it replaces the estimated total
+// we counted down during the print with the real figure (used += actual - estimated),
+// so the two never double-count. Matches finished prints oldest-first (the relay
+// reports them in that order). Returns true if a pending finish was reconciled.
+// Call on the main thread (it writes the weight globals).
+bool  filament_reconcile_actual(float actual_g);
+
 #endif

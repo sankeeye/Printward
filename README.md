@@ -89,21 +89,20 @@ sniffing your network.
 
 Bambu Cloud's login is behind Cloudflare bot‑protection, so a small Python helper runs on
 your PC instead: it logs in to Bambu Cloud, watches your print history, and reports the grams
-used by each finished print to the tablet over your LAN. It also keeps the tablet's own cloud
-token fresh.
+used by each finished print to the tablet over your LAN.
 
 Setup:
 
 1. `pip install requests`
 2. Copy `tools/config.example.json` to `tools/config.json` and fill in your details
-   (Bambu email, printer serial, the tablet's IP). `config.json` and `relay_state.json`
+   (Bambu email, printer serial, the tablet's IP, port and web password - Settings > Web password on the tablet). `config.json` and `relay_state.json`
    are git‑ignored — they hold your credentials/token and must stay local.
 3. Run it: `python tools/bambu_weight_relay.py` — leave it running while you print.
 
 Notes:
 
-- **Verification code**: when Bambu asks for a 6‑digit email code, the relay shows a field
-  in the tablet's web dashboard where you type it — so the relay can run headless.
+- **Verification code**: about every 90 days a fresh login may need a 6‑digit code emailed to
+  you; the relay asks for it in its terminal, so run it with a visible console for the first login.
 - **Windows convenience**: `encrypt_password.bat` stores your password encrypted
   (`bambu_password_enc`, via Windows DPAPI tied to your account) instead of plaintext;
   `start_relay_hidden.vbs` runs the relay with no console window. These are optional and

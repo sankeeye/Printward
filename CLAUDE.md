@@ -108,20 +108,30 @@
   gezien; Duits is langer, tablet is smal). En **beslissing nodig over de Bambu Cloud
   gewicht-relay** — zie hieronder.
 
-## Bambu Cloud gewicht-relay lijkt verweesd (ontdekt 16-07)
+## Bambu Cloud gewicht-relay hersteld (16-07)
 
-- `tools/bambu_weight_relay.py` POST naar `http://<tablet>/api/report_weight` en `/api/cloud_*`
-  (poort **80**). De huidige tabletserver `webctl.cpp` draait op **8080** en heeft die `/api/*`-
-  endpoints **niet** — die zaten op de verwijderde `webserver.cpp`. Nooit overgezet.
-- Gevolg: de relay kan de huidige build niet bereiken. Vermoedelijk **vervangen door de weegschaal**
-  (echte gewichten i.p.v. cloud-schatting) — past bij het "How it started"-verhaal.
-- Verweesde restanten in de tabletcode: `g_cloud_email/_access_token/_last_task_key` (alleen
-  gedefinieerd), `save_cloud_settings()` is leeg, `bambu_pop_pending_finish()` heeft geen aanroeper
-  meer. Stale comments in `bambu_mqtt.h`, `storage.h`, `ui_printer.h` verwijzen naar `bambu_cloud.cpp`
-  / `webserver.cpp` / `printer_app.cpp` (allemaal weg).
-- **README documenteert de relay nog als werkende functie** (Features + hele sectie). Beslissing aan
-  Arno: relay + cloud‑restanten helemaal weg (aanbevolen, weegschaal vervangt het), of endpoints
-  opnieuw overzetten naar webctl.cpp.
+Was verweesd (relay POSTte naar poort 80 + `/api/*`-endpoints die op de verwijderde
+`webserver.cpp` zaten). Arno wil hem houden — **juist waardevol voor gebruikers zónder weegschaal**:
+zonder schaal kun je niet herwegen om de live-schatting te corrigeren, dus de echte cloud-grammen
+per print voorkomen dat de schatting wegdrijft.
+
+- **Werking nu**: relay draait op de pc, logt in bij Bambu Cloud (tablet kan dat niet — Cloudflare),
+  en POST per voltooide print `/api/report_weight?weight_g=&task_key=` naar de tablet. De tablet
+  pollt de cloud **niet** zelf meer.
+- **Attributie** (`filament_reconcile_actual` in `filament_track.cpp`): de live-schatting liep al
+  tijdens de print (`used = base + bestand-grammen × voortgang`). De relay vervangt die schatting
+  door het echte cijfer: `used += (echt − geschat)` — **geen dubbeltelling**. Als het bestand niet
+  inlas is de schatting 0 en telt het volledige echte gewicht. Finish-queue in filament_track zelf
+  (het oude `bambu_pop_pending_finish` is verwijderd — verving het).
+- **Endpoints** (`webctl.cpp`, achter wachtwoord): `/api/report_weight` (dedup op task_key, zet in
+  de wachtrij) + `/api/cloud_status` → `{"logged_in":true}` (zodat de relay geen token pusht).
+- **Relay** (`tools/bambu_weight_relay.py`): nieuwe config-velden `device_port` (8080) en
+  `device_pass` (webwachtwoord, Basic auth). Params in de query i.p.v. form-body. 2FA-code valt
+  terug op de terminal (het dashboard-codeveld bestaat niet meer).
+- **Opgeruimd**: `g_cloud_*` globals + lege `save_cloud_settings()` weg (storage.h/android_glue/
+  mocks), `bambu_pop_pending_finish`/`pending_finish` weg, stale comments kloppend.
+- **Niet getest**: de echte cloud-login + print-toewijzing (vraagt Arno's account + echte print).
+  Wel getest: endpoint-plumbing (401 zonder wachtwoord, `{"result":"ok"}` met), self-test 35/35.
 - **Ontwerp i18n** (afgesproken 15-07): teksten krijgen een **sleutel** (`dash.printing`);
   **EN + NL zitten ingebouwd** zodat het out-of-the-box werkt zonder bestanden; daarnaast
   laadt de app **losse taalbestanden** `/sdcard/filatrack_lang_<code>.conf` (`sleutel=vertaling`,

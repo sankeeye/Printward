@@ -38,24 +38,21 @@ A legacy plaintext "bambu_password" still works but isn't recommended.
 Alternatively put a token into "custom_token" to skip the login entirely.
 Either way, don't share config.json or commit it anywhere.
 
-Keeping the device's own token fresh automatically
-----------------------------------------------------
-Since 2026-07-04 the FilaTrack can poll Bambu Cloud directly itself (it
-turns out only the device's own *login* is Cloudflare-blocked - a request
-using an already-issued token goes through fine). So this script's other
-job now is to notice whenever the device has lost its token (expired,
-rejected, or simply never set) and push the current one over, via
-POST /api/cloud_set_token - no manual copy-pasting into the dashboard.
-Bambu's tokens are valid for about 90 days and there is no working refresh
-endpoint (Bambu's own /user/refreshtoken always returns 401 as of writing),
-so getting a new one always means a full login - which, once every ~90
-days or so, may require you to type a 6-digit code emailed to you. That one
-step can't be automated away without giving this script access to your
-email inbox, which it deliberately does not do. When it does happen, this
-script asks for the code via the FilaTrack's web dashboard (open
-http://<device_ip>/ in a browser) rather than a terminal, so it still works
-when the relay runs hidden in the background. If the device is unreachable
-it falls back to prompting in the terminal.
+Login and the 6-digit code
+--------------------------
+The relay logs into Bambu Cloud on your PC (which the tablet can't - only the
+device's own *login* is Cloudflare-blocked) and reports finished-print weights
+to the tablet; the tablet doesn't poll Bambu Cloud itself. Bambu's tokens last
+about 90 days with no working refresh endpoint, so getting a new one means a full
+login, which every ~90 days may want a 6-digit code emailed to you. This script
+can't read your inbox, so it asks for that code in the terminal - run it with a
+visible console at least for the first login. (An older build showed the prompt in
+the tablet's web dashboard; the current one has no such field, so it falls back to
+the terminal.)
+
+The tablet's web server needs a port and password now (device_port / device_pass
+in config.json - see Settings > Web password on the tablet), and answers only on
+your local network.
 """
 
 import base64
@@ -172,7 +169,19 @@ def load_config():
               "bambu_password, or custom_token.")
         sys.exit(1)
     cfg.setdefault("poll_interval_sec", 120)
+    cfg.setdefault("device_port", 8080)   # the tablet's web server port (Settings > Printer setup)
+    # device_pass: the tablet's web password (Settings > Web password). Needed since
+    # the tablet's web server is password-protected; only reachable on the LAN.
     return cfg
+
+
+def device_url(cfg, path):
+    return f"http://{cfg['device_ip']}:{cfg.get('device_port', 8080)}{path}"
+
+
+def device_auth(cfg):
+    pw = cfg.get("device_pass") or ""
+    return ("filatrack", pw) if pw else None
 
 
 def load_state():
@@ -265,67 +274,74 @@ def get_recent_tasks(token, printer_serial, limit=5):
     return resp.json().get("hits", [])
 
 
-def report_weight_to_device(device_ip, weight_g, task_key):
-    url = f"http://{device_ip}/api/report_weight"
-    resp = requests.post(url, data={"weight_g": weight_g, "task_key": task_key}, timeout=10)
+def report_weight_to_device(cfg, weight_g, task_key):
+    # Query params, not a form body: the tablet's server reads the query string.
+    resp = requests.post(device_url(cfg, "/api/report_weight"),
+                         params={"weight_g": weight_g, "task_key": task_key},
+                         auth=device_auth(cfg), timeout=10)
     resp.raise_for_status()
     return resp.json()
 
 
-def get_device_cloud_status(device_ip):
-    resp = requests.get(f"http://{device_ip}/api/cloud_status", timeout=10)
+def get_device_cloud_status(cfg):
+    resp = requests.get(device_url(cfg, "/api/cloud_status"),
+                        auth=device_auth(cfg), timeout=10)
     resp.raise_for_status()
     return resp.json()
 
 
-def push_token_to_device(device_ip, token):
-    resp = requests.post(f"http://{device_ip}/api/cloud_set_token", data={"token": token}, timeout=10)
+def push_token_to_device(cfg, token):
+    resp = requests.post(device_url(cfg, "/api/cloud_set_token"),
+                         params={"token": token}, auth=device_auth(cfg), timeout=10)
     resp.raise_for_status()
     return resp.json()
 
 
-def device_request_verification_code(device_ip, email):
+def device_request_verification_code(cfg, email):
     """Tells the FilaTrack to show a 'enter your Bambu code' field in its web
     dashboard. Doesn't ask Bambu for anything - bambu_login() already triggered
-    the email; this just routes the prompt to a browser instead of a terminal."""
-    resp = requests.post(f"http://{device_ip}/api/cloud_need_code", data={"email": email}, timeout=10)
+    the email; this just routes the prompt to a browser instead of a terminal.
+    (The current tablet build has no dashboard code field, so this 404s and the
+    caller falls back to a terminal prompt.)"""
+    resp = requests.post(device_url(cfg, "/api/cloud_need_code"),
+                         params={"email": email}, auth=device_auth(cfg), timeout=10)
     resp.raise_for_status()
     return resp.json()
 
 
-def device_get_pending_code(device_ip):
-    resp = requests.get(f"http://{device_ip}/api/cloud_pending_code", timeout=10)
+def device_get_pending_code(cfg):
+    resp = requests.get(device_url(cfg, "/api/cloud_pending_code"),
+                        auth=device_auth(cfg), timeout=10)
     resp.raise_for_status()
     return resp.json()  # {"needed": bool, "code": str}
 
 
-def device_clear_code(device_ip):
+def device_clear_code(cfg):
     """Best-effort reset of the dashboard's code prompt after login finishes."""
     try:
-        requests.post(f"http://{device_ip}/api/cloud_code_done", timeout=10)
+        requests.post(device_url(cfg, "/api/cloud_code_done"),
+                      auth=device_auth(cfg), timeout=10)
     except requests.exceptions.RequestException:
         pass
 
 
-def make_code_prompt(device_ip):
-    """Returns a get_code(email) that collects the 6-digit Bambu code via the
-    FilaTrack's web dashboard, so it works even when this relay runs hidden
-    with no console. Falls back to a terminal prompt if the device can't be
-    reached (e.g. it's off, or you started start_relay.bat directly)."""
+def make_code_prompt(cfg):
+    """Returns a get_code(email) that collects the 6-digit Bambu code. The current
+    tablet build has no dashboard code field, so this falls back to a terminal
+    prompt - which is why running the relay with a visible console is recommended
+    for the first login."""
     def get_code(email):
         try:
-            device_request_verification_code(device_ip, email)
+            device_request_verification_code(cfg, email)
         except requests.exceptions.RequestException:
-            print(f"(Couldn't reach the FilaTrack at {device_ip} to ask for the code "
-                  f"there - falling back to this terminal.)")
             return input(f"Check {email} for a 6-digit code from Bambu and enter it here: ").strip()
 
         print(f"Bambu needs a verification code. Open the FilaTrack dashboard at "
-              f"http://{device_ip}/ and type the 6-digit code emailed to {email}.")
+              f"{device_url(cfg, '/')} and type the 6-digit code emailed to {email}.")
         deadline = time.time() + 15 * 60  # wait up to 15 min for it to be typed
         while time.time() < deadline:
             try:
-                pending = device_get_pending_code(device_ip)
+                pending = device_get_pending_code(cfg)
                 code = (pending.get("code") or "").strip()
                 if code:
                     return code
@@ -336,14 +352,12 @@ def make_code_prompt(device_ip):
     return get_code
 
 
-def ensure_device_has_token(device_ip, token):
-    """Checks whether the FilaTrack currently has a working Bambu Cloud
-    token and, if not, pushes the one this script is using. Cheap (one GET)
-    on the common case where the device is already fine; only writes to the
-    device's flash when it's actually needed, so this is safe to call every
-    cycle."""
+def ensure_device_has_token(cfg, token):
+    """Checks the tablet's cloud status. The current build reports logged_in:true
+    (it doesn't poll cloud itself - this relay does), so this returns early and the
+    token push below never runs. Kept for older builds that did poll directly."""
     try:
-        status = get_device_cloud_status(device_ip)
+        status = get_device_cloud_status(cfg)
     except requests.exceptions.RequestException as e:
         print(f"Couldn't check device's Bambu Cloud status: {e}")
         return
@@ -351,7 +365,7 @@ def ensure_device_has_token(device_ip, token):
         return
     print("Device has no active Bambu Cloud token - pushing the current one so it can poll directly...")
     try:
-        push_token_to_device(device_ip, token)
+        push_token_to_device(cfg, token)
         print("Token pushed to device.")
     except requests.exceptions.RequestException as e:
         print(f"Couldn't push token to device: {e}")
@@ -385,7 +399,7 @@ def main():
 
     # Collect any verification code Bambu asks for via the FilaTrack's web
     # dashboard instead of this terminal, so the relay works while hidden.
-    code_prompt = make_code_prompt(cfg["device_ip"])
+    code_prompt = make_code_prompt(cfg)
 
     def ensure_token():
         nonlocal token
@@ -396,7 +410,7 @@ def main():
             token = bambu_login(cfg["bambu_email"], resolve_password(cfg), code_prompt)
         finally:
             # Whatever happened, don't leave the dashboard showing a stale prompt.
-            device_clear_code(cfg["device_ip"])
+            device_clear_code(cfg)
         state["access_token"] = token
         save_state(state)
         print("Logged in.")
@@ -407,7 +421,7 @@ def main():
     while True:
         try:
             ensure_token()
-            ensure_device_has_token(cfg["device_ip"], token)
+            ensure_device_has_token(cfg, token)
             tasks = get_recent_tasks(token, cfg["printer_serial"])
 
             if tasks is None:
@@ -431,7 +445,7 @@ def main():
                 end_time = t.get("endTime")
                 name = t.get("title", "?")
                 print(f"Reporting finished print '{name}': {weight}g (endTime {end_time})")
-                report_weight_to_device(cfg["device_ip"], weight, end_time)
+                report_weight_to_device(cfg, weight, end_time)
                 state["last_task_key"] = end_time
                 save_state(state)
 

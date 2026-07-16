@@ -4,6 +4,8 @@
   "bambu_password": "your-bambu-account-password",
   "printer_serial": "YOUR_PRINTER_SERIAL",
   "device_ip": "192.168.1.123",
+  "device_port": 8080,
+  "device_pass": "the tablet's web password - see Settings > Web password on the tablet",
   "poll_interval_sec": 120,
   "custom_token": ""
 }
