@@ -1,5 +1,7 @@
 # Installing FilaTrack
 
+**English** · [Nederlands](INSTALL.nl.md) · [Deutsch](INSTALL.de.md)
+
 Two parts. You always need the **tablet app**; the **scale** only if you have the
 FilaTrack Scale hardware. No developer tools, no building.
 

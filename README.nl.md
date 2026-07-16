@@ -10,7 +10,7 @@ voegt echte spoelgewicht‑tracking toe. Zie [Hardware](#hardware).
 De interface is beschikbaar in **Engels, Nederlands en Duits**, direct wisselbaar, en er kunnen
 meer talen bij door simpelweg een bestand neer te zetten — zie [`lang/`](lang/).
 
-> **Installeren?** Zie **[INSTALL.md](INSTALL.md)** — de tablet-app is een APK die je downloadt en
+> **Installeren?** Zie **[INSTALL.nl.md](INSTALL.nl.md)** — de tablet-app is een APK die je downloadt en
 > aantikt, en de weegschaal flash je rechtstreeks vanuit je browser op
 > [de flasher-pagina](https://sankeeye.github.io/FilaTrack/scale/). Geen ontwikkeltools nodig.
 
