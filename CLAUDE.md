@@ -97,9 +97,11 @@
   lokaal netwerk + XSS-escaping · **webpoort instelbaar** (Instellingen > Printer instellen).
 - **Waar we gebleven zijn**: taal, beveiliging, instelbare poort én LAN-modus afgerond en op
   hardware bevestigd (temp + print-starten werken in LAN-only). Alles op branch
-  `feat/android-tablet-port`, self-test 32/32 groen. **Openstaand**: de losse tablet-schermen in
-  het Duits doorlopen (alleen gebouwd, niet op scherm gezien; Duits is langer, tablet is smal) en
-  eventueel een README voor buitenstaanders.
+  `feat/android-tablet-port`, self-test 32/32 groen. **README** is meertalig (EN/NL/DE:
+  README.md/.nl.md/.de.md) en gegeneraliseerd naar "Bambu Lab" i.p.v. P1S — met bewust één
+  eerlijke regel dat het op een P1S getest is (geen kale "werkt op alles"-claim). **Openstaand**:
+  de losse tablet-schermen in het Duits doorlopen (alleen gebouwd, niet op scherm gezien; Duits is
+  langer, tablet is smal); eventueel `android/README.md` + `CHANGELOG.md` ook generaliseren/vertalen.
 - **Ontwerp i18n** (afgesproken 15-07): teksten krijgen een **sleutel** (`dash.printing`);
   **EN + NL zitten ingebouwd** zodat het out-of-the-box werkt zonder bestanden; daarnaast
   laadt de app **losse taalbestanden** `/sdcard/filatrack_lang_<code>.conf` (`sleutel=vertaling`,
