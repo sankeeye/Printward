@@ -4,6 +4,7 @@
 // into per-layer segments. Blocking; run off the UI where a stall is fine.
 #include "gcode_view.h"
 #include "bambu_ftp.h"
+#include "bambu_mqtt.h"   // g_printer_status (printer's reported layer count)
 #include <Arduino.h>      // Serial (logcat)
 #include <zlib.h>
 #include <cstring>
@@ -23,6 +24,19 @@ static int g_max_layer = 0;
 static int16_t g_minx = 0, g_miny = 0, g_maxx = 0, g_maxy = 0, g_maxz = 0;
 static volatile bool g_ready = false;   // set last, read from the UI thread
 
+// ---- multi-plate selection --------------------------------------------------
+// A Bambu project .3mf can hold several plates (Metadata/plate_1..N.gcode/.png).
+// The printer prints one of them but does NOT report which over MQTT, so we pick
+// the plate whose "; total layer number" matches the layer count the printer IS
+// reporting (tie-break on the estimated print time). A manual override wins.
+static int g_plate_count    = 1;   // plates found in the current .3mf
+static int g_detected_plate = 1;   // auto-detected active plate (1-based)
+static int g_manual_plate   = 0;   // 0 = auto, else the user-forced plate
+static int g_loaded_plate   = 0;   // plate whose gcode is currently parsed (0 = none)
+static volatile bool g_detect_deferred = false;  // detected with no layer count yet
+
+static int effective_plate() { return g_manual_plate > 0 ? g_manual_plate : g_detected_plate; }
+
 static uint32_t rd32(const uint8_t* p) { return p[0] | (p[1] << 8) | (p[2] << 16) | ((uint32_t)p[3] << 24); }
 static uint16_t rd16(const uint8_t* p) { return (uint16_t)(p[0] | (p[1] << 8)); }
 
@@ -39,7 +53,133 @@ static bool zip_dl_cb(const uint8_t* d, unsigned int len, void*) {
     return true;
 }
 
-// Find Metadata/plate_1.gcode in the ZIP and inflate it. Returns a malloc'd,
+// Offset of the ZIP central directory, or -1. (Shared by unzip + plate detect.)
+static int32_t zip_cd_off() {
+    if (!g_zip || g_zip_len < 22) return -1;
+    int32_t lim = (int32_t)g_zip_len - 22;
+    for (int32_t i = lim; i >= 0 && i > lim - 65536; i--)
+        if (rd32(g_zip + i) == 0x06054b50) return (int32_t)rd32(g_zip + i + 16);
+    return -1;
+}
+
+// Locate a ZIP member by exact name. Fills the data offset + method + sizes.
+static bool zip_find(uint32_t cd_off, const char* name, uint32_t* dataoff,
+                     uint16_t* method, uint32_t* comp, uint32_t* uncomp) {
+    size_t nl = strlen(name);
+    uint32_t p = cd_off;
+    while (p + 46 <= g_zip_len && rd32(g_zip + p) == 0x02014b50) {
+        uint16_t m     = rd16(g_zip + p + 10);
+        uint32_t cs    = rd32(g_zip + p + 20), us = rd32(g_zip + p + 24);
+        uint16_t fnlen = rd16(g_zip + p + 28), exlen = rd16(g_zip + p + 30), cmlen = rd16(g_zip + p + 32);
+        uint32_t lho   = rd32(g_zip + p + 42);
+        const char* fn = (const char*)(g_zip + p + 46);
+        if (fnlen == nl && memcmp(fn, name, nl) == 0 && lho + 30 <= g_zip_len) {
+            uint16_t lfn = rd16(g_zip + lho + 26), lex = rd16(g_zip + lho + 28);
+            uint32_t data = lho + 30 + lfn + lex;
+            if ((uint64_t)data + cs <= g_zip_len) {
+                *dataoff = data; *method = m; *comp = cs; *uncomp = us; return true;
+            }
+        }
+        p += 46 + fnlen + exlen + cmlen;
+    }
+    return false;
+}
+
+// Inflate only the first buflen bytes of a member (enough for the gcode header).
+static uint32_t zip_read_head(uint32_t dataoff, uint16_t method, uint32_t comp,
+                              uint32_t uncomp, uint8_t* buf, uint32_t buflen) {
+    if (method == 0) {
+        uint32_t n = comp < buflen ? comp : buflen;
+        if (n > uncomp) n = uncomp;
+        memcpy(buf, g_zip + dataoff, n);
+        return n;
+    }
+    if (method == 8) {
+        z_stream zs; memset(&zs, 0, sizeof(zs));
+        if (inflateInit2(&zs, -15) != Z_OK) return 0;
+        zs.next_in = (Bytef*)(g_zip + dataoff); zs.avail_in = comp;
+        zs.next_out = (Bytef*)buf;              zs.avail_out = buflen;
+        inflate(&zs, Z_NO_FLUSH);   // stops when buf is full (Z_OK) or stream ends
+        uint32_t got = (uint32_t)zs.total_out;
+        inflateEnd(&zs);
+        return got;
+    }
+    return 0;
+}
+
+// Read "; total layer number: N" and "; total estimated time: 1h 54m 45s" from a
+// gcode header snippet. Sets *layers / *minutes to 0 when a field is absent.
+static void parse_plate_head(const char* h, uint32_t n, int* layers, int* minutes) {
+    *layers = 0; *minutes = 0;
+    const char* lk = "total layer number";
+    const char* p = (const char*)memmem(h, n, lk, strlen(lk));
+    if (p) { p += strlen(lk); const char* e = h + n;
+             while (p < e && (*p == ':' || *p == ' ' || *p == '\t')) p++;
+             *layers = atoi(p); }
+    const char* tk = "total estimated time";
+    const char* q = (const char*)memmem(h, n, tk, strlen(tk));
+    if (q) {
+        q += strlen(tk); const char* e = h + n; int hh = 0, mm = 0, ss = 0;
+        while (q < e && *q != '\n') {
+            if (*q >= '0' && *q <= '9') {
+                int v = atoi(q);
+                while (q < e && *q >= '0' && *q <= '9') q++;
+                if (q < e) { if (*q == 'h') hh = v; else if (*q == 'm') mm = v; else if (*q == 's') ss = v; }
+            } else q++;
+        }
+        *minutes = hh * 60 + mm + (ss >= 30 ? 1 : 0);
+    }
+}
+
+// Scan every Metadata/plate_K.gcode header; count the plates and pick the one
+// whose layer count matches target_layers (tie-break: estimated minutes nearest
+// target_min). Sets g_plate_count + g_detected_plate.
+static void detect_plates(int target_layers, int target_min) {
+    g_plate_count = 1; g_detected_plate = 1; g_detect_deferred = false;
+    int32_t cd = zip_cd_off();
+    if (cd < 0) return;
+
+    const int MAXP = 36;
+    int  lay[MAXP + 1]; int mn[MAXP + 1]; bool have[MAXP + 1];
+    for (int k = 0; k <= MAXP; k++) { lay[k] = 0; mn[k] = 0; have[k] = false; }
+
+    uint8_t* head = (uint8_t*)malloc(16384);
+    if (!head) return;
+    int count = 0;
+    for (int k = 1; k <= MAXP; k++) {
+        char name[40]; snprintf(name, sizeof(name), "Metadata/plate_%d.gcode", k);
+        uint32_t off, comp, uncomp; uint16_t method;
+        if (!zip_find((uint32_t)cd, name, &off, &method, &comp, &uncomp)) continue;
+        uint32_t got = zip_read_head(off, method, comp, uncomp, head, 16384);
+        if (got) parse_plate_head((const char*)head, got, &lay[k], &mn[k]);
+        have[k] = true; count = k;
+    }
+    free(head);
+    if (count < 1) count = 1;
+    g_plate_count = count;
+
+    if (target_layers <= 0) { g_detect_deferred = true; g_detected_plate = 1; return; }
+
+    int matches = 0, exact = 0, best = 0, bestdiff = 1 << 30;
+    for (int k = 1; k <= count; k++) {
+        if (!have[k] || lay[k] != target_layers) continue;
+        matches++; exact = k;
+        int d = target_min > 0 ? abs(mn[k] - target_min) : 0;
+        if (d < bestdiff) { bestdiff = d; best = k; }
+    }
+    if (matches == 1)      g_detected_plate = exact;
+    else if (matches > 1)  g_detected_plate = best;   // tie-break by estimated time
+    else {                                            // no exact layer match: closest
+        int cl = 0, cdif = 1 << 30;
+        for (int k = 1; k <= count; k++)
+            if (have[k] && lay[k] > 0) { int d = abs(lay[k] - target_layers); if (d < cdif) { cdif = d; cl = k; } }
+        g_detected_plate = cl > 0 ? cl : 1;
+    }
+    Serial.printf("GCODE: %d plate(s), printer layers=%d -> plate %d (manual=%d)\n",
+                  g_plate_count, target_layers, g_detected_plate, g_manual_plate);
+}
+
+// Find Metadata/plate_<N>.gcode in the ZIP and inflate it. Returns a malloc'd,
 // null-terminated buffer (+ length in *out_len), or nullptr.
 static char* unzip_gcode(uint32_t* out_len) {
     *out_len = 0;
@@ -53,7 +193,8 @@ static char* unzip_gcode(uint32_t* out_len) {
     if (eocd < 0) return nullptr;
     uint32_t cd_off = rd32(g_zip + eocd + 16);
 
-    const char* target = "Metadata/plate_1.gcode";
+    char target[40];
+    snprintf(target, sizeof(target), "Metadata/plate_%d.gcode", effective_plate());
     size_t tlen = strlen(target);
     uint32_t p = cd_off;
     while (p + 46 <= g_zip_len && rd32(g_zip + p) == 0x02014b50) {
@@ -272,14 +413,24 @@ void gcode_view_load(const char* gcode_file_name) {
     bool ok = bambu_ftp_download(path.c_str(), zip_dl_cb, nullptr, &total, &err);
     if (ok) {
         Serial.printf("GCODE: got %u bytes (.3mf)\n", (unsigned)g_zip_len);
+        // Pick which plate is printing (multi-plate projects) before extracting it.
+        int tl = g_printer_status.total_layers;
+        int tmin = 0;
+        if (g_printer_status.remaining_min > 0) {
+            int pct = g_printer_status.progress_pct;
+            tmin = (pct > 0 && pct < 95) ? g_printer_status.remaining_min * 100 / (100 - pct)
+                                         : g_printer_status.remaining_min;
+        }
+        detect_plates(tl, tmin);
         uint32_t glen = 0;
         char* gc = unzip_gcode(&glen);
         if (gc) {
             parse_gcode(gc, glen);
             free(gc);
             g_ready = (g_seg_count > 0);
+            if (g_ready) g_loaded_plate = effective_plate();
         } else {
-            Serial.println("GCODE: unzip failed (missing plate_1.gcode or out of memory)");
+            Serial.println("GCODE: unzip failed (missing plate gcode or out of memory)");
         }
     } else {
         Serial.printf("GCODE: download failed: %s\n", err.c_str());
@@ -299,4 +450,15 @@ float gcode_view_filament_g() { return g_filament_g; }
 int16_t gcode_view_max_z() { return g_maxz; }
 void gcode_view_bounds(int16_t* minx, int16_t* miny, int16_t* maxx, int16_t* maxy) {
     *minx = g_minx; *miny = g_miny; *maxx = g_maxx; *maxy = g_maxy;
+}
+
+int  gcode_view_active_plate()    { return effective_plate(); }
+int  gcode_view_plate_count()     { return g_plate_count; }
+int  gcode_view_manual_plate()    { return g_manual_plate; }
+int  gcode_view_loaded_plate()    { return g_loaded_plate; }
+bool gcode_view_detect_deferred() { return g_detect_deferred; }
+void gcode_view_set_manual_plate(int p) {
+    if (p < 0) p = 0;
+    if (g_plate_count > 0 && p > g_plate_count) p = g_plate_count;
+    g_manual_plate = p;
 }

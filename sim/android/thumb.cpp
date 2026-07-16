@@ -6,6 +6,7 @@
 #include <Arduino.h>
 #include <cstdlib>
 #include <cstring>
+#include <cstdio>
 #include <zlib.h>
 
 static uint32_t z_rd32(const uint8_t* p) { return p[0] | (p[1] << 8) | (p[2] << 16) | ((uint32_t)p[3] << 24); }
@@ -24,8 +25,9 @@ static bool thumb_dl_cb(const uint8_t* d, unsigned int n, void* ctx) {
     memcpy(b->p + b->len, d, n); b->len += n; return true;
 }
 
-uint8_t* threemf_thumb(const char* path, uint32_t* out_len) {
+uint8_t* threemf_thumb(const char* path, uint32_t* out_len, int plate) {
     *out_len = 0;
+    if (plate < 1) plate = 1;
     ThumbDl zip = {nullptr, 0, 0};
     uint32_t total = 0; String err;
     if (!bambu_ftp_download(path, thumb_dl_cb, &zip, &total, &err) || !zip.p || zip.len < 22) { free(zip.p); return nullptr; }
@@ -33,7 +35,8 @@ uint8_t* threemf_thumb(const char* path, uint32_t* out_len) {
     for (int32_t i = lim; i >= 0 && i > lim - 65536; i--) if (z_rd32(zip.p + i) == 0x06054b50) { eocd = i; break; }
     if (eocd < 0) { free(zip.p); return nullptr; }
     uint32_t cd = z_rd32(zip.p + eocd + 16);
-    const char* target = "Metadata/plate_1.png";
+    char target[40];
+    snprintf(target, sizeof(target), "Metadata/plate_%d.png", plate);
     size_t tlen = strlen(target);
     uint8_t* out = nullptr;
     uint32_t p = cd;

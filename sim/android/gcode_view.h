@@ -26,3 +26,14 @@ int gcode_view_max_layer();
 float gcode_view_filament_g();
 // Model XY bounds (0.1 mm units) for scaling to the canvas.
 void gcode_view_bounds(int16_t* minx, int16_t* miny, int16_t* maxx, int16_t* maxy);
+
+// --- multi-plate projects ----------------------------------------------------
+// A Bambu project .3mf may hold several plates; the printer prints one but does
+// not report which. gcode_view picks the plate whose layer count matches the
+// printer's, unless the user forces one. All are 1-based.
+int  gcode_view_active_plate();     // effective plate (manual override, else auto)
+int  gcode_view_plate_count();      // plates in the current .3mf (>= 1)
+int  gcode_view_manual_plate();     // 0 = auto, else the forced plate
+int  gcode_view_loaded_plate();     // plate whose gcode is parsed now (0 = none)
+bool gcode_view_detect_deferred();  // true if auto-detect ran before layers known
+void gcode_view_set_manual_plate(int plate);  // 0 = auto

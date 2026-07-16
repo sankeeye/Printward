@@ -52,6 +52,8 @@ static const Builtin BUILTIN[] = {
     {"dash.left",           "left",                   "resterend"},
     {"dash.eta",            "done at",                "klaar om"},
     {"dash.this_print",     "this print",             "deze print"},
+    {"dash.plate",          "Plate",                  "Plaat"},
+    {"dash.plate_auto",     "Auto",                   "Automatisch"},
     {"dash.controls",       "Controls",               "Bediening"},
     {"dash.pause",          "Pause",                  "Pauze"},
     {"dash.resume",         "Resume",                 "Hervat"},

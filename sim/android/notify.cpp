@@ -63,12 +63,13 @@ void notify_send(const char* title, const char* msg) {
 // to a plain text push when there's no thumbnail. Runs on its own thread since
 // the .3mf download can take a while.
 #include "thumb.h"
-struct NThumb { char title[48]; char body[176]; char path[160]; };
+#include "gcode_view.h"   // active plate of a multi-plate print
+struct NThumb { char title[48]; char body[176]; char path[160]; int plate; };
 
 static int nthumb_thread(void* data) {
     NThumb* m = (NThumb*)data;
     uint32_t plen = 0;
-    uint8_t* png = m->path[0] ? threemf_thumb(m->path, &plen) : nullptr;
+    uint8_t* png = m->path[0] ? threemf_thumb(m->path, &plen, m->plate) : nullptr;
     if (g_ntfy_topic[0]) {
         WiFiClientSecure c;
         c.setInsecure();
@@ -115,6 +116,7 @@ static void notify_send_thumb(const char* title, const char* msg, const char* pa
     strncpy(m->title, title, sizeof(m->title) - 1); m->title[sizeof(m->title) - 1] = 0;
     strncpy(m->body, msg, sizeof(m->body) - 1);     m->body[sizeof(m->body) - 1] = 0;
     strncpy(m->path, path ? path : "", sizeof(m->path) - 1); m->path[sizeof(m->path) - 1] = 0;
+    m->plate = gcode_view_active_plate();   // the plate this print used
     SDL_Thread* th = SDL_CreateThread(nthumb_thread, "ntfyimg", m);
     if (th) SDL_DetachThread(th); else free(m);
 }

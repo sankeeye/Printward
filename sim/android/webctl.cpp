@@ -20,6 +20,7 @@
 #include "history.h"          // recent-print log + total cost
 #include "ui_screensaver.h"   // g_screensaver_3d, screensaver_view_changed()
 #include "thumb.h"            // .3mf model-preview extraction (Files/Historie)
+#include "gcode_view.h"       // active plate of a multi-plate print
 #include "backup.h"           // download / restore all tablet data
 #include "lang.h"             // UI translations, served to the web page via /lang
 #include "bambu_mqtt.h"
@@ -490,6 +491,8 @@ static void build_status(char* o, int n) {
         s.light_on ? "true" : "false", s.fan_speed_pct, s.speed_level, s.active_tray_now,
         filament_shortfall(), g_stat_prints, g_stat_grams, g_hist_total_cost,
         live ? lg : -1.0f, live ? lc : 0.0f, gf);
+    p += snprintf(o + p, n - p, "\"plate\":%d,\"plates\":%d,\"mplate\":%d,",
+        gcode_view_active_plate(), gcode_view_plate_count(), gcode_view_manual_plate());
     p += snprintf(o + p, n - p,
         "\"bkage\":%ld,",
         backup_seconds_since_dl());
@@ -745,12 +748,21 @@ static void handle_conn(int fd) {
         return;
     }
     if (!strcmp(path, "/thumb")) {           // .3mf model preview (embedded PNG)
-        char pth[220];
+        char pth[220], plbuf[8];
         parse_query(query, "path", pth, sizeof(pth));
+        parse_query(query, "plate", plbuf, sizeof(plbuf));
+        int plate = plbuf[0] ? atoi(plbuf) : 1;
         uint32_t len = 0;
-        uint8_t* png = pth[0] ? threemf_thumb(pth, &len) : nullptr;
+        uint8_t* png = pth[0] ? threemf_thumb(pth, &len, plate) : nullptr;
         if (png && len) { send_resp(fd, "200 OK", "image/png", (const char*)png, (int)len); free(png); }
         else { if (png) free(png); send_resp(fd, "404 Not Found", "text/plain", "", 0); }
+        return;
+    }
+    if (!strcmp(path, "/setplate")) {        // multi-plate: force a plate (0 = auto)
+        char plbuf[8];
+        parse_query(query, "p", plbuf, sizeof(plbuf));
+        gcode_view_set_manual_plate(plbuf[0] ? atoi(plbuf) : 0);
+        send_msg(fd, "200 OK", "ok");
         return;
     }
     if (!strcmp(path, "/hist_bulk")) {       // archive/restore/delete history entries

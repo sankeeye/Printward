@@ -86,11 +86,18 @@ static void gcode_maybe_load() {
     if (rep[0]) { strncpy(last_seen, rep, sizeof(last_seen) - 1); last_seen[sizeof(last_seen) - 1] = '\0'; }
     if (!last_seen[0]) return;
 
-    if (strcmp(last_seen, cur) != 0) {           // a new print file -> (re)load it
+    // Reload not just on a new file, but when the active plate changes: the user
+    // forced a different plate, or auto-detect first ran before the printer had
+    // reported its layer count and can now pick the right plate.
+    bool plate_changed = gcode_view_ready() &&
+        (gcode_view_active_plate() != gcode_view_loaded_plate() ||
+         (gcode_view_detect_deferred() && g_printer_status.total_layers > 0));
+    if (strcmp(last_seen, cur) != 0 || plate_changed) {   // new file or plate switch
         strncpy(cur, last_seen, sizeof(cur) - 1); cur[sizeof(cur) - 1] = '\0';
         last_try = 0;                            // attempt immediately
+        if (plate_changed) g_gcode_done[0] = '\0';   // force past the "already loaded" guard
     }
-    if (strcmp(g_gcode_done, cur) == 0) return;  // already loaded this file
+    if (strcmp(g_gcode_done, cur) == 0) return;  // already loaded this file + plate
     if (g_gcode_loading) return;                 // a load is already running
 
     uint32_t now = SDL_GetTicks();
