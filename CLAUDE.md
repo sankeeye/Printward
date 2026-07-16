@@ -95,11 +95,12 @@
   `tools/i18n_audit.py` + `tools/check_formats.py` · race in `/setcfg` weg (taal wisselt in
   één klik) · **beveiliging**: webwachtwoord (zelf gegenereerd, in Instellingen) + alleen
   lokaal netwerk + XSS-escaping · **webpoort instelbaar** (Instellingen > Printer instellen).
-- **Waar we gebleven zijn**: taal, beveiliging, instelbare poort én LAN-modus afgerond en op
-  hardware bevestigd (temp + print-starten werken in LAN-only). Alles op branch
-  `feat/android-tablet-port`, self-test 32/32 groen. **README** is meertalig (EN/NL/DE:
-  README.md/.nl.md/.de.md) en gegeneraliseerd naar "Bambu Lab" i.p.v. P1S — met bewust één
-  eerlijke regel dat het op een P1S getest is (geen kale "werkt op alles"-claim).
+- **Waar we gebleven zijn**: taal, beveiliging, instelbare poort, LAN-modus én de cloud-relay
+  afgerond en op hardware bevestigd. **Alles staat nu op `main`** (de sessie-branch
+  `feat/android-tablet-port` is samengevoegd en verwijderd; volgende klus = verse branch vanaf
+  main). Self-test **35/35** groen. **README** is meertalig (EN/NL/DE) en gegeneraliseerd naar
+  "Bambu Lab" i.p.v. P1S — met bewust één eerlijke regel dat het op een P1S getest is.
+  Dode OTA-update-code (ESP32-erfenis) verwijderd.
 - **Opruimronde 16-07**: verwijderd wat over het weggehaalde ESP32-paneel ging — `docs/` helemaal
   (PINOUT, paneel-datasheet-pdf, pandatouch.png, gedateerde PROGRESS-snapshot), de stale
   `CHANGELOG.md` (beschreef alleen de verwijderde firmware), en het gegenereerde
@@ -252,6 +253,7 @@ X:\projects\panda\FilaTrack\tools\selftest.ps1    # 28 checks tegen de echte tab
 
 ## Repo
 
-- Eén repo: **github.com/sankeeye/FilaTrack** (remote `origin`). `main` == de feature-branch.
+- Eén repo: **github.com/sankeeye/FilaTrack** (remote `origin`). Al het werk staat op `main`
+  (GitHub's standaard-branch). Nieuwe klus? Verse branch vanaf main, daarna samenvoegen.
 - Alles is eigen werk; er zit geen code van derden meer in (gemeten: 19 gedeelde regels,
   allemaal kale declaraties). Zie "How it started" in de README.
