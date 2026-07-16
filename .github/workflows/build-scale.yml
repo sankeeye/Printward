@@ -19,7 +19,8 @@ jobs:
           python-version: '3.12'
 
       - name: Install PlatformIO + esptool
-        run: pip install --upgrade platformio esptool
+        # esptool <5: v5 renamed the merge_bin CLI, which ci_merge_scale.py uses.
+        run: pip install --upgrade platformio "esptool<5"
 
       - name: Build scale firmware
         run: pio run -d scale -e filatrack_scale
