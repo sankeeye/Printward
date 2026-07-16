@@ -397,8 +397,7 @@ def main():
 
     token = cfg.get("custom_token") or state.get("access_token") or ""
 
-    # Collect any verification code Bambu asks for via the FilaTrack's web
-    # dashboard instead of this terminal, so the relay works while hidden.
+    # Collect any 6-digit code Bambu asks for (falls back to a terminal prompt).
     code_prompt = make_code_prompt(cfg)
 
     def ensure_token():
@@ -415,8 +414,8 @@ def main():
         save_state(state)
         print("Logged in.")
 
-    print(f"Bambu weight relay starting. Keeping the FilaTrack at {cfg['device_ip']}'s Bambu Cloud "
-          f"token fresh and reporting any prints it missed, every {cfg['poll_interval_sec']}s. Ctrl+C to stop.")
+    print(f"Bambu weight relay starting. Reporting finished-print weights to the FilaTrack at "
+          f"{device_url(cfg, '')}, every {cfg['poll_interval_sec']}s. Ctrl+C to stop.")
 
     while True:
         try:
