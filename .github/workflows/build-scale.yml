@@ -18,19 +18,17 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install PlatformIO
-        run: pip install --upgrade platformio
+      - name: Install PlatformIO + esptool
+        run: pip install --upgrade platformio esptool
 
       - name: Build scale firmware
         run: pio run -d scale -e filatrack_scale
 
-      - name: Upload build output
+      - name: Merge into one flash image
+        run: python tools/ci_merge_scale.py scale/.pio/build/filatrack_scale filatrack-scale.bin
+
+      - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
-          name: filatrack-scale-build
-          # Everything a flasher needs; we'll merge these into one image next.
-          path: |
-            scale/.pio/build/filatrack_scale/firmware.bin
-            scale/.pio/build/filatrack_scale/bootloader.bin
-            scale/.pio/build/filatrack_scale/partitions.bin
-            scale/.pio/build/filatrack_scale/flasher_args.json
+          name: filatrack-scale-firmware
+          path: filatrack-scale.bin
