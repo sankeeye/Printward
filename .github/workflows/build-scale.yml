@@ -18,18 +18,17 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install PlatformIO + esptool
-        # esptool <5: v5 renamed the merge_bin CLI, which ci_merge_scale.py uses.
-        run: pip install --upgrade platformio "esptool<5"
+      - name: Install PlatformIO
+        run: pip install --upgrade platformio
 
       - name: Build scale firmware
         run: pio run -d scale -e filatrack_scale
 
-      - name: Merge into one flash image
-        run: python tools/ci_merge_scale.py scale/.pio/build/filatrack_scale filatrack-scale.bin
+      - name: Stage firmware for ESP Web Tools
+        run: python tools/ci_stage_scale.py scale/.pio/build/filatrack_scale dist/scale
 
       - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
           name: filatrack-scale-firmware
-          path: filatrack-scale.bin
+          path: dist/scale
