@@ -105,9 +105,9 @@
   (PINOUT, paneel-datasheet-pdf, pandatouch.png, gedateerde PROGRESS-snapshot), de stale
   `CHANGELOG.md` (beschreef alleen de verwijderde firmware), en het gegenereerde
   `tablet_inventory.txt`. `android/README.md` ontdaan van "ESP32-firmware"-framing.
-- **Nog te doen**: de losse tablet-schermen in het Duits doorlopen (alleen gebouwd, niet op scherm
-  gezien; Duits is langer, tablet is smal). En **beslissing nodig over de Bambu Cloud
-  gewicht-relay** — zie hieronder.
+- **Duitse tablet-schermen**: door Arno nagelopen en akkoord (16-07) — geen tekst die uit z'n
+  vakje loopt. Relay-beslissing is gemaakt en uitgevoerd (zie hieronder). Aan Arno's kant rest:
+  tablet een vast IP geven (DHCP-reservering) zodat de relay niet vastloopt bij een IP-wissel.
 
 ## Bambu Cloud gewicht-relay hersteld (16-07)
 
