@@ -11,6 +11,10 @@ Die Oberfläche gibt es in **Englisch, Niederländisch und Deutsch**, im laufend
 umschaltbar, und weitere Sprachen lassen sich durch das Ablegen einer Datei hinzufügen — siehe
 [`lang/`](lang/).
 
+> **Installieren?** Siehe **[INSTALL.md](INSTALL.md)** — die Tablet-App ist ein APK zum
+> Herunterladen und Antippen, und die Waage flasht du direkt im Browser auf
+> [der Flasher-Seite](https://sankeeye.github.io/FilaTrack/scale/). Keine Entwickler-Tools nötig.
+
 ## Funktionen
 
 - **Live‑Druckerstatus & ‑steuerung** über das **lokale MQTT** des Druckers (der Broker im Drucker

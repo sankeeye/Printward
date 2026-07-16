@@ -10,6 +10,10 @@ spool‑weight tracking. See [Hardware](#hardware).
 The interface is available in **English, Dutch and German**, switchable on the fly, and more
 languages can be added by dropping in a file — see [`lang/`](lang/).
 
+> **Installing?** See **[INSTALL.md](INSTALL.md)** — the tablet app is a download‑and‑tap APK,
+> and the scale flashes straight from your browser at
+> [the flasher page](https://sankeeye.github.io/FilaTrack/scale/). No developer tools needed.
+
 ## Features
 
 - **Live printer status & control** over the printer's **local MQTT** feed (the broker
