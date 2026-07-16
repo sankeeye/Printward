@@ -63,19 +63,22 @@
 
 ## Voortgang / Laatste Stand
 
-- **Datum laatste sessie**: 15-07-2026
+- **Datum laatste sessie**: 16-07-2026
 - **Wat is af**: back-up/herstel + herinnering + SD-kopie · live printkosten · ntfy
   (print klaar mét modelfoto, mislukt, tekort, rol bijna op) · per-materiaal statistiek ·
   filament-balkjes · verbindingsbol · ETA + laagteller · actief slot · klok ·
   waarschuwingspill · uitgebreide historie (zoeken/filteren/sorteren/CSV) ·
   voorraadoverzicht + restlengte · diagnose-scherm · self-test · **hernoemd naar FilaTrack**
   (incl. datamigratie) · package `nl.filatrack.app` · ESP32-firmware verwijderd (2097 regels) ·
-  **web volledig meertalig** (EN/NL/DE, incl. serverantwoorden) + `tools/i18n_audit.py` ·
-  race in `/setcfg` weg (taal wisselt in één klik).
-- **Waar we gebleven zijn**: **web én tablet zijn vertaald** (EN/NL/DE compleet, 350 sleutels).
-  De taal wisselt live, zonder herstart, op beide. Eén taalbestand bedient allebei.
-  Nog te doen: door Arno laten nakijken op de tablet, en de losse schermen (Files, Move,
-  Spools, Scale, Settings) in het Duits doorlopen — die heb ik alleen gebouwd, niet gezien.
+  **web + tablet volledig meertalig** (EN/NL/DE, incl. serverantwoorden, eigen Latin-1-font) +
+  `tools/i18n_audit.py` + `tools/check_formats.py` · race in `/setcfg` weg (taal wisselt in
+  één klik) · **beveiliging**: webwachtwoord (zelf gegenereerd, in Instellingen) + alleen
+  lokaal netwerk + XSS-escaping · **webpoort instelbaar** (Instellingen > Printer instellen).
+- **Waar we gebleven zijn**: taal én beveiliging afgerond en door Arno afgetekend
+  ("ik vind het goed zo"). Alles op branch `feat/android-tablet-port`, self-test 31/31 groen.
+  Nog te doen: de losse tablet-schermen (Files, Move, Spools, Scale, Settings) in het Duits
+  doorlopen — die heb ik alleen gebouwd, niet op het scherm gezien; Duits is langer dan
+  Nederlands en de tablet is smal, dus daar kan tekst uit z'n vakje lopen.
 - **Ontwerp i18n** (afgesproken 15-07): teksten krijgen een **sleutel** (`dash.printing`);
   **EN + NL zitten ingebouwd** zodat het out-of-the-box werkt zonder bestanden; daarnaast
   laadt de app **losse taalbestanden** `/sdcard/filatrack_lang_<code>.conf` (`sleutel=vertaling`,
