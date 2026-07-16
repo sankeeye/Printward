@@ -108,7 +108,28 @@
 
 ## Voortgang / Laatste Stand
 
-- **Datum laatste sessie**: 16-07-2026
+- **Datum laatste sessie**: 16-07-2026 (2e sessie, avond)
+- **Vervolgsessie 16-07 (alles op hardware bevestigd, op `main`, release Printward v1.0 bijgewerkt)**:
+  - **arm64-v8a** toegevoegd → universele APK; installeert nu ook op nieuwere/64-bits toestellen
+    (was 32-bit-only, vandaar de melding "voor een oudere versie").
+  - **Multi-plaat bug gefixt**: pakte altijd `plate_1`. Nu auto-detectie van de printende plaat door
+    het lagenaantal van de printer te matchen met `; total layer number` per plaat (`gcode_view.cpp`),
+    handmatige "Plaat"-keuze op de webpagina als vangnet. Fixte ook de lege tablet-render + de
+    filament-schatting. Live bevestigd (koos plaat 2, filament 56,7 g).
+  - **Rebrand FilaTrack → Printward volledig doorgevoerd** (de naam FilaTrack was al bezet — zie
+    filatrack.app): app/pakket `nl.printward.app`/config (met migratie: 9 databestanden verplaatst),
+    GitHub-repo hernoemd, release "Printward v1.0", Pages-flasher, web-login-gebruiker `printward`.
+    Oude app van de tablet verwijderd; back-up oude config in `Downloads\printward_tablet_backup`.
+  - **`Co-Authored-By: Claude`-trailer** uit alle commits verwijderd (history 2× herschreven, ook de
+    oude PandaTouch/StreamDeck-namen uit commitberichten) en voortaan weglaten.
+  - **Rolnummers (#N)**: auto-toegekend (laag = ouder = FIFO), zelf aanpasbaar, getoond in web- en
+    tablet-picker/lijst, "op nummer (oudste eerst)"-sortering, én **nummer intypen in de rolkiezer**
+    om direct te pakken. Nieuw veld in `printward_spools.conf` (voorwaarts-compatibel).
+  - **Snelfilters** in de rollenlijst: materiaal-knoppen (Alle/PLA/PETG/…) i.p.v. dropdown + "in AMS"-vinkje.
+  - **Open / volgende keer**: tablet een vast IP geven (DHCP-reservering) — Arno's kant. Optioneel:
+    schone APK-herbouw (debug-symbolen drukken de grootte), plaatkeuze-knop óók op het tabletscherm,
+    "niet in AMS"-filter. Let op: `adb pull/install` met `/sdcard/...` via **PowerShell** doen — Git Bash
+    verhaspelt het pad. JAVA_HOME = `Android Studio1\jbr` (JDK 21).
 - **Wat is af**: back-up/herstel + herinnering + SD-kopie · live printkosten · ntfy
   (print klaar mét modelfoto, mislukt, tekort, rol bijna op) · per-materiaal statistiek ·
   filament-balkjes · verbindingsbol · ETA + laagteller · actief slot · klok ·
