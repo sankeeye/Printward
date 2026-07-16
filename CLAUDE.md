@@ -86,6 +86,11 @@
 
 - **Repo is nu PUBLIEK** (was privé; nodig voor gratis GitHub Pages). Historie vooraf gescand:
   geen geheimen, alleen placeholders. Geheim-dragende bestanden zijn nooit gecommit.
+- **Licentie: AGPL-3.0** (was MIT). Copyleft: verspreiden of als netwerkdienst draaien = broncode
+  onder dezelfde licentie delen, dus niemand kan het dichttimmeren + als betaalproduct verkopen.
+  `LICENSE` = letterlijke AGPL-tekst; README's (3 talen) bijgewerkt + een naam-regel ("FilaTrack"
+  en huisstijl vallen buiten de AGPL, tegen imitatie). Copyright op `sankeeye`. Geldt vooruit —
+  oude MIT-commits blijven onder MIT beschikbaar.
 - **Weegschaal — browser-flasher, volautomatisch**: workflow `.github/workflows/build-scale.yml`
   bouwt de firmware (PlatformIO), staget de flash-delen + manifest (`tools/ci_stage_scale.py`, ESP
   Web Tools "parts"-model — geen merge, geen flash-size gok), en deployt de flasher-pagina
