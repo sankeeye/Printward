@@ -26,7 +26,10 @@ android {
         externalNativeBuild {
             ndkBuild {
                 arguments "APP_PLATFORM=android-19"
-                abiFilters 'armeabi-v7a'
+                // armeabi-v7a for the old 32-bit tablet (SM-T280); arm64-v8a so the
+                // APK also installs on modern 64-bit devices. ndk-build clamps arm64
+                // to its minimum platform (android-21) automatically.
+                abiFilters 'armeabi-v7a', 'arm64-v8a'
             }
             // cmake {
             //     arguments "-DANDROID_APP_PLATFORM=android-19", "-DANDROID_STL=c++_static"
