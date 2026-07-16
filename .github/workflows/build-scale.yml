@@ -1,16 +1,27 @@
-# Builds the FilaTrack Scale firmware (ESP32-S3) in CI.
+# Builds the FilaTrack Scale firmware (ESP32-S3) and publishes a browser flasher.
 #
-# First step toward a one-click install: prove the scale firmware builds on GitHub's
-# runners. Run it by hand from the Actions tab (Run workflow) and download the result
-# under "Artifacts". Once this is green we add the merge → release → web flasher on top.
+# Run it by hand from the Actions tab (Run workflow). It builds the firmware, stages
+# the flash parts + a manifest, drops in the flasher page, and deploys it to GitHub
+# Pages, so anyone can flash the scale from Chrome/Edge at:
+#   https://<you>.github.io/FilaTrack/scale/
+#
+# One-time: enable Pages under Settings > Pages > Source: "GitHub Actions".
 name: Build FilaTrack Scale firmware
 
 on:
   workflow_dispatch:        # run manually from the Actions tab
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   scale:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -24,11 +35,27 @@ jobs:
       - name: Build scale firmware
         run: pio run -d scale -e filatrack_scale
 
-      - name: Stage firmware for ESP Web Tools
-        run: python tools/ci_stage_scale.py scale/.pio/build/filatrack_scale dist/scale
+      - name: Stage firmware + flasher for ESP Web Tools
+        run: |
+          python tools/ci_stage_scale.py scale/.pio/build/filatrack_scale dist/scale
+          cp web/flash/index.html dist/scale/index.html
 
-      - name: Upload firmware
+      - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
         with:
           name: filatrack-scale-firmware
           path: dist/scale
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload to Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to Pages
+        id: deploy
+        uses: actions/deploy-pages@v4

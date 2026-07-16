@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flash the FilaTrack Scale</title>
+  <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      max-width: 640px; margin: 0 auto; padding: 24px; line-height: 1.5;
+    }
+    h1 { font-size: 1.6rem; }
+    .card {
+      border: 1px solid #8883; border-radius: 12px; padding: 20px; margin: 20px 0;
+      text-align: center;
+    }
+    ol { padding-left: 1.2em; }
+    li { margin: 6px 0; }
+    .muted { opacity: 0.75; font-size: 0.92rem; }
+    esp-web-install-button { display: inline-block; margin-top: 8px; }
+    code { background: #8882; padding: 1px 5px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Flash the FilaTrack Scale</h1>
+
+  <p>This installs the FilaTrack firmware on the load-cell scale (ESP32-S3). It runs
+  entirely in your browser &mdash; nothing to download or install.</p>
+
+  <div class="card">
+    <p><strong>Plug the scale into this computer with a USB-C cable, then click:</strong></p>
+    <esp-web-install-button manifest="manifest.json">
+      <button slot="activate">Connect &amp; Install</button>
+      <span slot="unsupported">Your browser can't do this &mdash; use <strong>Chrome</strong> or
+        <strong>Edge</strong> on a computer (not a phone).</span>
+      <span slot="not-allowed">This page needs to be opened over https.</span>
+    </esp-web-install-button>
+  </div>
+
+  <h2>Steps</h2>
+  <ol>
+    <li>Use <strong>Chrome</strong> or <strong>Edge</strong> on a <strong>computer</strong>
+      (phones and Firefox/Safari can't talk to USB devices).</li>
+    <li>Connect the scale with a <strong>USB-C</strong> cable.</li>
+    <li>Click <strong>Connect &amp; Install</strong>, pick the scale's port from the list,
+      and confirm. Flashing takes about a minute.</li>
+    <li>When it's done, the scale creates its own Wi-Fi network for first-time setup
+      &mdash; connect to it and enter your home Wi-Fi, then calibrate with a known weight.
+      See <a href="https://github.com/sankeeye/FilaTrack/blob/main/scale/README.md">the scale guide</a>.</li>
+  </ol>
+
+  <p class="muted">No port in the list? Try a different USB-C cable (some are charge-only),
+  or hold the scale's <code>BOOT</code> button while plugging it in.</p>
+</body>
+</html>
