@@ -7,6 +7,14 @@ A standalone **control panel and monitor for a Bambu Lab 3D printer** that runs 
 tablet or from any browser on your LAN. A companion **Printward Scale** weigh scale adds real
 spool‑weight tracking. See [Hardware](#hardware).
 
+![The Printward dashboard on the tablet — live print status, temperatures, AMS spools with
+remaining grams, and one‑tap controls. The same screens run in any browser on your LAN.](docs/img/dashboard.png)
+
+> When the tablet is idle it becomes a screensaver that draws the running print layer by layer,
+> straight from the G‑code:
+
+![Live model build‑up on the idle screen](docs/img/model-view.png)
+
 The interface is available in **English, Dutch and German**, switchable on the fly, and more
 languages can be added by dropping in a file — see [`lang/`](lang/).
 

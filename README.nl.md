@@ -7,6 +7,15 @@ Een zelfstandig **bedien‑ en monitorpaneel voor een Bambu Lab 3D‑printer** d
 vanaf de tablet of vanuit elke browser op je netwerk. Een losse **Printward Scale** (weegschaal)
 voegt echte spoelgewicht‑tracking toe. Zie [Hardware](#hardware).
 
+![Het Printward-dashboard op de tablet — live printstatus, temperaturen, AMS-spoelen met
+resterende grammen en bediening met één tik. Dezelfde schermen draaien in elke browser op je
+netwerk.](docs/img/dashboard.png)
+
+> Als de tablet niets doet wordt hij een screensaver die de lopende print laag voor laag
+> opbouwt, rechtstreeks uit de G‑code:
+
+![Live modelopbouw op het rustscherm](docs/img/model-view.png)
+
 De interface is beschikbaar in **Engels, Nederlands en Duits**, direct wisselbaar, en er kunnen
 meer talen bij door simpelweg een bestand neer te zetten — zie [`lang/`](lang/).
 
