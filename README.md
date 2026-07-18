@@ -4,8 +4,8 @@
 
 A standalone **control panel and monitor for a Bambu Lab 3D printer** that runs on an
 **Android tablet** — with a full web interface as well, so you can drive the printer from the
-tablet or from any browser on your LAN. A companion **Printward Scale** weigh scale adds real
-spool‑weight tracking. See [Hardware](#hardware).
+tablet or from any browser on your LAN. A companion **Printward Scale** weigh scale (inspired by
+**[SpoolEase](https://spoolease.io)**) adds real spool‑weight tracking. See [Hardware](#hardware).
 
 ![The Printward dashboard on the tablet — live print status, temperatures, AMS spools with
 remaining grams, and one‑tap controls. The same screens run in any browser on your LAN.](docs/img/dashboard.png)

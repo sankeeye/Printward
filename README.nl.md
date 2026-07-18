@@ -4,8 +4,9 @@
 
 Een zelfstandig **bedien‑ en monitorpaneel voor een Bambu Lab 3D‑printer** dat draait op een
 **Android‑tablet** — met daarnaast een volledige webinterface, zodat je de printer kunt bedienen
-vanaf de tablet of vanuit elke browser op je netwerk. Een losse **Printward Scale** (weegschaal)
-voegt echte spoelgewicht‑tracking toe. Zie [Hardware](#hardware).
+vanaf de tablet of vanuit elke browser op je netwerk. Een losse **Printward Scale** (weegschaal,
+geïnspireerd op **[SpoolEase](https://spoolease.io)**) voegt echte spoelgewicht‑tracking toe.
+Zie [Hardware](#hardware).
 
 ![Het Printward-dashboard op de tablet — live printstatus, temperaturen, AMS-spoelen met
 resterende grammen en bediening met één tik. Dezelfde schermen draaien in elke browser op je

@@ -5,7 +5,8 @@
 Ein eigenständiges **Bedien‑ und Überwachungspanel für einen Bambu Lab 3D‑Drucker**, das auf einem
 **Android‑Tablet** läuft — dazu eine vollständige Weboberfläche, sodass du den Drucker vom Tablet
 oder von jedem Browser in deinem Netzwerk aus steuern kannst. Eine begleitende **Printward Scale**
-(Waage) ergänzt echtes Spulengewicht‑Tracking. Siehe [Hardware](#hardware).
+(Waage, inspiriert von **[SpoolEase](https://spoolease.io)**) ergänzt echtes
+Spulengewicht‑Tracking. Siehe [Hardware](#hardware).
 
 ![Das Printward-Dashboard auf dem Tablet — Live-Druckstatus, Temperaturen, AMS-Spulen mit
 Restgramm und Steuerung mit einem Tipp. Dieselben Screens laufen in jedem Browser im
