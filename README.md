@@ -64,9 +64,10 @@ On the **Android‑tablet / web build**, additionally:
   monitor/controller with a live local‑MQTT link to the printer, **plus a full web UI** on
   `http://<tablet>:8080`. Verified on a Samsung SM‑T280 (Android 5.1.1).
   See [`android/README.md`](android/README.md).
-- **Printward Scale** — an ESP32‑S3 + HX711 load‑cell scale (the SpoolEase Scale hardware flashed
-  with our own firmware) that feeds real spool weights to the tablet for filament tracking,
-  cost, and low/short‑filament warnings. See [`scale/`](scale/).
+- **Printward Scale** — an ESP32‑S3 + HX711 load‑cell scale that feeds real spool weights to the
+  tablet for filament tracking, cost, and low/short‑filament warnings. It reuses the
+  **[SpoolEase](https://spoolease.io) Scale** hardware (design, wiring and 3D‑printed parts) with
+  our own firmware; build it with SpoolEase's guide. See [`scale/`](scale/).
 
 Developed and tested on a **Bambu Lab P1S**. Printward talks to the printer over the local
 **MQTT + FTP** interface that Bambu Lab printers share, so other models (P1P, X1C, A1, …) should
@@ -148,6 +149,9 @@ interface, and the scale.
 ## Credits
 
 - Built on LVGL and SDL, plus the open‑source libraries listed in `platformio.ini`.
+- The **Printward Scale** is inspired by **[SpoolEase](https://spoolease.io)** by yanshay: it
+  reuses the SpoolEase Scale hardware design, wiring and 3D‑printed parts, and runs our own
+  firmware. Thanks for the great project and for being cool with this.
 
 ## License
 

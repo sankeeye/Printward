@@ -6,9 +6,13 @@ wordt een "domme sensor": hij meet het gewicht en geeft dat via LAN-HTTP door
 aan de **Printward-tablet** (die het brein is). Geen NFC, geen database, geen
 printer-MQTT — alleen een gekalibreerde schaal met een mini web-API.
 
+> **Geïnspireerd op [SpoolEase](https://spoolease.io)** (van yanshay). Printward hergebruikt de
+> SpoolEase Scale-hardware, bedrading en 3D-onderdelen en draait er eigen firmware op. Bouw de
+> weegschaal met hun uitstekende [build-gids](https://www.spoolease.io/docs/build-setup/scale-build).
+
 ## Hardware / bedrading
 
-Zoals in de SpoolEase Scale build-gids:
+Zoals in de [SpoolEase Scale build-gids](https://www.spoolease.io/docs/build-setup/scale-build):
 
 | HX711 | ESP32-S3 |
 |-------|----------|
