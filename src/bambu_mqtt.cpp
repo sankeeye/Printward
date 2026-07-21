@@ -13,6 +13,7 @@ static PubSubClient g_mqtt(g_tls_client);
 static String g_report_topic;
 static String g_request_topic;
 static unsigned long g_last_reconnect_attempt = 0;
+static unsigned long g_last_pushall = 0;   // periodic full-status resync while connected
 static bool g_topics_built = false;
 
 static void build_topics() {
@@ -186,6 +187,7 @@ static bool try_connect() {
     g_mqtt.subscribe(g_report_topic.c_str());
     Serial.printf("BAMBU: Connected, subscribed to %s\n", g_report_topic.c_str());
     request_pushall();
+    g_last_pushall = millis();
     return true;
 }
 
@@ -213,6 +215,15 @@ void bambu_mqtt_loop() {
 
     g_printer_status.mqtt_connected = true;
     g_mqtt.loop();
+
+    // Re-sync the full status periodically. After the first pushall the printer only
+    // sends deltas, so a missed update or a hiccup (e.g. Bambu Handy connecting over
+    // the cloud) can leave our picture stale forever. A periodic pushall self-heals it.
+    unsigned long now = millis();
+    if (now - g_last_pushall > 30000) {
+        g_last_pushall = now;
+        request_pushall();
+    }
 }
 
 bool bambu_is_connected() {
