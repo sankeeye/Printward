@@ -47,11 +47,12 @@
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "PRINTWARD", __VA_ARGS__)
 
 extern bool g_screensaver_3d;
+extern int  g_screensaver_delay_s;   // idle seconds before the screensaver appears (0 = off)
 
 // --- thread-safe request queue (web thread -> main thread) ---------------
 enum QKind { Q_MOVE = 1, Q_CTL, Q_CFG, Q_START, Q_SPOOL_SAVE, Q_SPOOL_DEL, Q_SPOOL_LOAD,
              Q_EMPTY_SAVE, Q_EMPTY_DEL, Q_SPOOL_BULK, Q_SPOOL_CLEAR, Q_HIST_BULK, Q_RESTORE,
-             Q_REPORT_WEIGHT, Q_DRYSET, Q_DRYDONE };
+             Q_REPORT_WEIGHT, Q_DRYSET, Q_DRYDONE, Q_SAVERSET };
 enum CtlCode { CTL_PAUSE = 1, CTL_RESUME, CTL_STOP, CTL_LIGHT, CTL_FAN, CTL_SPEED };
 
 struct QCmd {
@@ -386,6 +387,10 @@ void webctl_loop() {
                 g_dry_hum_ack = true;                 // mute humidity alarm until the AMS reads dry again
                 save_settings();
                 break;
+            case Q_SAVERSET:
+                g_screensaver_delay_s = c.code < 0 ? 0 : c.code;   // idle seconds; 0 = never
+                save_settings();
+                break;
             case Q_EMPTY_SAVE: {
                 EmptySpool e; memset(&e, 0, sizeof(e));
                 char v[24];
@@ -511,8 +516,8 @@ static void build_status(char* o, int n) {
         s.light_on ? "true" : "false", s.fan_speed_pct, s.speed_level, s.active_tray_now,
         filament_shortfall(), g_stat_prints, g_stat_grams, g_hist_total_cost,
         live ? lg : -1.0f, live ? lc : 0.0f, gf);
-    p += snprintf(o + p, n - p, "\"plate\":%d,\"plates\":%d,\"mplate\":%d,",
-        gcode_view_active_plate(), gcode_view_plate_count(), gcode_view_manual_plate());
+    p += snprintf(o + p, n - p, "\"plate\":%d,\"plates\":%d,\"mplate\":%d,\"saver_delay\":%d,",
+        gcode_view_active_plate(), gcode_view_plate_count(), gcode_view_manual_plate(), g_screensaver_delay_s);
     p += snprintf(o + p, n - p, "\"dry\":{\"iv\":%d,\"adv\":%d,\"always\":%d,\"usehum\":%d,\"hum\":%d,\"last\":%ld,\"now\":%ld},",
         g_dry_interval_days, g_dry_advance_days, g_dry_banner_always ? 1 : 0,
         g_dry_use_humidity ? 1 : 0, g_dry_hum_alarm ? 1 : 0, g_dry_last_dried, (long)time(nullptr));
@@ -857,6 +862,13 @@ static void handle_conn(int fd) {
     }
     if (!strcmp(path, "/drydone")) {         // mark the desiccant dried right now
         q_push(Q_DRYDONE, 0, 0, nullptr);
+        send_msg(fd, "200 OK", "ok");
+        return;
+    }
+    if (!strcmp(path, "/setsaver")) {        // screensaver idle delay in seconds (0 = never)
+        char d[8];
+        parse_query(query, "delay", d, sizeof(d));
+        q_push(Q_SAVERSET, d[0] ? atoi(d) : 0, 0, nullptr);
         send_msg(fd, "200 OK", "ok");
         return;
     }

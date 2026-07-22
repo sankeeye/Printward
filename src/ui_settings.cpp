@@ -45,6 +45,27 @@ static void scale_open_cb(lv_event_t* e) {
     (void)e;
     create_weigh_ui();
 }
+static lv_obj_t* g_saver_delay_label = nullptr;
+static void saver_delay_set_label() {
+    if (!g_saver_delay_label) return;
+    char b[48];
+    int s = g_screensaver_delay_s;
+    if (s <= 0)       snprintf(b, sizeof(b), "%s: %s", T("set.saver_delay"), T("set.saver_off"));
+    else if (s < 60)  snprintf(b, sizeof(b), "%s: %d s", T("set.saver_delay"), s);
+    else              snprintf(b, sizeof(b), "%s: %d min", T("set.saver_delay"), s / 60);
+    lv_label_set_text(g_saver_delay_label, b);
+}
+// Tap to cycle the idle delay through a few sensible presets (off / 30 s / 1-10 min).
+static void saver_delay_cb(lv_event_t* e) {
+    (void)e;
+    static const int STEPS[] = {0, 30, 60, 120, 300, 600};
+    const int n = (int)(sizeof(STEPS) / sizeof(STEPS[0]));
+    int idx = 0;
+    for (int i = 0; i < n; i++) if (STEPS[i] == g_screensaver_delay_s) { idx = i; break; }
+    g_screensaver_delay_s = STEPS[(idx + 1) % n];
+    saver_delay_set_label();
+    save_settings();
+}
 #endif
 
 static void brightness_cb(lv_event_t* e) {
@@ -198,6 +219,16 @@ void create_settings_ui() {
     lv_obj_set_style_text_font(g_view_btn_label, &lv_font_montserrat_14, 0);
     lv_obj_center(g_view_btn_label);
     lv_obj_add_event_cb(view_btn, view_toggle_cb, LV_EVENT_CLICKED, NULL);
+
+    lv_obj_t* saver_btn = lv_btn_create(row2);
+    lv_obj_set_flex_grow(saver_btn, 1);
+    lv_obj_set_height(saver_btn, lv_pct(100));
+    lv_obj_set_style_bg_color(saver_btn, lv_color_hex(0x555555), LV_PART_MAIN);
+    g_saver_delay_label = lv_label_create(saver_btn);
+    lv_obj_set_style_text_font(g_saver_delay_label, &lv_font_montserrat_14, 0);
+    lv_obj_center(g_saver_delay_label);
+    saver_delay_set_label();
+    lv_obj_add_event_cb(saver_btn, saver_delay_cb, LV_EVENT_CLICKED, NULL);
 
     lv_obj_t* scale_btn = lv_btn_create(row2);
     lv_obj_set_flex_grow(scale_btn, 1);

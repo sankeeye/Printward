@@ -288,6 +288,12 @@ section#spools{max-width:1040px}
   <button id="cDryDone" class="formbtn pri" style="margin-top:8px" data-i18n="set.dry_done">Nu gedroogd</button>
   <div id="cDryMsg" class="muted" style="margin-top:6px"></div>
  </div>
+ <div class="card"><h3 data-i18n="set.saver_title">Screensaver-vertraging</h3>
+  <div class="muted" style="font-size:12px;margin-bottom:8px" data-i18n="set.saver_hint">Aantal seconden inactief voordat de screensaver verschijnt (0 = nooit).</div>
+  <div class="frow"><label class="muted" data-i18n="set.saver_delay">Screensaver</label>
+   <div style="display:flex;gap:8px;align-items:center"><input type="number" id="cSaver" min="0" step="5" placeholder="60" style="width:100px"><span class="muted">s</span><button id="cSaverSave" class="formbtn sec" data-i18n="save">Opslaan</button></div></div>
+  <div id="cSaverMsg" class="muted" style="margin-top:6px"></div>
+ </div>
  <div class="card"><h3 data-i18n="set.backup">Back-up &amp; herstel (alles)</h3>
   <div id="bkStatus" style="border-radius:8px;padding:10px 12px;margin-bottom:10px;display:none"></div>
   <div class="muted" style="font-size:12px;margin-bottom:8px" data-i18n="set.backup_hint">Alles op de tablet in één bestand: rollen, lege spoelen, gewichten, historie en statistieken. (Printer-IP/serial/toegangscode zitten er <b>niet</b> in.)</div>
@@ -540,6 +546,7 @@ $('cNtfyTest').onclick=function(){$('cNtfyMsg').textContent=t('set.sending','ver
 $('cLowSave').onclick=function(){var g=parseInt($('cLow').value,10);if(isNaN(g)||g<0){$('cNtfyMsg').textContent=t('invalid_number','ongeldig getal');return;}fetch('/setcfg?low='+g).then(function(r){return r.text();}).then(function(txt){lowG=g;$('cNtfyMsg').textContent=t('set.threshold_saved','drempel opgeslagen')+': '+g+' g';});};
 $('cDrySave').onclick=function(){var d=parseInt($('cDry').value,10);if(isNaN(d)||d<0)d=0;var a=parseInt($('cAdv').value,10);if(isNaN(a)||a<0)a=0;var al=$('cDryAlways').checked?1:0;var hm=$('cDryHum').checked?1:0;fetch('/setdry?days='+d+'&adv='+a+'&always='+al+'&hum='+hm).then(function(){$('cDryMsg').textContent=t('set.dry_saved2','opgeslagen');});};
 $('cDryDone').onclick=function(){fetch('/drydone').then(function(){$('cDryMsg').textContent=t('set.dry_reset','timer opnieuw gestart — bedankt!');});};
+$('cSaverSave').onclick=function(){var d=parseInt($('cSaver').value,10);if(isNaN(d)||d<0)d=0;fetch('/setsaver?delay='+d).then(function(){$('cSaverMsg').textContent=t('set.dry_saved2','opgeslagen');});};
 function joinPath(b,n){return (b==='/'?'':b)+'/'+n;}
 function fmtSize(b){return b>1048576?(b/1048576).toFixed(1)+' MB':b>1024?(b/1024).toFixed(0)+' KB':b+' B';}
 function loadFiles(path){curPath=path;$('fpath').textContent=path;$('flist').innerHTML='<div class=muted>'+t('loading','laden…')+'</div>';
@@ -650,6 +657,7 @@ function poll(){
    var dleft=iv>0?Math.ceil((s.dry.last+iv*86400-s.dry.now)/86400):null;
    if($('cDryStatus'))$('cDryStatus').textContent=hum?('⚠ '+t('dash.dry_wet','AMS vochtig')+' — '+t('set.dry_over','te laat — drogen!')):((dleft===null)?t('set.dry_off_status','Uit — geen herinnering.'):(dleft>0?(t('set.dry_next','Volgende keer drogen over')+' '+dleft+' '+t('days','dagen')+'.'):('⚠ '+(-dleft)+' '+t('days','dagen')+' '+t('set.dry_over','te laat — drogen!'))));
    var dw=$('drywarn');if(dw){var showdw=hum||(dleft!==null&&(always||dleft<=adv));if(showdw){dw.style.display='block';dw.textContent='⚠ '+t('dash.dry_warn','Silicagel drogen')+(hum?(' — '+t('dash.dry_wet','AMS vochtig')):(dleft>0?(' — '+t('dash.dry_in','nog')+' '+dleft+' '+t('days','dagen')):(dleft<0?(' — '+(-dleft)+' '+t('days','dagen')+' '+t('dash.dry_late','te laat')):' — '+t('dash.dry_today','vandaag'))));}else dw.style.display='none';}}
+  if(s.saver_delay!==undefined){var sv=$('cSaver');if(sv&&document.activeElement!==sv)sv.value=s.saver_delay;}
   if(s.bkage!==undefined)renderBkStatus(s.bkage);
   if(s.cfg&&s.cfg.scale_ip){scaleHost=s.cfg.scale_ip;var si=$('sIp');if(si&&!si.value)si.value=s.cfg.scale_ip;}
   if(s.cfg&&s.cfg.low)lowG=s.cfg.low;

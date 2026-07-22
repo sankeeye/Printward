@@ -159,6 +159,7 @@ static const Builtin BUILTIN[] = {
     {"dash.left_fmt",       "%dh%02dm left",             "nog %du%02dm"},
 
     {"ss.temps",              "Nozzle %.0f\xC2\xB0   Bed %.0f\xC2\xB0   Chamber %.0f\xC2\xB0", "Nozzle %.0f\xC2\xB0   Bed %.0f\xC2\xB0   Chamber %.0f\xC2\xB0"},
+    {"ss.temps_nc",           "Nozzle %.0f\xC2\xB0   Bed %.0f\xC2\xB0", "Nozzle %.0f\xC2\xB0   Bed %.0f\xC2\xB0"},
     {"ss.short_fmt",          "Filament short: ~%.0f g", "Filament tekort: ~%.0f g te kort"},
     {"scale.net_fmt",         "network: %s \xE2\x80\xA2 %s \xE2\x80\xA2 %ddBm%s", "netwerk: %s \xE2\x80\xA2 %s \xE2\x80\xA2 %ddBm%s"},
     {"scale.static_suffix",   " \xE2\x80\xA2 static IP", " \xE2\x80\xA2 vast IP"},
@@ -206,6 +207,10 @@ static const Builtin BUILTIN[] = {
     {"dash.short_fmt",        "Filament short: ~%.0f g", "Filament tekort: ~%.0f g"},
     {"set.saver_3d",          "Screensaver: 3D", "Screensaver: 3D"},
     {"set.saver_2d",          "Screensaver: 2D", "Screensaver: 2D"},
+    {"set.saver_delay",       "Screensaver",     "Screensaver"},
+    {"set.saver_off",         "off",             "uit"},
+    {"set.saver_title",       "Screensaver delay", "Screensaver-vertraging"},
+    {"set.saver_hint",        "Idle seconds before the screensaver appears (0 = never)", "Aantal seconden inactief voordat de screensaver verschijnt (0 = nooit)"},
     {"set.wifi_setup",        "WiFi setup", "WiFi instellen"},
     {"wifi.selected",         "Selected: %s", "Gekozen: %s"},
     {"wifi.selected_none",    "Selected: none", "Gekozen: geen"},

@@ -42,6 +42,7 @@ static bool g_shown = false;
 static int  g_page = 0;
 
 bool g_screensaver_3d = false;   // false = top-down 2D, true = isometric 3D
+int  g_screensaver_delay_s = 60; // idle seconds before the screensaver appears; 0 = never
 
 static lv_obj_t* mk_label(lv_obj_t* parent, const lv_font_t* font, uint32_t color) {
     lv_obj_t* l = lv_label_create(parent);
@@ -250,8 +251,15 @@ static void update_dashboard() {
         lv_label_set_text(g_time, "");
         lv_label_set_text(g_ams, "");
     }
-    lv_label_set_text_fmt(g_temps, T("ss.temps"),
-                          s.nozzle_temp, s.bed_temp, s.chamber_temp);
+    // Truncate like Bambu (floor via int cast, still a %.0f so runtime language
+    // files stay compatible), and drop the chamber reading on printers without a
+    // chamber sensor (P1/A1) - matching the main dashboard.
+    if (printer_has_chamber_sensor())
+        lv_label_set_text_fmt(g_temps, T("ss.temps"),
+                              (double)(int)s.nozzle_temp, (double)(int)s.bed_temp, (double)(int)s.chamber_temp);
+    else
+        lv_label_set_text_fmt(g_temps, T("ss.temps_nc"),
+                              (double)(int)s.nozzle_temp, (double)(int)s.bed_temp);
     float sh = filament_shortfall();
     if (sh > 0) if (true) {
         // The warning icon is a font glyph, not text, so it cannot live in the
@@ -293,8 +301,12 @@ void screensaver_loop() {
     }
     static uint32_t page_at = 0, refresh_at = 0;
 
+    if (g_screensaver_delay_s <= 0) {            // disabled -> never show
+        if (g_shown) { g_shown = false; lv_obj_add_flag(g_ss, LV_OBJ_FLAG_HIDDEN); }
+        return;
+    }
     uint32_t inactive = lv_display_get_inactive_time(NULL);
-    if (inactive > SS_TIMEOUT_MS) {
+    if (inactive > (uint32_t)g_screensaver_delay_s * 1000u) {
         uint32_t t = lv_tick_get();
         if (!g_shown) {
             g_shown = true;

@@ -75,6 +75,7 @@ void save_settings() {
     fprintf(f, "access_code=%s\n", g_printer_access_code);
     fprintf(f, "brightness=%d\n", (int)g_brightness);
     fprintf(f, "view3d=%d\n", g_screensaver_3d ? 1 : 0);
+    fprintf(f, "saver_delay=%d\n", g_screensaver_delay_s);
     fprintf(f, "scale_ip=%s\n", g_scale_ip);
     fprintf(f, "ntfy_topic=%s\n", g_ntfy_topic);
     fprintf(f, "lang=%s\n", g_lang);
@@ -125,6 +126,7 @@ void load_settings() {
         else if (!strcmp(key, "brightness"))     g_brightness = (uint8_t)atoi(val);
         else if (!strcmp(key, "wifi_ssid"))      strncpy(g_wifi_ssid, val, sizeof(g_wifi_ssid) - 1);
         else if (!strcmp(key, "view3d"))         g_screensaver_3d = (atoi(val) != 0);
+        else if (!strcmp(key, "saver_delay"))    g_screensaver_delay_s = atoi(val);
         else if (!strcmp(key, "scale_ip"))       strncpy(g_scale_ip, val, sizeof(g_scale_ip) - 1);
         else if (!strcmp(key, "ntfy_topic"))     strncpy(g_ntfy_topic, val, sizeof(g_ntfy_topic) - 1);
         else if (!strcmp(key, "lang"))           strncpy(g_lang, val, sizeof(g_lang) - 1);
