@@ -502,8 +502,8 @@ static void build_status(char* o, int n) {
         s.mqtt_connected ? "true" : "false", s.gcode_state, name,
         s.progress_pct, s.layer_num, s.total_layers, s.remaining_min);
     p += snprintf(o + p, n - p,
-        "\"nozzle\":%.0f,\"nozzle_t\":%.0f,\"bed\":%.0f,\"bed_t\":%.0f,\"chamber\":%.0f,\"has_chamber\":%d,",
-        s.nozzle_temp, s.nozzle_target, s.bed_temp, s.bed_target, s.chamber_temp, printer_has_chamber_sensor() ? 1 : 0);
+        "\"nozzle\":%d,\"nozzle_t\":%d,\"bed\":%d,\"bed_t\":%d,\"chamber\":%d,\"has_chamber\":%d,",
+        (int)s.nozzle_temp, (int)s.nozzle_target, (int)s.bed_temp, (int)s.bed_target, (int)s.chamber_temp, printer_has_chamber_sensor() ? 1 : 0);
     float lg = 0, lc = 0;
     bool live = filament_live_cost(&lg, &lc);
     char gf[160]; json_escape(s.gcode_file, gf, sizeof(gf));
