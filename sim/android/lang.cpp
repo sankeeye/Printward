@@ -310,6 +310,8 @@ static const Builtin BUILTIN[] = {
     {"dash.dry_today",        "today",                     "vandaag"},
     {"set.dry_advance",       "Show the banner this many days early", "Banner alvast tonen (dagen van tevoren)"},
     {"set.dry_advance_hint",  "0 = only once overdue",     "0 = pas als het over tijd is"},
+    {"set.dry_always",        "Always show the banner on the tablet", "Banner altijd op de tab tonen"},
+    {"set.dry_always_hint",   "Off = only within the window above", "Uit = pas binnen bovenstaand venster"},
     {"weeks",                 "wk",                        "wk"},
 
     // --- live status / units ---

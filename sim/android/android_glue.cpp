@@ -43,6 +43,7 @@ int  g_dry_interval_days = 0;           // silica-gel drying reminder interval i
 int  g_dry_advance_days = 0;            // show the reminder this many days BEFORE it's due
 long g_dry_last_dried = 0;              // unix time the desiccant was last dried (0 = never)
 bool g_dry_notified = false;            // already pushed the "dry it" reminder for this cycle
+bool g_dry_banner_always = false;       // keep the dashboard banner visible at all times (vs only within the advance window)
 float g_tray_capacity_g[AMS_MAX_UNITS][AMS_MAX_TRAYS] = {{0}};
 float g_tray_used_g[AMS_MAX_UNITS][AMS_MAX_TRAYS] = {{0}};
 float g_ext_capacity_g = 0;
@@ -82,6 +83,7 @@ void save_settings() {
     fprintf(f, "dry_advance=%d\n", g_dry_advance_days);
     fprintf(f, "dry_last=%ld\n", g_dry_last_dried);
     fprintf(f, "dry_notified=%d\n", g_dry_notified ? 1 : 0);
+    fprintf(f, "dry_banner_always=%d\n", g_dry_banner_always ? 1 : 0);
     if (g_wifi_ssid[0]) fprintf(f, "wifi_ssid=%s\n", g_wifi_ssid);
     fclose(f);
     Serial.println("CONF: saved /sdcard/printward.conf");
@@ -127,6 +129,7 @@ void load_settings() {
         else if (!strcmp(key, "dry_advance"))    g_dry_advance_days = atoi(val);
         else if (!strcmp(key, "dry_last"))       g_dry_last_dried = atol(val);
         else if (!strcmp(key, "dry_notified"))   g_dry_notified = (atoi(val) != 0);
+        else if (!strcmp(key, "dry_banner_always")) g_dry_banner_always = (atoi(val) != 0);
         else if (!strcmp(key, "webui_port")) {
             int p = atoi(val);
             if (p >= 1024 && p <= 65535) g_webui_port = p;   // ignore junk; keep the default

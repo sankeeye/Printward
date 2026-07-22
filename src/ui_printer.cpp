@@ -677,7 +677,9 @@ void update_printer_ui() {
         if (g_dry_interval_days > 0 && g_dry_last_dried > 0) {
             long left_sec = g_dry_last_dried + (long)g_dry_interval_days * 86400L - (long)time(nullptr);
             left_days = left_sec >= 0 ? (left_sec + 86399) / 86400 : -((-left_sec) / 86400);
-            if (left_sec <= (long)g_dry_advance_days * 86400L) show = true;   // due, or within the advance window
+            // "Always" keeps it on the dashboard as a live countdown; otherwise it
+            // only appears once due, or within the configured advance window.
+            if (g_dry_banner_always || left_sec <= (long)g_dry_advance_days * 86400L) show = true;
         }
         if (show) {
             if (left_days > 0)      lv_label_set_text_fmt(g_dry_label, "%s (%s %ld d)", T("dash.dry_warn"), T("dash.dry_in"), left_days);

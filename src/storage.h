@@ -28,6 +28,7 @@ extern int  g_dry_interval_days; // silica-gel drying reminder interval, days (0
 extern int  g_dry_advance_days;  // show the reminder this many days before it's due
 extern long g_dry_last_dried;    // unix time the desiccant was last dried
 extern bool g_dry_notified;      // already reminded for the current cycle
+extern bool g_dry_banner_always; // keep the dashboard banner visible at all times
 void webui_pass_ensure();        // make one on first run; no-op afterwards
 
 // Manual spool-weight tracking. capacity_g is what the user enters when
