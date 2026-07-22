@@ -585,9 +585,9 @@ function amt(t){
 }
 function humHtml(h,raw){if(!h||h<1)return'';var l,c;if(h>=4){l=t('dash.hum_dry','droog');c='#2ecc71';}else if(h===3){l=t('dash.hum_ok','redelijk');c='#f39c12';}else{l=t('dash.hum_wet','vochtig');c='#e74c3c';}var val=(raw!==undefined&&raw>=0)?(raw+'%'):l;return ' · <span style="color:'+c+'">'+t('dash.humidity','vocht')+': '+val+'</span>';}
 function slotName(slot){return slot===254?'externe spoel':('AMS'+(Math.floor(slot/4)+1)+' T'+(slot%4+1));}
-function trayCell(t,slot,assign){
+function trayCell(tr,slot,assign){
  var inner;
- if(t&&t.present)inner='<div class="sw" style="background:'+t.rgb+'"></div><div>'+t.type+'</div>'+amt(t);
+ if(tr&&tr.present)inner='<div class="sw" style="background:'+tr.rgb+'"></div><div>'+tr.type+'</div>'+amt(tr);
  else inner='<div class="sw empty"></div><div class="muted">'+t('spools.empty_slot','leeg')+'</div><div></div>';
  if(assign)inner+='<button class="rolbtn" onclick="pickRoll('+slot+')">Rol</button>';
  var act=(lastS&&lastS.active_tray===slot)?' style="outline:2px solid #2ecc71;outline-offset:3px;border-radius:6px" title="Wordt nu gebruikt"':'';
