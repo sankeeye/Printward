@@ -374,6 +374,7 @@ void webctl_loop() {
                 if (adv > g_dry_interval_days) adv = g_dry_interval_days;   // can't warn before it was dried
                 g_dry_advance_days = adv;
                 g_dry_banner_always = (c.arg[0] == '1');   // banner always on the tablet vs only within the window
+                g_dry_use_humidity = (c.arg[1] == '1');    // also warn on real AMS humidity
                 if (g_dry_interval_days > 0 && g_dry_last_dried == 0) g_dry_last_dried = (long)time(nullptr);
                 g_dry_notified = false;               // re-evaluate against the new interval
                 save_settings();
@@ -511,8 +512,9 @@ static void build_status(char* o, int n) {
         live ? lg : -1.0f, live ? lc : 0.0f, gf);
     p += snprintf(o + p, n - p, "\"plate\":%d,\"plates\":%d,\"mplate\":%d,",
         gcode_view_active_plate(), gcode_view_plate_count(), gcode_view_manual_plate());
-    p += snprintf(o + p, n - p, "\"dry\":{\"iv\":%d,\"adv\":%d,\"always\":%d,\"last\":%ld,\"now\":%ld},",
-        g_dry_interval_days, g_dry_advance_days, g_dry_banner_always ? 1 : 0, g_dry_last_dried, (long)time(nullptr));
+    p += snprintf(o + p, n - p, "\"dry\":{\"iv\":%d,\"adv\":%d,\"always\":%d,\"usehum\":%d,\"hum\":%d,\"last\":%ld,\"now\":%ld},",
+        g_dry_interval_days, g_dry_advance_days, g_dry_banner_always ? 1 : 0,
+        g_dry_use_humidity ? 1 : 0, g_dry_hum_alarm ? 1 : 0, g_dry_last_dried, (long)time(nullptr));
     p += snprintf(o + p, n - p,
         "\"bkage\":%ld,",
         backup_seconds_since_dl());
@@ -841,11 +843,14 @@ static void handle_conn(int fd) {
         return;
     }
     if (!strcmp(path, "/setdry")) {          // silica-gel reminder interval (days; 0 = off) + advance days
-        char d[8], a[8], al[4];
+        char d[8], a[8], al[4], hm[4];
         parse_query(query, "days", d, sizeof(d));
         parse_query(query, "adv", a, sizeof(a));
         parse_query(query, "always", al, sizeof(al));
-        q_push(Q_DRYSET, d[0] ? atoi(d) : 0, a[0] ? (float)atoi(a) : 0.0f, al[0] ? al : "0");
+        parse_query(query, "hum", hm, sizeof(hm));
+        char flags[4]; flags[0] = (al[0] == '1') ? '1' : '0';   // [0]=banner-always, [1]=use-humidity
+        flags[1] = (hm[0] == '1') ? '1' : '0'; flags[2] = 0;
+        q_push(Q_DRYSET, d[0] ? atoi(d) : 0, a[0] ? (float)atoi(a) : 0.0f, flags);
         send_msg(fd, "200 OK", "ok");
         return;
     }

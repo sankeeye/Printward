@@ -312,6 +312,10 @@ static const Builtin BUILTIN[] = {
     {"set.dry_advance_hint",  "0 = only once overdue",     "0 = pas als het over tijd is"},
     {"set.dry_always",        "Always show the banner on the tablet", "Banner altijd op de tab tonen"},
     {"set.dry_always_hint",   "Off = only within the window above", "Uit = pas binnen bovenstaand venster"},
+    {"set.dry_hum",           "Also warn on AMS humidity",  "Ook waarschuwen bij AMS-vochtigheid"},
+    {"set.dry_hum_hint",      "Alerts once the AMS stays damp ~30 min", "Melding zodra de AMS ~30 min vochtig meldt"},
+    {"set.dry_saved2",        "saved",                      "opgeslagen"},
+    {"dash.dry_wet",          "AMS damp",                   "AMS vochtig"},
     {"weeks",                 "wk",                        "wk"},
 
     // --- live status / units ---

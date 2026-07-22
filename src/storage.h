@@ -29,6 +29,13 @@ extern int  g_dry_advance_days;  // show the reminder this many days before it's
 extern long g_dry_last_dried;    // unix time the desiccant was last dried
 extern bool g_dry_notified;      // already reminded for the current cycle
 extern bool g_dry_banner_always; // keep the dashboard banner visible at all times
+extern bool g_dry_use_humidity;  // also remind when the AMS reports the desiccant is wet
+extern bool g_dry_hum_alarm;     // runtime: AMS-humidity reminder currently active
+
+// True when an AMS has reported "wet" (humidity grade >= 4) continuously for long
+// enough to be a real drying signal (not a transient spike). Updates g_dry_hum_alarm
+// as a side effect so other threads (web status) can read the debounced result.
+bool dry_humidity_alarm();
 void webui_pass_ensure();        // make one on first run; no-op afterwards
 
 // Manual spool-weight tracking. capacity_g is what the user enters when

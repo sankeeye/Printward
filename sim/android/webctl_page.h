@@ -281,6 +281,8 @@ section#spools{max-width:1040px}
    <div style="display:flex;gap:8px;align-items:center"><input type="number" id="cAdv" min="0" step="1" placeholder="0" style="width:100px"><span class="muted" data-i18n="set.dry_advance_hint">0 = pas als het over tijd is</span></div></div>
   <div class="frow"><label class="muted" for="cDryAlways" data-i18n="set.dry_always">Banner altijd op de tab tonen</label>
    <div style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="cDryAlways" style="width:20px;height:20px"><span class="muted" data-i18n="set.dry_always_hint">Uit = pas binnen bovenstaand venster</span></div></div>
+  <div class="frow"><label class="muted" for="cDryHum" data-i18n="set.dry_hum">Ook waarschuwen bij AMS-vochtigheid</label>
+   <div style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="cDryHum" style="width:20px;height:20px"><span class="muted" data-i18n="set.dry_hum_hint">Melding zodra de AMS ~30 min vochtig meldt</span></div></div>
   <button id="cDrySave" class="formbtn sec" style="margin-top:10px" data-i18n="save">Opslaan</button>
   <div id="cDryStatus" class="muted" style="margin-top:10px"></div>
   <button id="cDryDone" class="formbtn pri" style="margin-top:8px" data-i18n="set.dry_done">Nu gedroogd</button>
@@ -536,7 +538,7 @@ $('cSave').onclick=function(){
 $('cNtfySave').onclick=function(){fetch('/setcfg?ntfy='+encodeURIComponent($('cNtfy').value)).then(function(r){return r.text();}).then(function(txt){$('cNtfyMsg').textContent=txt;});};
 $('cNtfyTest').onclick=function(){$('cNtfyMsg').textContent=t('set.sending','versturen…');fetch('/setcfg?ntfy='+encodeURIComponent($('cNtfy').value)).then(function(){setTimeout(function(){fetch('/notify_test').then(function(r){return r.text();}).then(function(txt){$('cNtfyMsg').textContent=txt;});},500);});};
 $('cLowSave').onclick=function(){var g=parseInt($('cLow').value,10);if(isNaN(g)||g<0){$('cNtfyMsg').textContent=t('invalid_number','ongeldig getal');return;}fetch('/setcfg?low='+g).then(function(r){return r.text();}).then(function(txt){lowG=g;$('cNtfyMsg').textContent=t('set.threshold_saved','drempel opgeslagen')+': '+g+' g';});};
-$('cDrySave').onclick=function(){var d=parseInt($('cDry').value,10);if(isNaN(d)||d<0)d=0;var a=parseInt($('cAdv').value,10);if(isNaN(a)||a<0)a=0;var al=$('cDryAlways').checked?1:0;fetch('/setdry?days='+d+'&adv='+a+'&always='+al).then(function(){$('cDryMsg').textContent=d>0?(t('set.dry_saved','ingesteld op')+' '+d+' '+t('days','dagen')):t('set.dry_off','uitgezet');});};
+$('cDrySave').onclick=function(){var d=parseInt($('cDry').value,10);if(isNaN(d)||d<0)d=0;var a=parseInt($('cAdv').value,10);if(isNaN(a)||a<0)a=0;var al=$('cDryAlways').checked?1:0;var hm=$('cDryHum').checked?1:0;fetch('/setdry?days='+d+'&adv='+a+'&always='+al+'&hum='+hm).then(function(){$('cDryMsg').textContent=t('set.dry_saved2','opgeslagen');});};
 $('cDryDone').onclick=function(){fetch('/drydone').then(function(){$('cDryMsg').textContent=t('set.dry_reset','timer opnieuw gestart — bedankt!');});};
 function joinPath(b,n){return (b==='/'?'':b)+'/'+n;}
 function fmtSize(b){return b>1048576?(b/1048576).toFixed(1)+' MB':b>1024?(b/1024).toFixed(0)+' KB':b+' B';}
@@ -639,14 +641,15 @@ function poll(){
   if(!$('rollModal')||$('rollModal').style.display!=='flex'){$('amsStrip').innerHTML=amsHtml(s.ams,s.ext,true);}
   if($('movetemps'))$('movetemps').textContent=t('dash.nozzle','nozzle')+' '+s.nozzle+'/'+s.nozzle_t+'° · '+t('dash.bed','bed')+' '+s.bed+'/'+s.bed_t+'° · '+t('dash.chamber','kamer')+' '+s.chamber+'°';
   if(s.prints!==undefined&&$('stPrints')){$('stPrints').textContent=s.prints;$('stUsed').textContent=(s.used>=1000?(s.used/1000).toFixed(2)+' kg':s.used+' g');if($('stCost'))$('stCost').textContent='€ '+(s.cost||0).toFixed(2);}
-  if(s.dry){var iv=s.dry.iv||0,adv=s.dry.adv||0,always=!!s.dry.always;
+  if(s.dry){var iv=s.dry.iv||0,adv=s.dry.adv||0,always=!!s.dry.always,usehum=!!s.dry.usehum,hum=!!s.dry.hum;
    var dv=$('cDry');if(dv&&document.activeElement!==dv)dv.value=iv||'';
    var av=$('cAdv');if(av&&document.activeElement!==av)av.value=adv||'';
    var cx=$('cDryAlways');if(cx&&document.activeElement!==cx)cx.checked=always;
+   var ch=$('cDryHum');if(ch&&document.activeElement!==ch)ch.checked=usehum;
    if($('cDryWk'))$('cDryWk').textContent=iv>0?('≈ '+(iv/7).toFixed(1)+' '+t('weeks','wk')):'';
    var dleft=iv>0?Math.ceil((s.dry.last+iv*86400-s.dry.now)/86400):null;
-   if($('cDryStatus'))$('cDryStatus').textContent=(dleft===null)?t('set.dry_off_status','Uit — geen herinnering.'):(dleft>0?(t('set.dry_next','Volgende keer drogen over')+' '+dleft+' '+t('days','dagen')+'.'):('⚠ '+(-dleft)+' '+t('days','dagen')+' '+t('set.dry_over','te laat — drogen!')));
-   var dw=$('drywarn');if(dw){if(dleft!==null&&(always||dleft<=adv)){dw.style.display='block';dw.textContent='⚠ '+t('dash.dry_warn','Silicagel drogen')+(dleft>0?(' — '+t('dash.dry_in','nog')+' '+dleft+' '+t('days','dagen')):(dleft<0?(' — '+(-dleft)+' '+t('days','dagen')+' '+t('dash.dry_late','te laat')):' — '+t('dash.dry_today','vandaag')));}else dw.style.display='none';}}
+   if($('cDryStatus'))$('cDryStatus').textContent=hum?('⚠ '+t('dash.dry_wet','AMS vochtig')+' — '+t('set.dry_over','te laat — drogen!')):((dleft===null)?t('set.dry_off_status','Uit — geen herinnering.'):(dleft>0?(t('set.dry_next','Volgende keer drogen over')+' '+dleft+' '+t('days','dagen')+'.'):('⚠ '+(-dleft)+' '+t('days','dagen')+' '+t('set.dry_over','te laat — drogen!'))));
+   var dw=$('drywarn');if(dw){var showdw=hum||(dleft!==null&&(always||dleft<=adv));if(showdw){dw.style.display='block';dw.textContent='⚠ '+t('dash.dry_warn','Silicagel drogen')+(hum?(' — '+t('dash.dry_wet','AMS vochtig')):(dleft>0?(' — '+t('dash.dry_in','nog')+' '+dleft+' '+t('days','dagen')):(dleft<0?(' — '+(-dleft)+' '+t('days','dagen')+' '+t('dash.dry_late','te laat')):' — '+t('dash.dry_today','vandaag'))));}else dw.style.display='none';}}
   if(s.bkage!==undefined)renderBkStatus(s.bkage);
   if(s.cfg&&s.cfg.scale_ip){scaleHost=s.cfg.scale_ip;var si=$('sIp');if(si&&!si.value)si.value=s.cfg.scale_ip;}
   if(s.cfg&&s.cfg.low)lowG=s.cfg.low;

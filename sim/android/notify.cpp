@@ -152,6 +152,29 @@ static void lownotify_save() {
     fclose(f);
 }
 
+// The AMS measures its own humidity (grade 1-5; 4-5 = wet). That's the real
+// signal the desiccant needs drying, far better than a blind timer. We debounce
+// it: the alarm only trips after the AMS stays wet for a while, so opening the
+// AMS (a brief humidity spike) doesn't fire a false reminder.
+bool dry_humidity_alarm() {
+    static long wet_since = 0;
+    if (!g_dry_use_humidity) { wet_since = 0; g_dry_hum_alarm = false; return false; }
+    int maxh = 0;
+    PrinterStatus& s = g_printer_status;
+    for (int u = 0; u < s.ams_count && u < AMS_MAX_UNITS; u++)
+        if (s.ams[u].present && s.ams[u].humidity > maxh) maxh = s.ams[u].humidity;
+    long now = (long)time(nullptr);
+    bool alarm = false;
+    if (maxh >= 4) {                          // "vochtig"
+        if (wet_since == 0) wet_since = now;
+        alarm = (now - wet_since) >= 1800;    // sustained for 30 min
+    } else {
+        wet_since = 0;                        // dried out -> re-arm
+    }
+    g_dry_hum_alarm = alarm;
+    return alarm;
+}
+
 void notify_loop() {
     static char last_state[16] = "";
     static bool warned_short = false;
@@ -199,6 +222,20 @@ void notify_loop() {
             notify_send("Silicagel drogen", "Tijd om het droogmiddel weer te drogen.");
             g_dry_notified = true;
             save_settings();
+        }
+    }
+
+    // Humidity-based reminder: the AMS itself reports the desiccant is wet. Fires
+    // once per wet episode and re-arms after it dries out again (runtime-only, so
+    // it may remind again after a restart while still wet - which is fine).
+    {
+        static bool hum_notified = false;
+        bool alarm = dry_humidity_alarm();
+        if (alarm && !hum_notified) {
+            notify_send("Silicagel drogen", "De AMS meldt hoge vochtigheid - tijd om het droogmiddel te drogen.");
+            hum_notified = true;
+        } else if (!alarm) {
+            hum_notified = false;
         }
     }
 
