@@ -110,6 +110,7 @@ section#spools{max-width:1040px}
 
 <section id="dash" class="on">
  <div id="warn" style="display:none;background:#5a2020;color:#ffd0d0;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-weight:600"></div>
+ <div id="drywarn" style="display:none;background:#5a4a1e;color:#ffe8b0;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-weight:600"></div>
  <div class="card"><div id="state">–</div><div id="task" class="muted"></div>
   <div class="bar"><div id="fill"></div></div><div id="prog" class="muted"></div>
   <div id="pcost" class="muted" style="margin-top:4px"></div>
@@ -271,6 +272,14 @@ section#spools{max-width:1040px}
    <div style="display:flex;gap:8px;align-items:center"><input type="number" id="cLow" min="0" step="10" placeholder="100" style="width:120px"><span class="muted">g</span><button id="cLowSave" class="formbtn sec" data-i18n="save">Opslaan</button></div></div>
   <div class="muted" style="font-size:12px;margin-top:8px" data-i18n="set.ntfy_hint">Installeer de gratis <b>ntfy</b>-app (of ntfy.sh in de browser) en abonneer op dit topic. Je krijgt een melding bij print klaar/mislukt, filament tekort en als een gewogen rol onder de drempel komt.</div>
   <div id="cNtfyMsg" class="muted" style="margin-top:6px"></div>
+ </div>
+ <div class="card"><h3 data-i18n="set.dry_title">Silicagel drogen</h3>
+  <div class="muted" style="font-size:12px;margin-bottom:8px" data-i18n="set.dry_hint">Krijg een melding wanneer het droogmiddel weer gedroogd moet worden. Zet op 0 om uit te zetten. Een ntfy-topic hierboven geeft ook een pushmelding.</div>
+  <div class="frow"><label class="muted" data-i18n="set.dry_interval">Om de hoeveel dagen drogen (0 = uit)</label>
+   <div style="display:flex;gap:8px;align-items:center"><input type="number" id="cDry" min="0" step="1" placeholder="45" style="width:100px"><span class="muted" id="cDryWk"></span><button id="cDrySave" class="formbtn sec" data-i18n="save">Opslaan</button></div></div>
+  <div id="cDryStatus" class="muted" style="margin-top:10px"></div>
+  <button id="cDryDone" class="formbtn pri" style="margin-top:8px" data-i18n="set.dry_done">Nu gedroogd</button>
+  <div id="cDryMsg" class="muted" style="margin-top:6px"></div>
  </div>
  <div class="card"><h3 data-i18n="set.backup">Back-up &amp; herstel (alles)</h3>
   <div id="bkStatus" style="border-radius:8px;padding:10px 12px;margin-bottom:10px;display:none"></div>
@@ -522,6 +531,8 @@ $('cSave').onclick=function(){
 $('cNtfySave').onclick=function(){fetch('/setcfg?ntfy='+encodeURIComponent($('cNtfy').value)).then(function(r){return r.text();}).then(function(txt){$('cNtfyMsg').textContent=txt;});};
 $('cNtfyTest').onclick=function(){$('cNtfyMsg').textContent=t('set.sending','versturen…');fetch('/setcfg?ntfy='+encodeURIComponent($('cNtfy').value)).then(function(){setTimeout(function(){fetch('/notify_test').then(function(r){return r.text();}).then(function(txt){$('cNtfyMsg').textContent=txt;});},500);});};
 $('cLowSave').onclick=function(){var g=parseInt($('cLow').value,10);if(isNaN(g)||g<0){$('cNtfyMsg').textContent=t('invalid_number','ongeldig getal');return;}fetch('/setcfg?low='+g).then(function(r){return r.text();}).then(function(txt){lowG=g;$('cNtfyMsg').textContent=t('set.threshold_saved','drempel opgeslagen')+': '+g+' g';});};
+$('cDrySave').onclick=function(){var d=parseInt($('cDry').value,10);if(isNaN(d)||d<0)d=0;fetch('/setdry?days='+d).then(function(){$('cDryMsg').textContent=d>0?(t('set.dry_saved','ingesteld op')+' '+d+' '+t('days','dagen')):t('set.dry_off','uitgezet');});};
+$('cDryDone').onclick=function(){fetch('/drydone').then(function(){$('cDryMsg').textContent=t('set.dry_reset','timer opnieuw gestart — bedankt!');});};
 function joinPath(b,n){return (b==='/'?'':b)+'/'+n;}
 function fmtSize(b){return b>1048576?(b/1048576).toFixed(1)+' MB':b>1024?(b/1024).toFixed(0)+' KB':b+' B';}
 function loadFiles(path){curPath=path;$('fpath').textContent=path;$('flist').innerHTML='<div class=muted>'+t('loading','laden…')+'</div>';
@@ -623,6 +634,11 @@ function poll(){
   if(!$('rollModal')||$('rollModal').style.display!=='flex'){$('amsStrip').innerHTML=amsHtml(s.ams,s.ext,true);}
   if($('movetemps'))$('movetemps').textContent=t('dash.nozzle','nozzle')+' '+s.nozzle+'/'+s.nozzle_t+'° · '+t('dash.bed','bed')+' '+s.bed+'/'+s.bed_t+'° · '+t('dash.chamber','kamer')+' '+s.chamber+'°';
   if(s.prints!==undefined&&$('stPrints')){$('stPrints').textContent=s.prints;$('stUsed').textContent=(s.used>=1000?(s.used/1000).toFixed(2)+' kg':s.used+' g');if($('stCost'))$('stCost').textContent='€ '+(s.cost||0).toFixed(2);}
+  if(s.dry){var iv=s.dry.iv||0;var dv=$('cDry');if(dv&&document.activeElement!==dv)dv.value=iv||'';
+   if($('cDryWk'))$('cDryWk').textContent=iv>0?('≈ '+(iv/7).toFixed(1)+' '+t('weeks','wk')):'';
+   var dleft=iv>0?Math.ceil((s.dry.last+iv*86400-s.dry.now)/86400):null;
+   if($('cDryStatus'))$('cDryStatus').textContent=(dleft===null)?t('set.dry_off_status','Uit — geen herinnering.'):(dleft>0?(t('set.dry_next','Volgende keer drogen over')+' '+dleft+' '+t('days','dagen')+'.'):('⚠ '+(-dleft)+' '+t('days','dagen')+' '+t('set.dry_over','te laat — drogen!')));
+   var dw=$('drywarn');if(dw){if(dleft!==null&&dleft<=0){dw.style.display='block';dw.textContent='⚠ '+t('dash.dry_warn','Silicagel drogen')+(dleft<0?(' — '+(-dleft)+' '+t('days','dagen')+' '+t('dash.dry_late','te laat')):'');}else dw.style.display='none';}}
   if(s.bkage!==undefined)renderBkStatus(s.bkage);
   if(s.cfg&&s.cfg.scale_ip){scaleHost=s.cfg.scale_ip;var si=$('sIp');if(si&&!si.value)si.value=s.cfg.scale_ip;}
   if(s.cfg&&s.cfg.low)lowG=s.cfg.low;

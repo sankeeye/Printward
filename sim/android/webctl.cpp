@@ -51,7 +51,7 @@ extern bool g_screensaver_3d;
 // --- thread-safe request queue (web thread -> main thread) ---------------
 enum QKind { Q_MOVE = 1, Q_CTL, Q_CFG, Q_START, Q_SPOOL_SAVE, Q_SPOOL_DEL, Q_SPOOL_LOAD,
              Q_EMPTY_SAVE, Q_EMPTY_DEL, Q_SPOOL_BULK, Q_SPOOL_CLEAR, Q_HIST_BULK, Q_RESTORE,
-             Q_REPORT_WEIGHT };
+             Q_REPORT_WEIGHT, Q_DRYSET, Q_DRYDONE };
 enum CtlCode { CTL_PAUSE = 1, CTL_RESUME, CTL_STOP, CTL_LIGHT, CTL_FAN, CTL_SPEED };
 
 struct QCmd {
@@ -368,6 +368,18 @@ void webctl_loop() {
             case Q_SPOOL_DEL:  spool_delete(c.code); break;
             case Q_SPOOL_LOAD: spool_load_to_slot(c.code, (int)c.step); break;
             case Q_SPOOL_CLEAR: spool_clear_slot((int)c.step); break;
+            case Q_DRYSET: {
+                g_dry_interval_days = c.code < 0 ? 0 : c.code;
+                if (g_dry_interval_days > 0 && g_dry_last_dried == 0) g_dry_last_dried = (long)time(nullptr);
+                g_dry_notified = false;               // re-evaluate against the new interval
+                save_settings();
+                break;
+            }
+            case Q_DRYDONE:
+                g_dry_last_dried = (long)time(nullptr);
+                g_dry_notified = false;               // re-arm the reminder
+                save_settings();
+                break;
             case Q_EMPTY_SAVE: {
                 EmptySpool e; memset(&e, 0, sizeof(e));
                 char v[24];
@@ -495,6 +507,8 @@ static void build_status(char* o, int n) {
         live ? lg : -1.0f, live ? lc : 0.0f, gf);
     p += snprintf(o + p, n - p, "\"plate\":%d,\"plates\":%d,\"mplate\":%d,",
         gcode_view_active_plate(), gcode_view_plate_count(), gcode_view_manual_plate());
+    p += snprintf(o + p, n - p, "\"dry\":{\"iv\":%d,\"last\":%ld,\"now\":%ld},",
+        g_dry_interval_days, g_dry_last_dried, (long)time(nullptr));
     p += snprintf(o + p, n - p,
         "\"bkage\":%ld,",
         backup_seconds_since_dl());
@@ -820,6 +834,17 @@ static void handle_conn(int fd) {
         // needs several clicks". Costs about one frame.
         q_wait(q_push(Q_CFG, 0, 0, query ? query : ""), 1500);
         send_msg(fd, "200 OK", "saved");
+        return;
+    }
+    if (!strcmp(path, "/setdry")) {          // silica-gel reminder interval (days; 0 = off)
+        char d[8]; parse_query(query, "days", d, sizeof(d));
+        q_push(Q_DRYSET, d[0] ? atoi(d) : 0, 0, nullptr);
+        send_msg(fd, "200 OK", "ok");
+        return;
+    }
+    if (!strcmp(path, "/drydone")) {         // mark the desiccant dried right now
+        q_push(Q_DRYDONE, 0, 0, nullptr);
+        send_msg(fd, "200 OK", "ok");
         return;
     }
     if (!strcmp(path, "/spools")) {

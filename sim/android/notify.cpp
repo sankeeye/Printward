@@ -7,6 +7,7 @@
 #include "filament_track.h"
 #include "backup.h"
 #include "spool_db.h"
+#include "storage.h"      // g_dry_* reminder state + save_settings()
 #include <ctime>
 #include <SDL.h>
 #include <Arduino.h>
@@ -186,6 +187,19 @@ void notify_loop() {
         warned_short = true;
     }
     if (sh <= 0) warned_short = false;
+
+    // Silica-gel drying reminder: once the interval has passed since it was last
+    // dried, push a one-off reminder. Persisted, so it stays quiet until "dried"
+    // is pressed (which re-arms it). A 0 last-dried means the clock starts now.
+    if (g_dry_interval_days > 0 && !g_dry_notified) {
+        if (g_dry_last_dried == 0) { g_dry_last_dried = (long)time(nullptr); save_settings(); }
+        long due = g_dry_last_dried + (long)g_dry_interval_days * 86400L;
+        if ((long)time(nullptr) >= due) {
+            notify_send("Silicagel drogen", "Tijd om het droogmiddel weer te drogen.");
+            g_dry_notified = true;
+            save_settings();
+        }
+    }
 
     // Low filament: warn once when a weighed slot is below the low threshold.
     // Persisted so it pings a single time (incl. rolls already low right now) and
