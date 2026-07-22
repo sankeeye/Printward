@@ -306,6 +306,10 @@ static const Builtin BUILTIN[] = {
     {"set.dry_reset",         "timer restarted - thanks!", "timer opnieuw gestart - bedankt!"},
     {"dash.dry_warn",         "Dry the silica gel",        "Silicagel drogen"},
     {"dash.dry_late",         "late",                      "te laat"},
+    {"dash.dry_in",           "in",                        "nog"},
+    {"dash.dry_today",        "today",                     "vandaag"},
+    {"set.dry_advance",       "Show the banner this many days early", "Banner alvast tonen (dagen van tevoren)"},
+    {"set.dry_advance_hint",  "0 = only once overdue",     "0 = pas als het over tijd is"},
     {"weeks",                 "wk",                        "wk"},
 
     // --- live status / units ---

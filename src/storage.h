@@ -25,6 +25,7 @@ extern bool g_allow_remote;      // serve clients outside the local network too
 extern int  g_webui_port;        // web server port (default 8080)
 extern bool g_lan_mode;          // printer LAN-only: expose temperature + print-start
 extern int  g_dry_interval_days; // silica-gel drying reminder interval, days (0 = off)
+extern int  g_dry_advance_days;  // show the reminder this many days before it's due
 extern long g_dry_last_dried;    // unix time the desiccant was last dried
 extern bool g_dry_notified;      // already reminded for the current cycle
 void webui_pass_ensure();        // make one on first run; no-op afterwards

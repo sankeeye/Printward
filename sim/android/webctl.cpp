@@ -370,6 +370,9 @@ void webctl_loop() {
             case Q_SPOOL_CLEAR: spool_clear_slot((int)c.step); break;
             case Q_DRYSET: {
                 g_dry_interval_days = c.code < 0 ? 0 : c.code;
+                int adv = (int)c.step; if (adv < 0) adv = 0;
+                if (adv > g_dry_interval_days) adv = g_dry_interval_days;   // can't warn before it was dried
+                g_dry_advance_days = adv;
                 if (g_dry_interval_days > 0 && g_dry_last_dried == 0) g_dry_last_dried = (long)time(nullptr);
                 g_dry_notified = false;               // re-evaluate against the new interval
                 save_settings();
@@ -507,8 +510,8 @@ static void build_status(char* o, int n) {
         live ? lg : -1.0f, live ? lc : 0.0f, gf);
     p += snprintf(o + p, n - p, "\"plate\":%d,\"plates\":%d,\"mplate\":%d,",
         gcode_view_active_plate(), gcode_view_plate_count(), gcode_view_manual_plate());
-    p += snprintf(o + p, n - p, "\"dry\":{\"iv\":%d,\"last\":%ld,\"now\":%ld},",
-        g_dry_interval_days, g_dry_last_dried, (long)time(nullptr));
+    p += snprintf(o + p, n - p, "\"dry\":{\"iv\":%d,\"adv\":%d,\"last\":%ld,\"now\":%ld},",
+        g_dry_interval_days, g_dry_advance_days, g_dry_last_dried, (long)time(nullptr));
     p += snprintf(o + p, n - p,
         "\"bkage\":%ld,",
         backup_seconds_since_dl());
@@ -836,9 +839,11 @@ static void handle_conn(int fd) {
         send_msg(fd, "200 OK", "saved");
         return;
     }
-    if (!strcmp(path, "/setdry")) {          // silica-gel reminder interval (days; 0 = off)
-        char d[8]; parse_query(query, "days", d, sizeof(d));
-        q_push(Q_DRYSET, d[0] ? atoi(d) : 0, 0, nullptr);
+    if (!strcmp(path, "/setdry")) {          // silica-gel reminder interval (days; 0 = off) + advance days
+        char d[8], a[8];
+        parse_query(query, "days", d, sizeof(d));
+        parse_query(query, "adv", a, sizeof(a));
+        q_push(Q_DRYSET, d[0] ? atoi(d) : 0, a[0] ? (float)atoi(a) : 0.0f, nullptr);
         send_msg(fd, "200 OK", "ok");
         return;
     }

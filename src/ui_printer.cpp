@@ -673,14 +673,16 @@ void update_printer_ui() {
     // Silica-gel drying reminder banner - independent of the printer, so it runs
     // here (before the "no data yet" early-out below).
     if (g_dry_banner && g_dry_label) {
-        bool due = false; int overdue = 0;
+        bool show = false; long left_days = 0;
         if (g_dry_interval_days > 0 && g_dry_last_dried > 0) {
-            long left = g_dry_last_dried + (long)g_dry_interval_days * 86400L - (long)time(nullptr);
-            if (left <= 0) { due = true; overdue = (int)((-left) / 86400L); }
+            long left_sec = g_dry_last_dried + (long)g_dry_interval_days * 86400L - (long)time(nullptr);
+            left_days = left_sec >= 0 ? (left_sec + 86399) / 86400 : -((-left_sec) / 86400);
+            if (left_sec <= (long)g_dry_advance_days * 86400L) show = true;   // due, or within the advance window
         }
-        if (due) {
-            if (overdue > 0) lv_label_set_text_fmt(g_dry_label, "%s (%d d)", T("dash.dry_warn"), overdue);
-            else lv_label_set_text(g_dry_label, T("dash.dry_warn"));
+        if (show) {
+            if (left_days > 0)      lv_label_set_text_fmt(g_dry_label, "%s (%s %ld d)", T("dash.dry_warn"), T("dash.dry_in"), left_days);
+            else if (left_days == 0) lv_label_set_text_fmt(g_dry_label, "%s (%s)", T("dash.dry_warn"), T("dash.dry_today"));
+            else                     lv_label_set_text_fmt(g_dry_label, "%s (%ld d %s)", T("dash.dry_warn"), -left_days, T("dash.dry_late"));
             lv_obj_clear_flag(g_dry_banner, LV_OBJ_FLAG_HIDDEN);
         } else {
             lv_obj_add_flag(g_dry_banner, LV_OBJ_FLAG_HIDDEN);

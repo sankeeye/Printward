@@ -193,8 +193,9 @@ void notify_loop() {
     // is pressed (which re-arms it). A 0 last-dried means the clock starts now.
     if (g_dry_interval_days > 0 && !g_dry_notified) {
         if (g_dry_last_dried == 0) { g_dry_last_dried = (long)time(nullptr); save_settings(); }
-        long due = g_dry_last_dried + (long)g_dry_interval_days * 86400L;
-        if ((long)time(nullptr) >= due) {
+        // Warn "advance" days before the actual due date, so it's a heads-up.
+        long warn = g_dry_last_dried + (long)(g_dry_interval_days - g_dry_advance_days) * 86400L;
+        if ((long)time(nullptr) >= warn) {
             notify_send("Silicagel drogen", "Tijd om het droogmiddel weer te drogen.");
             g_dry_notified = true;
             save_settings();
