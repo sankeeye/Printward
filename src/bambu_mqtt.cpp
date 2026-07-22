@@ -7,6 +7,18 @@
 
 PrinterStatus g_printer_status;
 
+// True when this printer model actually has a chamber-temperature sensor (X1 /
+// H2 series). P1P/P1S and A1/A1-mini report only a fixed placeholder value that
+// Bambu Studio hides - so we hide it too. Detected from the serial-number prefix.
+bool printer_has_chamber_sensor() {
+    const char* sn = g_printer_serial;
+    if (!sn[0]) return true;                 // serial unknown -> don't hide anything
+    static const char* NO_CHAMBER[] = {"01S", "01P", "030", "039"};  // P1P, P1S, A1 mini, A1
+    for (const char* p : NO_CHAMBER)
+        if (strncmp(sn, p, 3) == 0) return false;
+    return true;
+}
+
 static WiFiClientSecure g_tls_client;
 static PubSubClient g_mqtt(g_tls_client);
 

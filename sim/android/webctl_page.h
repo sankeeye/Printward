@@ -116,7 +116,7 @@ section#spools{max-width:1040px}
   <div id="pcost" class="muted" style="margin-top:4px"></div>
   <div id="platepick" class="muted" style="display:none;margin-top:8px;align-items:center;gap:8px;font-size:14px"><span data-i18n="dash.plate">Plaat</span><select id="plateSel" onchange="setPlate(this.value)" style="padding:6px;border-radius:6px;border:1px solid #333b44;background:var(--panel2);color:#fff"></select></div>
   <img id="pthumb" alt="" style="display:none;max-width:100%;max-height:240px;border-radius:8px;margin-top:10px"></div>
- <div class="card temps"><div><span data-i18n="dash.nozzle">Nozzle</span> <b id="noz">–</b></div><div><span data-i18n="dash.bed">Bed</span> <b id="bed">–</b></div><div><span data-i18n="dash.chamber">Kamer</span> <b id="cham">–</b></div></div>
+ <div class="card temps"><div><span data-i18n="dash.nozzle">Nozzle</span> <b id="noz">–</b></div><div><span data-i18n="dash.bed">Bed</span> <b id="bed">–</b></div><div id="chamwrap"><span data-i18n="dash.chamber">Kamer</span> <b id="cham">–</b></div></div>
  <div class="card"><h3 data-i18n="dash.controls">Bediening</h3><div class="ctrls">
    <button id="bPause" class="b-blue" data-i18n="dash.pause">Pause</button>
    <button id="bStop" class="b-red" data-i18n="dash.stop">Stop</button>
@@ -633,13 +633,13 @@ function poll(){
   if($('pthumb')){var pf=((s.state==='RUNNING'||s.state==='PAUSE')&&s.file)?s.file:'';var pkey=pf+'#'+(s.plate||1);if(pkey!==pthumbFile){pthumbFile=pkey;if(pf){var pth=pf.charAt(0)==='/'?pf:'/cache/'+pf;var im=$('pthumb');im.onload=function(){im.style.display='block';};im.onerror=function(){im.style.display='none';};im.src='/thumb?path='+encodeURIComponent(pth)+'&plate='+(s.plate||1);}else{$('pthumb').style.display='none';}}}
   var pp=$('platepick');if(pp){if(s.plates>1){var sel=$('plateSel');if(sel.dataset.n!==String(s.plates)){sel.dataset.n=String(s.plates);var h='<option value="0">'+t('dash.plate_auto','Automatisch')+'</option>';for(var pi=1;pi<=s.plates;pi++)h+='<option value="'+pi+'">'+t('dash.plate','Plaat')+' '+pi+'</option>';sel.innerHTML=h;}if(document.activeElement!==sel)sel.value=String(s.mplate||0);pp.style.display='flex';}else pp.style.display='none';}
   var w=$('warn');if(w){if(s.short>0){w.style.display='block';w.textContent='⚠ '+t('dash.warn_short','Filament tekort')+' — ~'+s.short+' g '+t('dash.short_body','te kort voor deze print op het actieve slot.');}else{w.style.display='none';}}
-  $('noz').textContent=s.nozzle+'/'+s.nozzle_t+'°';$('bed').textContent=s.bed+'/'+s.bed_t+'°';$('cham').textContent=s.chamber+'°';
+  $('noz').textContent=s.nozzle+'/'+s.nozzle_t+'°';$('bed').textContent=s.bed+'/'+s.bed_t+'°';var hasC=(s.has_chamber!==0);if($('chamwrap'))$('chamwrap').style.display=hasC?'':'none';if(hasC)$('cham').textContent=s.chamber+'°';
   $('bPause').textContent=(s.state==='PAUSE')?t('dash.resume','Resume'):t('dash.pause','Pause');
   $('bLight').textContent=t('dash.light','Licht')+': '+(s.light?t('on','aan'):t('off','uit'));
   $('bFan').textContent=t('dash.fan','Fan')+' '+s.fan+'%';
   if(document.activeElement!==$('speed'))$('speed').value=s.speed;
   if(!$('rollModal')||$('rollModal').style.display!=='flex'){$('amsStrip').innerHTML=amsHtml(s.ams,s.ext,true);}
-  if($('movetemps'))$('movetemps').textContent=t('dash.nozzle','nozzle')+' '+s.nozzle+'/'+s.nozzle_t+'° · '+t('dash.bed','bed')+' '+s.bed+'/'+s.bed_t+'° · '+t('dash.chamber','kamer')+' '+s.chamber+'°';
+  if($('movetemps'))$('movetemps').textContent=t('dash.nozzle','nozzle')+' '+s.nozzle+'/'+s.nozzle_t+'° · '+t('dash.bed','bed')+' '+s.bed+'/'+s.bed_t+'°'+((s.has_chamber!==0)?(' · '+t('dash.chamber','kamer')+' '+s.chamber+'°'):'');
   if(s.prints!==undefined&&$('stPrints')){$('stPrints').textContent=s.prints;$('stUsed').textContent=(s.used>=1000?(s.used/1000).toFixed(2)+' kg':s.used+' g');if($('stCost'))$('stCost').textContent='€ '+(s.cost||0).toFixed(2);}
   if(s.dry){var iv=s.dry.iv||0,adv=s.dry.adv||0,always=!!s.dry.always,usehum=!!s.dry.usehum,hum=!!s.dry.hum;
    var dv=$('cDry');if(dv&&document.activeElement!==dv)dv.value=iv||'';

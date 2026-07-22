@@ -743,7 +743,12 @@ void update_printer_ui() {
 
     lv_label_set_text_fmt(g_nozzle_label, "%s %.0f/%.0f\xC2\xB0" "C", T("dash.nozzle"), s.nozzle_temp, s.nozzle_target);
     lv_label_set_text_fmt(g_bed_label, "%s %.0f/%.0f\xC2\xB0" "C", T("dash.bed"), s.bed_temp, s.bed_target);
-    lv_label_set_text_fmt(g_chamber_label, "%s %.0f\xC2\xB0" "C", T("dash.chamber"), s.chamber_temp);
+    // Only printers with a real chamber sensor (X1/H2) get a chamber reading; the
+    // P1/A1 series report a bogus placeholder, so we leave it blank like Bambu does.
+    if (printer_has_chamber_sensor())
+        lv_label_set_text_fmt(g_chamber_label, "%s %.0f\xC2\xB0" "C", T("dash.chamber"), s.chamber_temp);
+    else
+        lv_label_set_text(g_chamber_label, "");
 
     for (int u = 0; u < AMS_MAX_UNITS; u++) {
         AmsUnit& unit = s.ams[u];

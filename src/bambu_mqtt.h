@@ -70,6 +70,10 @@ void bambu_mqtt_loop();
 
 bool bambu_is_connected();
 
+// True when this printer model has a real chamber-temperature sensor (X1 / H2
+// series). False for P1P/P1S and A1/A1-mini, which only report a placeholder.
+bool printer_has_chamber_sensor();
+
 // Call after the printer IP / serial / access code change at runtime: drops the
 // current session and reconnects promptly with the new settings.
 void bambu_mqtt_settings_changed();
