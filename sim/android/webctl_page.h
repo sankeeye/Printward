@@ -278,9 +278,10 @@ section#spools{max-width:1040px}
   <div class="frow"><label class="muted" data-i18n="set.dry_interval">Om de hoeveel dagen drogen (0 = uit)</label>
    <div style="display:flex;gap:8px;align-items:center"><input type="number" id="cDry" min="0" step="1" placeholder="45" style="width:100px"><span class="muted" id="cDryWk"></span></div></div>
   <div class="frow"><label class="muted" data-i18n="set.dry_advance">Banner alvast tonen (dagen van tevoren)</label>
-   <div style="display:flex;gap:8px;align-items:center"><input type="number" id="cAdv" min="0" step="1" placeholder="0" style="width:100px"><span class="muted" data-i18n="set.dry_advance_hint">0 = pas als het over tijd is</span><button id="cDrySave" class="formbtn sec" data-i18n="save">Opslaan</button></div></div>
+   <div style="display:flex;gap:8px;align-items:center"><input type="number" id="cAdv" min="0" step="1" placeholder="0" style="width:100px"><span class="muted" data-i18n="set.dry_advance_hint">0 = pas als het over tijd is</span></div></div>
   <div class="frow"><label class="muted" for="cDryAlways" data-i18n="set.dry_always">Banner altijd op de tab tonen</label>
-   <div style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="cDryAlways"><span class="muted" data-i18n="set.dry_always_hint">Uit = pas binnen bovenstaand venster</span></div></div>
+   <div style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="cDryAlways" style="width:20px;height:20px"><span class="muted" data-i18n="set.dry_always_hint">Uit = pas binnen bovenstaand venster</span></div></div>
+  <button id="cDrySave" class="formbtn sec" style="margin-top:10px" data-i18n="save">Opslaan</button>
   <div id="cDryStatus" class="muted" style="margin-top:10px"></div>
   <button id="cDryDone" class="formbtn pri" style="margin-top:8px" data-i18n="set.dry_done">Nu gedroogd</button>
   <div id="cDryMsg" class="muted" style="margin-top:6px"></div>
