@@ -382,7 +382,8 @@ void webctl_loop() {
             }
             case Q_DRYDONE:
                 g_dry_last_dried = (long)time(nullptr);
-                g_dry_notified = false;               // re-arm the reminder
+                g_dry_notified = false;               // re-arm the timer reminder
+                g_dry_hum_ack = true;                 // mute humidity alarm until the AMS reads dry again
                 save_settings();
                 break;
             case Q_EMPTY_SAVE: {
@@ -528,8 +529,8 @@ static void build_status(char* o, int n) {
     for (int u = 0; u < s.ams_count && u < AMS_MAX_UNITS; u++) {
         AmsUnit& un = s.ams[u];
         if (!un.present) continue;
-        p += snprintf(o + p, n - p, "%s{\"id\":%d,\"humidity\":%d,\"temp\":%.0f,\"trays\":[",
-            first ? "" : ",", u + 1, un.humidity, un.temp);
+        p += snprintf(o + p, n - p, "%s{\"id\":%d,\"humidity\":%d,\"humidity_raw\":%d,\"temp\":%.0f,\"trays\":[",
+            first ? "" : ",", u + 1, un.humidity, un.humidity_raw, un.temp);
         first = false;
         for (int t = 0; t < AMS_MAX_TRAYS; t++) {
             AmsTraySlot& tr = un.trays[t];

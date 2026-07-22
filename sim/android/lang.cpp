@@ -199,6 +199,7 @@ static const Builtin BUILTIN[] = {
     {"move.retract_10",       "Retract 10mm", "Terugtrekken 10mm"},
     {"dash.stop_yes",         "Stop", "Stoppen"},
     {"dash.humidity_fmt",     "Humidity: %s", "Vocht: %s"},
+    {"dash.humidity_pct",     "Humidity: %d%%", "Vocht: %d%%"},
     {"dash.light_on",         "Light: On", "Licht: aan"},
     {"dash.light_off",        "Light: Off", "Licht: uit"},
     {"dash.fan_pct",          "Fan %d%%", "Ventilator %d%%"},

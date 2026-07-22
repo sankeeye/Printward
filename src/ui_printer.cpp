@@ -228,6 +228,7 @@ static void speed_dd_cb(lv_event_t* e) {
 static void dry_done_cb(lv_event_t*) {
     g_dry_last_dried = (long)time(nullptr);
     g_dry_notified = false;
+    g_dry_hum_ack = true;    // mute the humidity alarm until the AMS reads dry again
     save_settings();
     if (g_dry_banner) lv_obj_add_flag(g_dry_banner, LV_OBJ_FLAG_HIDDEN);
 }
@@ -752,14 +753,18 @@ void update_printer_ui() {
         }
         lv_obj_clear_flag(g_ams_boxes[u], LV_OBJ_FLAG_HIDDEN);
         if (g_ams_humidity_labels[u]) {
-            // Bambu humidity grade 1-5: 1 = dry (good) ... 5 = wet (bad).
+            // Bambu humidity grade 1-5: 1 = most humid (bad) ... 5 = driest (good).
             int hu = unit.humidity;
             if (hu >= 1) {
                 const char* hl; uint32_t hc;
-                if (hu <= 2)      { hl = T("dash.hum_dry"); hc = 0x2ecc71; }
+                if (hu >= 4)      { hl = T("dash.hum_dry"); hc = 0x2ecc71; }
                 else if (hu == 3) { hl = T("dash.hum_ok");  hc = 0xf39c12; }
                 else              { hl = T("dash.hum_wet"); hc = 0xe74c3c; }
-                lv_label_set_text_fmt(g_ams_humidity_labels[u], T("dash.humidity_fmt"), hl);
+                // Show the actual RH% (what Bambu Studio shows) when reported, else the grade label.
+                if (unit.humidity_raw >= 0)
+                    lv_label_set_text_fmt(g_ams_humidity_labels[u], T("dash.humidity_pct"), unit.humidity_raw);
+                else
+                    lv_label_set_text_fmt(g_ams_humidity_labels[u], T("dash.humidity_fmt"), hl);
                 lv_obj_set_style_text_color(g_ams_humidity_labels[u], lv_color_hex(hc), 0);
             } else {
                 lv_label_set_text(g_ams_humidity_labels[u], "");

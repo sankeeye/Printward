@@ -114,7 +114,11 @@ static void handle_mqtt_message(char* topic, byte* payload, unsigned int length)
             if (count >= AMS_MAX_UNITS) break;
             AmsUnit& unit = g_printer_status.ams[count];
             unit.present = true;
+            // Bambu's 1-5 humidity grade: 1 = most humid (bad) ... 5 = driest (good).
             unit.humidity = atoi((const char*)(u["humidity"] | "-1"));
+            // Newer AMS units also report the actual relative humidity as a
+            // percentage (lower = drier) - the exact figure Bambu Studio shows.
+            unit.humidity_raw = u["humidity_raw"].isNull() ? -1 : atoi((const char*)(u["humidity_raw"] | "-1"));
             unit.temp = atof((const char*)(u["temp"] | "0"));
 
             JsonArray trays = u["tray"];

@@ -159,17 +159,21 @@ static void lownotify_save() {
 bool dry_humidity_alarm() {
     static long wet_since = 0;
     if (!g_dry_use_humidity) { wet_since = 0; g_dry_hum_alarm = false; return false; }
-    int maxh = 0;
+    bool wet = false;                         // grade 1-2 = genuinely humid (1 = worst)
     PrinterStatus& s = g_printer_status;
     for (int u = 0; u < s.ams_count && u < AMS_MAX_UNITS; u++)
-        if (s.ams[u].present && s.ams[u].humidity > maxh) maxh = s.ams[u].humidity;
+        if (s.ams[u].present && s.ams[u].humidity >= 1 && s.ams[u].humidity <= 2) wet = true;
     long now = (long)time(nullptr);
     bool alarm = false;
-    if (maxh >= 4) {                          // "vochtig"
+    if (wet) {
+        // Just dried: the sensor lags (AMS air stays humid a while), so stay quiet
+        // until it actually reads dry once - then a future wet spell alarms again.
+        if (g_dry_hum_ack) { wet_since = 0; g_dry_hum_alarm = false; return false; }
         if (wet_since == 0) wet_since = now;
         alarm = (now - wet_since) >= 1800;    // sustained for 30 min
     } else {
         wet_since = 0;                        // dried out -> re-arm
+        g_dry_hum_ack = false;                // sensor confirms dry; clear the ack
     }
     g_dry_hum_alarm = alarm;
     return alarm;

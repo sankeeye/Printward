@@ -576,7 +576,7 @@ function amt(t){
  if(t.gram>=0){return '<div class="muted"'+(t.gram<lowG?' style="color:#e74c3c;font-weight:600"':'')+'>'+t.gram+' g</div>';}
  return '<div class="muted">'+(t.remain>=0?t.remain+'%':'–')+'</div>';
 }
-function humHtml(h){if(!h||h<1)return'';var l,c;if(h<=2){l=t('dash.hum_dry','droog');c='#2ecc71';}else if(h===3){l=t('dash.hum_ok','redelijk');c='#f39c12';}else{l=t('dash.hum_wet','vochtig');c='#e74c3c';}return ' · <span style="color:'+c+'">'+t('dash.humidity','vocht')+': '+l+'</span>';}
+function humHtml(h,raw){if(!h||h<1)return'';var l,c;if(h>=4){l=t('dash.hum_dry','droog');c='#2ecc71';}else if(h===3){l=t('dash.hum_ok','redelijk');c='#f39c12';}else{l=t('dash.hum_wet','vochtig');c='#e74c3c';}var val=(raw!==undefined&&raw>=0)?(raw+'%'):l;return ' · <span style="color:'+c+'">'+t('dash.humidity','vocht')+': '+val+'</span>';}
 function slotName(slot){return slot===254?'externe spoel':('AMS'+(Math.floor(slot/4)+1)+' T'+(slot%4+1));}
 function trayCell(t,slot,assign){
  var inner;
@@ -589,7 +589,7 @@ function trayCell(t,slot,assign){
 function amsHtml(ams,ext,assign){
  var h='';
  (ams||[]).forEach(function(u){
-  h+='<div class="amsbox"><div class="muted">AMS '+u.id+humHtml(u.humidity)+'</div><div class="trays">';
+  h+='<div class="amsbox"><div class="muted">AMS '+u.id+humHtml(u.humidity,u.humidity_raw)+'</div><div class="trays">';
   u.trays.forEach(function(t,ti){h+=trayCell(t,(u.id-1)*4+ti,assign);});
   h+='</div></div>';
  });

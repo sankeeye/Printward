@@ -31,6 +31,7 @@ extern bool g_dry_notified;      // already reminded for the current cycle
 extern bool g_dry_banner_always; // keep the dashboard banner visible at all times
 extern bool g_dry_use_humidity;  // also remind when the AMS reports the desiccant is wet
 extern bool g_dry_hum_alarm;     // runtime: AMS-humidity reminder currently active
+extern bool g_dry_hum_ack;       // "just dried": mute humidity alarm until the AMS reads dry again
 
 // True when an AMS has reported "wet" (humidity grade >= 4) continuously for long
 // enough to be a real drying signal (not a transient spike). Updates g_dry_hum_alarm

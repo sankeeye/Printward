@@ -17,7 +17,8 @@ struct AmsTraySlot {
 
 struct AmsUnit {
     bool present;
-    int humidity;    // 1-5 humidity grade, -1 if unknown
+    int humidity;      // 1-5 humidity grade: 1 = most humid, 5 = driest; -1 if unknown
+    int humidity_raw;  // actual relative humidity %, lower = drier; -1 if not reported
     float temp;
     AmsTraySlot trays[AMS_MAX_TRAYS];
 };
