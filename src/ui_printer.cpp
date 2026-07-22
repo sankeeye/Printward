@@ -27,6 +27,8 @@ static lv_obj_t* g_conn_label = nullptr;
 static lv_obj_t* g_clock_label = nullptr;
 static lv_obj_t* g_warn_banner = nullptr;
 static lv_obj_t* g_warn_label = nullptr;
+static lv_obj_t* g_dry_banner = nullptr;   // "dry the silica gel" reminder + button
+static lv_obj_t* g_dry_label = nullptr;
 static lv_obj_t* g_state_label = nullptr;
 static lv_obj_t* g_task_label = nullptr;
 static lv_obj_t* g_bar = nullptr;
@@ -220,6 +222,17 @@ static void speed_dd_cb(lv_event_t* e) {
     g_pending_speed_level = (int)lv_dropdown_get_selected(dd) + 1;  // 1..4
 }
 
+#ifdef __ANDROID__
+// "Dried it now" on the silica-gel reminder banner: restart the timer + re-arm.
+// Runs on the LVGL/main thread, so it can touch storage directly.
+static void dry_done_cb(lv_event_t*) {
+    g_dry_last_dried = (long)time(nullptr);
+    g_dry_notified = false;
+    save_settings();
+    if (g_dry_banner) lv_obj_add_flag(g_dry_banner, LV_OBJ_FLAG_HIDDEN);
+}
+#endif
+
 void create_printer_ui() {
     lv_obj_clean(g_main_screen);
     lv_obj_set_style_bg_color(g_main_screen, lv_color_hex(g_bg_color), LV_PART_MAIN);
@@ -354,6 +367,32 @@ void create_printer_ui() {
     lv_obj_set_style_text_color(g_warn_label, lv_color_hex(0xffe0e0), 0);
     lv_label_set_text(g_warn_label, "");
     lv_obj_add_flag(g_warn_banner, LV_OBJ_FLAG_HIDDEN);
+
+    // Silica-gel drying reminder pill with a "dried it" button, shown when overdue.
+    g_dry_banner = lv_obj_create(state_row);
+    lv_obj_set_size(g_dry_banner, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    lv_obj_set_style_bg_color(g_dry_banner, lv_color_hex(0x5a4a1e), 0);
+    lv_obj_set_style_border_width(g_dry_banner, 0, 0);
+    lv_obj_set_style_radius(g_dry_banner, 8, 0);
+    lv_obj_set_style_pad_hor(g_dry_banner, PT_SZ(12), 0);
+    lv_obj_set_style_pad_ver(g_dry_banner, PT_SZ(5), 0);
+    lv_obj_set_style_pad_gap(g_dry_banner, PT_SZ(10), 0);
+    lv_obj_set_flex_flow(g_dry_banner, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(g_dry_banner, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_clear_flag(g_dry_banner, LV_OBJ_FLAG_SCROLLABLE);
+    g_dry_label = lv_label_create(g_dry_banner);
+    lv_obj_set_style_text_font(g_dry_label, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(g_dry_label, lv_color_hex(0xffe8b0), 0);
+    lv_label_set_text(g_dry_label, "");
+    lv_obj_t* dry_btn = lv_btn_create(g_dry_banner);
+    lv_obj_set_style_bg_color(dry_btn, lv_color_hex(0x3a7d44), 0);
+    lv_obj_set_style_pad_hor(dry_btn, PT_SZ(10), 0);
+    lv_obj_set_style_pad_ver(dry_btn, PT_SZ(4), 0);
+    lv_obj_t* dry_btn_lbl = lv_label_create(dry_btn);
+    lv_label_set_text(dry_btn_lbl, T("set.dry_done"));
+    lv_obj_set_style_text_font(dry_btn_lbl, &lv_font_montserrat_14, 0);
+    lv_obj_add_event_cb(dry_btn, dry_done_cb, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_flag(g_dry_banner, LV_OBJ_FLAG_HIDDEN);
 #endif
 
     // --- Progress bar + % + remaining time ---
@@ -630,6 +669,22 @@ void update_printer_ui() {
         time_t now = time(nullptr);
         struct tm* lt = localtime(&now);
         if (lt) { char ct[8]; strftime(ct, sizeof(ct), "%H:%M", lt); lv_label_set_text(g_clock_label, ct); }
+    }
+    // Silica-gel drying reminder banner - independent of the printer, so it runs
+    // here (before the "no data yet" early-out below).
+    if (g_dry_banner && g_dry_label) {
+        bool due = false; int overdue = 0;
+        if (g_dry_interval_days > 0 && g_dry_last_dried > 0) {
+            long left = g_dry_last_dried + (long)g_dry_interval_days * 86400L - (long)time(nullptr);
+            if (left <= 0) { due = true; overdue = (int)((-left) / 86400L); }
+        }
+        if (due) {
+            if (overdue > 0) lv_label_set_text_fmt(g_dry_label, "%s (%d d)", T("dash.dry_warn"), overdue);
+            else lv_label_set_text(g_dry_label, T("dash.dry_warn"));
+            lv_obj_clear_flag(g_dry_banner, LV_OBJ_FLAG_HIDDEN);
+        } else {
+            lv_obj_add_flag(g_dry_banner, LV_OBJ_FLAG_HIDDEN);
+        }
     }
 #endif
 
